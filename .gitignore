@@ -1,6 +1,7 @@
 # Xcode build artifacts
 build/
 DerivedData/
+.derivedData/
 *.xcarchive
 
 # Xcode user-specific files
@@ -47,4 +48,3 @@ Carthage/Build/
 
 # Accidental Xcode workspace files
 *.xcworkspace/xcuserdata/
-
