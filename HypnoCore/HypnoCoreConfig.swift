@@ -25,6 +25,18 @@ public struct HypnoCoreConfig {
         appSupportDirectory.appendingPathComponent("apple-photos-hidden-local-identifiers.txt")
     }
 
+    public var effectLibrariesDirectory: URL {
+        ensureDirectory(appSupportDirectory.appendingPathComponent("effect-libraries", isDirectory: true))
+    }
+
+    public var lutsDirectory: URL {
+        ensureDirectory(appSupportDirectory.appendingPathComponent("luts", isDirectory: true))
+    }
+
+    public var textDirectory: URL {
+        ensureDirectory(appSupportDirectory.appendingPathComponent("text", isDirectory: true))
+    }
+
     private static var defaultAppSupportDirectory: URL {
         let fm = FileManager.default
         let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
@@ -37,5 +49,13 @@ public struct HypnoCoreConfig {
         }
 
         return appDir
+    }
+
+    private func ensureDirectory(_ url: URL) -> URL {
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: url.path) {
+            try? fm.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
+        }
+        return url
     }
 }
