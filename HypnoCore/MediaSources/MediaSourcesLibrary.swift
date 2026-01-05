@@ -31,6 +31,8 @@ public final class MediaSourcesLibrary {
 
     /// Which media types to include
     private let allowedMediaTypes: Set<SourceMediaType>
+    private let exclusionStore: ExclusionStore
+    private let deleteStore: DeleteStore
 
     let allowedPhotoExtensions = Set([
         "jpeg", "jpg", "png", "heic", "gif"
@@ -50,8 +52,15 @@ public final class MediaSourcesLibrary {
     /// Total number of assets in this library
     public var assetCount: Int { sourceIndex.count }
 
-    public init(sources: [String], allowedMediaTypes: Set<SourceMediaType> = [.images, .videos]) {
+    public init(
+        sources: [String],
+        allowedMediaTypes: Set<SourceMediaType> = [.images, .videos],
+        exclusionStore: ExclusionStore,
+        deleteStore: DeleteStore
+    ) {
         self.allowedMediaTypes = allowedMediaTypes
+        self.exclusionStore = exclusionStore
+        self.deleteStore = deleteStore
         if sources.isEmpty {
             // No explicit sources → default to Photos library videos
             loadFilesFromPhotosLibrary()
@@ -63,8 +72,15 @@ public final class MediaSourcesLibrary {
     }
 
     /// Initialize from a Photos album
-    public init(photosAlbum: PHAssetCollection, allowedMediaTypes: Set<SourceMediaType> = [.images, .videos]) {
+    public init(
+        photosAlbum: PHAssetCollection,
+        allowedMediaTypes: Set<SourceMediaType> = [.images, .videos],
+        exclusionStore: ExclusionStore,
+        deleteStore: DeleteStore
+    ) {
         self.allowedMediaTypes = allowedMediaTypes
+        self.exclusionStore = exclusionStore
+        self.deleteStore = deleteStore
         loadFromPhotosAlbum(photosAlbum)
         // No exclusions for Photos albums - they're curated
     }
@@ -77,9 +93,13 @@ public final class MediaSourcesLibrary {
         photosAlbums: [PHAssetCollection] = [],
         includeAllPhotos: Bool = false,
         customPhotosAssetIds: [String] = [],
-        allowedMediaTypes: Set<SourceMediaType> = [.images, .videos]
+        allowedMediaTypes: Set<SourceMediaType> = [.images, .videos],
+        exclusionStore: ExclusionStore,
+        deleteStore: DeleteStore
     ) {
         self.allowedMediaTypes = allowedMediaTypes
+        self.exclusionStore = exclusionStore
+        self.deleteStore = deleteStore
 
         /// Load folder/file sources
         if !sources.isEmpty {
@@ -429,8 +449,6 @@ public final class MediaSourcesLibrary {
     }
 
     private func applyExclusions() {
-        let exclusionStore = ExclusionStore.shared
-        let deleteStore = DeleteStore.shared
         let hiddenUUIDs = ApplePhotos.shared.cachedHiddenUUIDs
 
         sourceIndex.removeAll { entry in
@@ -454,12 +472,12 @@ public final class MediaSourcesLibrary {
     // MARK: - Exclusions & Deletions (user-driven)
 
     public func exclude(file: MediaFile) {
-        ExclusionStore.shared.add(file.source)
+        exclusionStore.add(file.source)
         sourceIndex.removeAll { sourceKey($0.source) == sourceKey(file.source) }
     }
 
     public func markForDeletion(file: MediaFile) {
-        DeleteStore.shared.add(file.source)
+        deleteStore.add(file.source)
         sourceIndex.removeAll { sourceKey($0.source) == sourceKey(file.source) }
     }
 }

@@ -21,39 +21,47 @@ struct MediaSourcesLibraryTests {
         let tempDir = try makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        try await withTemporaryCoreConfig(tempDir.appendingPathComponent("core", isDirectory: true)) {
-            let imageURL = tempDir.appendingPathComponent("library-image.png")
-            try writeTestImage(to: imageURL, size: CGSize(width: 10, height: 10))
+        let stores = try makeStores(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let imageURL = tempDir.appendingPathComponent("library-image.png")
+        try writeTestImage(to: imageURL, size: CGSize(width: 10, height: 10))
 
-            let library = MediaSourcesLibrary(sources: [tempDir.path], allowedMediaTypes: [.images])
-            guard let clip = library.randomClip(clipLength: 1.25) else {
-                #expect(Bool(false), "Expected image clip from library")
-                return
-            }
-
-            #expect(clip.file.mediaKind == .image)
-            #expect(abs(clip.duration.seconds - 1.25) < 0.01)
+        let library = MediaSourcesLibrary(
+            sources: [tempDir.path],
+            allowedMediaTypes: [.images],
+            exclusionStore: stores.exclusion,
+            deleteStore: stores.delete
+        )
+        guard let clip = library.randomClip(clipLength: 1.25) else {
+            #expect(Bool(false), "Expected image clip from library")
+            return
         }
+
+        #expect(clip.file.mediaKind == .image)
+        #expect(abs(clip.duration.seconds - 1.25) < 0.01)
     }
 
     @Test func mediaSourcesLibraryRandomClipForVideo() async throws {
         let tempDir = try makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        try await withTemporaryCoreConfig(tempDir.appendingPathComponent("core", isDirectory: true)) {
-            let videoURL = tempDir.appendingPathComponent("library-video.mov")
-            try await writeTestVideo(to: videoURL, size: CGSize(width: 12, height: 12), frameCount: 4, frameRate: 30)
+        let stores = try makeStores(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let videoURL = tempDir.appendingPathComponent("library-video.mov")
+        try await writeTestVideo(to: videoURL, size: CGSize(width: 12, height: 12), frameCount: 4, frameRate: 30)
 
-            let library = MediaSourcesLibrary(sources: [tempDir.path], allowedMediaTypes: [.videos])
-            guard let clip = library.randomClip(clipLength: 0.5) else {
-                #expect(Bool(false), "Expected video clip from library")
-                return
-            }
-
-            #expect(clip.file.mediaKind == .video)
-            #expect(clip.duration.seconds <= 0.5 + 0.01)
-            #expect(clip.startTime.seconds >= 0)
+        let library = MediaSourcesLibrary(
+            sources: [tempDir.path],
+            allowedMediaTypes: [.videos],
+            exclusionStore: stores.exclusion,
+            deleteStore: stores.delete
+        )
+        guard let clip = library.randomClip(clipLength: 0.5) else {
+            #expect(Bool(false), "Expected video clip from library")
+            return
         }
+
+        #expect(clip.file.mediaKind == .video)
+        #expect(clip.duration.seconds <= 0.5 + 0.01)
+        #expect(clip.startTime.seconds >= 0)
     }
 
     private func makeTempDirectory() throws -> URL {
@@ -63,6 +71,23 @@ struct MediaSourcesLibraryTests {
         )
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
+    }
+
+    private func makeStores(in directory: URL) throws -> (exclusion: ExclusionStore, delete: DeleteStore, favorite: FavoriteStore) {
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: directory.path) {
+            try fm.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
+
+        let exclusionURL = directory.appendingPathComponent("exclusions.json")
+        let deleteURL = directory.appendingPathComponent("deletions.json")
+        let favoritesURL = directory.appendingPathComponent("favorites.json")
+
+        return (
+            exclusion: ExclusionStore(url: exclusionURL),
+            delete: DeleteStore(url: deleteURL),
+            favorite: FavoriteStore(url: favoritesURL)
+        )
     }
 
     private func writeTestImage(to url: URL, size: CGSize) throws {
@@ -191,17 +216,6 @@ struct MediaSourcesLibraryTests {
         ctx.fill(CGRect(origin: .zero, size: size))
 
         return pixelBuffer
-    }
-
-    private func withTemporaryCoreConfig(_ appSupportDirectory: URL, _ body: () async throws -> Void) async throws {
-        let previous = HypnoCoreConfig.shared
-        let fm = FileManager.default
-        if !fm.fileExists(atPath: appSupportDirectory.path) {
-            try fm.createDirectory(at: appSupportDirectory, withIntermediateDirectories: true)
-        }
-        HypnoCoreConfig.shared = HypnoCoreConfig(appSupportDirectory: appSupportDirectory)
-        defer { HypnoCoreConfig.shared = previous }
-        try await body()
     }
 
     private enum TestImageError: Error {

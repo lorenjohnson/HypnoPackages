@@ -11,12 +11,13 @@ import Foundation
 /// Persistent queue of sources the user has marked for deletion.
 /// The actual deletion is deferred - this just tracks the list.
 public final class DeleteStore {
-    public static let shared = DeleteStore()
-
     private var queuedIdentifiers: Set<String> = []
     private let queue = DispatchQueue(label: "DeleteStore.queue")
+    private let storeURL: URL
 
-    private init() {
+    public init(url: URL) {
+        self.storeURL = url
+        ensureParentDirectoryExists()
         load()
     }
 
@@ -76,18 +77,24 @@ public final class DeleteStore {
     }
 
     private func load() {
-        let url = HypnoCoreConfig.shared.deletionsURL
-        guard let data = try? Data(contentsOf: url) else { return }
+        guard let data = try? Data(contentsOf: storeURL) else { return }
         if let list = try? JSONDecoder().decode([String].self, from: data) {
             queuedIdentifiers = Set(list)
         }
     }
 
     private func save() {
-        let url = HypnoCoreConfig.shared.deletionsURL
         let list = Array(queuedIdentifiers)
         if let data = try? JSONEncoder().encode(list) {
-            try? data.write(to: url)
+            try? data.write(to: storeURL)
+        }
+    }
+
+    private func ensureParentDirectoryExists() {
+        let dir = storeURL.deletingLastPathComponent()
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: dir.path) {
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true, attributes: nil)
         }
     }
 }
