@@ -7,7 +7,6 @@
 
 import Foundation
 import CoreGraphics
-import HypnoCore
 
 // MARK: - Hypnogram core models
 

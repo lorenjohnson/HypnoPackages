@@ -1,0 +1,454 @@
+{
+  "effects" : [
+    {
+      "effects" : [
+        {
+          "params" : {
+            "brightness" : 0,
+            "colorSpace" : "rgb",
+            "contrast" : 0,
+            "hueShift" : 0,
+            "invert" : false,
+            "opacity" : 1,
+            "saturation" : 0
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "intensity" : 1,
+            "lutFile" : "NW-1"
+          },
+          "type" : "LUTEffect"
+        }
+      ],
+      "name" : "Effect"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "animated" : true,
+            "offsetAmount" : 15
+          },
+          "type" : "RGBSplitSimpleEffect"
+        }
+      ],
+      "name" : "RGB Split"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "Basic",
+          "params" : {
+            "brightness" : -0.43695262738853524,
+            "colorSpace" : "rgb",
+            "contrast" : 0.17282046178343946,
+            "hueShift" : 0.007762738853503093,
+            "invert" : false,
+            "opacity" : 1,
+            "saturation" : -0.13380772292993626
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "RGBSplitSimple",
+          "params" : {
+            "animated" : true,
+            "offsetAmount" : 12.624900477707008
+          },
+          "type" : "RGBSplitSimpleEffect"
+        },
+        {
+          "params" : {
+            "antialiasing" : true,
+            "changeIntervalFrames" : 90,
+            "durationMultiplier" : 1,
+            "fontSize" : 32,
+            "fontSizeVariation" : 0.30000001192092896,
+            "maxTextCount" : 1,
+            "opacity" : 0.800000011920929,
+            "strokeWidth" : 2,
+            "textColor" : "#FFFFFF"
+          },
+          "type" : "TextOverlayEffect"
+        }
+      ],
+      "name" : "RGB + Text"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "EdgeDecay",
+          "params" : {
+            "_enabled" : false,
+            "intensity" : 0.09004906581266083
+          },
+          "type" : "EdgeDecayEffect"
+        },
+        {
+          "name" : "BlockFreezeMetal",
+          "params" : {
+            "_enabled" : false,
+            "blockSize" : 33,
+            "freezeAmount" : 0.26536909574221645,
+            "streakAmount" : 0.14373349471830985
+          },
+          "type" : "BlockFreezeMetalEffect"
+        },
+        {
+          "name" : "GlitchBlocksMetal",
+          "params" : {
+            "_enabled" : false,
+            "blockSize" : 22,
+            "corruption" : 0.10874490521753745,
+            "glitchAmount" : 0.29670521002564076
+          },
+          "type" : "GlitchBlocksMetalEffect"
+        },
+        {
+          "name" : "TimeShuffleMetal",
+          "params" : {
+            "_enabled" : false,
+            "chunkSize" : 60,
+            "depth" : 108,
+            "numRegions" : 6,
+            "shuffleRate" : 0.30000001192092896
+          },
+          "type" : "TimeShuffleMetalEffect"
+        },
+        {
+          "name" : "Basic",
+          "params" : {
+            "brightness" : -0.1015625,
+            "colorSpace" : "yuv",
+            "contrast" : 0.9599680656934306,
+            "hueShift" : -0.0020176610297659714,
+            "invert" : false,
+            "opacity" : 0.9202497718978102,
+            "saturation" : -0.019616788321167866
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "PixelDriftMetal",
+          "params" : {
+            "_enabled" : false,
+            "decay" : 0.34998195236555496,
+            "driftStrength" : 21.961066811452657,
+            "threshold" : 0.12659671532846714
+          },
+          "type" : "PixelDriftMetalEffect"
+        },
+        {
+          "name" : "TextOverlay",
+          "params" : {
+            "_enabled" : false,
+            "antialiasing" : true,
+            "changeIntervalFrames" : 90,
+            "durationMultiplier" : 2,
+            "fontSize" : 22.775650831216797,
+            "fontSizeVariation" : 0.3593401073088301,
+            "maxTextCount" : 1,
+            "opacity" : 0.800000011920929,
+            "textColor" : "#FFFFFF"
+          },
+          "type" : "TextOverlayEffect"
+        }
+      ],
+      "name" : "Glitch and Time"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.1288342235059039,
+            "colorSpace" : "yuv",
+            "colorizeAmount" : 0,
+            "colorizeHue" : 0,
+            "contrast" : -0.011167820653690264,
+            "hueShift" : 0.7918133802816902,
+            "invert" : true,
+            "opacity" : 1,
+            "saturation" : 0.48471874716643226
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "FrameDifference",
+          "params" : {
+            "_enabled" : false,
+            "boost" : 2.1959806743421053,
+            "originalBlend" : 0.6596422697368421
+          },
+          "type" : "FrameDifferenceEffect"
+        },
+        {
+          "name" : "CompressionMetal",
+          "params" : {
+            "_enabled" : false,
+            "colorLevels" : 16,
+            "format" : 2,
+            "passes" : 1,
+            "quality" : 0.8299656404274922
+          },
+          "type" : "CompressionMetalEffect"
+        },
+        {
+          "name" : "TimeShuffleMetal",
+          "params" : {
+            "_enabled" : false,
+            "chunkSize" : 51,
+            "depth" : 20,
+            "numRegions" : 8,
+            "shuffleRate" : 0.30000001192092896
+          },
+          "type" : "TimeShuffleMetalEffect"
+        },
+        {
+          "name" : "IFrameCompress",
+          "params" : {
+            "_enabled" : false,
+            "diffThreshold" : 0.776693555485173,
+            "glitch" : 0.6619294819078947,
+            "iframeInterval" : 300,
+            "quality" : 0.6855486739728134,
+            "stickiness" : 0.8149398981339273
+          },
+          "type" : "IFrameCompressEffect"
+        },
+        {
+          "name" : "TextOverlay",
+          "params" : {
+            "_enabled" : true,
+            "antialiasing" : true,
+            "changeIntervalFrames" : 44,
+            "durationMultiplier" : 1.7708232239906834,
+            "fontSize" : 24.091625889794823,
+            "fontSizeVariation" : 0.4020136443661972,
+            "maxTextCount" : 1,
+            "opacity" : 1,
+            "strokeWidth" : 6.4604017811247045,
+            "textColor" : "#FFFFFF",
+            "textDurationFrames" : 105
+          },
+          "type" : "TextOverlayEffect"
+        },
+        {
+          "name" : "LUT",
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 1,
+            "lutFile" : "NW-9"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "name" : "TemporalSmear",
+          "params" : {
+            "intensity" : 0.09327100924331777,
+            "lookback" : 30
+          },
+          "type" : "TemporalSmearEffect"
+        }
+      ],
+      "name" : "YUV Invert + Text"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : -0.6783124366581121,
+            "colorSpace" : "yuv",
+            "contrast" : 0.6501661048792529,
+            "hueShift" : -0.17486496913580252,
+            "invert" : true,
+            "opacity" : 0.834671145636208,
+            "saturation" : 0.10594760693792371
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "GaussianBlurMetal",
+          "params" : {
+            "_enabled" : false,
+            "radius" : 14.545641447368421
+          },
+          "type" : "GaussianBlurMetalEffect"
+        },
+        {
+          "name" : "FrameDifference",
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 2.7613243811931447,
+            "originalBlend" : 0.47031763980263147,
+            "sensitivity" : 0.7944849917763158
+          },
+          "type" : "FrameDifferenceEffect"
+        },
+        {
+          "name" : "TextOverlay",
+          "params" : {
+            "_enabled" : true,
+            "antialiasing" : true,
+            "changeIntervalFrames" : 90,
+            "durationMultiplier" : 1.0218911840110003,
+            "fontSize" : 32,
+            "fontSizeVariation" : 0.30000001192092896,
+            "maxTextCount" : 2,
+            "opacity" : 0.46985035211267606,
+            "strokeWidth" : 2,
+            "textColor" : "#000000"
+          },
+          "type" : "TextOverlayEffect"
+        }
+      ],
+      "name" : "Frame Diff + Text + Sat"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "TextOverlay",
+          "params" : {
+            "_enabled" : false,
+            "changeIntervalFrames" : 55,
+            "durationMultiplier" : 1.188720703125,
+            "fontSize" : 34.75136861313869,
+            "fontSizeVariation" : 0.09584198398356797,
+            "maxTextCount" : 1,
+            "opacity" : 0.800000011920929,
+            "textDurationFrames" : 47
+          },
+          "type" : "TextOverlayEffect"
+        },
+        {
+          "name" : "GhostBlur",
+          "params" : {
+            "_enabled" : true,
+            "blurAmount" : 65.61970715153114,
+            "intensity" : 0.8186587591240876,
+            "trailLength" : 6
+          },
+          "type" : "GhostBlurEffect"
+        }
+      ],
+      "name" : "Text + Ghost"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "brightness" : 0,
+            "colorSpace" : "rgb",
+            "contrast" : 0,
+            "hueShift" : 0,
+            "invert" : false,
+            "opacity" : 1,
+            "saturation" : 0
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "blockMoshProbability" : 0.7862682481751825,
+            "blockSize" : 28,
+            "blockiness" : 1,
+            "burstChance" : 0.446426665525965,
+            "cleanFrameChance" : 0.3462306113138686,
+            "feedbackAmount" : 0.18344548953710682,
+            "intensityVariation" : 0.6438754562043796,
+            "jitterAmount" : 1.1875,
+            "maxBurstDuration" : 431,
+            "maxHistoryOffset" : 253,
+            "minBurstDuration" : 190,
+            "minHistoryOffset" : 41,
+            "motionSensitivity" : 0.8500000238418579,
+            "smearStrength" : 0.09136632019585937,
+            "updateProbability" : 0.6729299726277372
+          },
+          "type" : "DatamoshMetalEffect"
+        }
+      ],
+      "name" : "OpFlow Test"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.4510663898544558,
+            "colorSpace" : "yuv",
+            "contrast" : 1,
+            "hueShift" : -0.36656057098765427,
+            "invert" : true,
+            "opacity" : 1,
+            "saturation" : 0.16417272045424935
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "ColorEchoMetal",
+          "params" : {
+            "_enabled" : true,
+            "channelOffset" : 11,
+            "intensity" : 0.6628208893602853
+          },
+          "type" : "ColorEchoMetalEffect"
+        },
+        {
+          "name" : "TimeShuffleMetal",
+          "params" : {
+            "_enabled" : false,
+            "chunkSize" : 24,
+            "numRegions" : 3,
+            "shuffleRate" : 0.03470394788555017
+          },
+          "type" : "TimeShuffleMetalEffect"
+        },
+        {
+          "name" : "FeedbackLoop",
+          "params" : {
+            "_enabled" : false,
+            "intensity" : 0.2978258634868421,
+            "rotation" : -0.03746916118421051,
+            "scale" : 2.7927580180921057
+          },
+          "type" : "FeedbackLoopEffect"
+        },
+        {
+          "name" : "IFrameCompress",
+          "params" : {
+            "diffThreshold" : 0.16306394430582039,
+            "glitch" : 0,
+            "iframeInterval" : 300,
+            "quality" : 0.1926046416972722,
+            "stickiness" : 0.6787498729208379
+          },
+          "type" : "IFrameCompressEffect"
+        },
+        {
+          "name" : "TextOverlay",
+          "params" : {
+            "_enabled" : true,
+            "antialiasing" : true,
+            "changeIntervalFrames" : 90,
+            "durationMultiplier" : 2,
+            "fontSize" : 17.16711956521739,
+            "fontSizeVariation" : 0.30000001192092896,
+            "maxTextCount" : 1,
+            "opacity" : 0.800000011920929,
+            "textColor" : "#FFFFFF"
+          },
+          "type" : "TextOverlayEffect"
+        }
+      ],
+      "name" : "Dec 28: Set 1"
+    }
+  ],
+  "version" : 1
+}
