@@ -11,6 +11,30 @@ public enum MediaKind: String, Codable {
     case image
 }
 
+// MARK: - Source Media Type
+
+public enum SourceMediaType: String, Codable, CaseIterable {
+    case images
+    case videos
+}
+
+// MARK: - Library Keys
+
+/// Standard keys for media source selection across both Hypnograph and Divine.
+public enum ApplePhotosLibraryKeys {
+    /// Key for "All Items" from Photos library.
+    public static let photosAll = "photos:all"
+
+    /// Key for custom-selected Photos assets.
+    public static let photosCustom = "photos:custom"
+
+    /// Key for all folder libraries combined.
+    public static let foldersAll = "folders:all"
+
+    /// Prefix for all Photos-related keys.
+    public static let photosPrefix = "photos:"
+}
+
 // MARK: - Codable Helpers for Core Types
 
 /// Codable wrapper for CMTime (stores as seconds)
@@ -198,6 +222,36 @@ public struct MediaFile: Identifiable, Codable {
         }
     }
 }
+
+// MARK: - Source Library Info
+
+/// Information about a media source library for menu display.
+/// Used by both Hypnograph and Divine apps.
+public struct SourceLibraryInfo: Identifiable, Sendable {
+    public enum LibraryType: Sendable {
+        case folders
+        case applePhotos
+    }
+
+    public let id: String
+    public let name: String
+    public let type: LibraryType
+    public var assetCount: Int
+
+    public init(id: String, name: String, type: LibraryType, assetCount: Int) {
+        self.id = id
+        self.name = name
+        self.type = type
+        self.assetCount = assetCount
+    }
+
+    /// Display name with asset count, e.g. "Archive (587)"
+    public var displayName: String {
+        "\(name) (\(assetCount))"
+    }
+}
+
+// MARK: - Video Clip
 
 /// A specific slice (start + length) from a MediaFile.
 public struct VideoClip: Codable {

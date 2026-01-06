@@ -14,29 +14,23 @@ struct CoreStoreTests {
 
         let exclusionURL = tempDir.appendingPathComponent("exclusions.json")
         let deletionsURL = tempDir.appendingPathComponent("deletions.json")
-        let favoritesURL = tempDir.appendingPathComponent("favorites.json")
 
         let exclusionStore = ExclusionStore(url: exclusionURL)
         let deleteStore = DeleteStore(url: deletionsURL)
-        let favoriteStore = FavoriteStore(url: favoritesURL)
 
         let fileURL = tempDir.appendingPathComponent("sample.mov")
         let fileSource = MediaFile.Source.url(fileURL)
         let photoSource = MediaFile.Source.photos(localIdentifier: "test-asset")
 
-        favoriteStore.add(fileSource)
         exclusionStore.add(photoSource)
         deleteStore.add(fileSource)
 
-        #expect(favoriteStore.isFavorited(fileSource))
         #expect(exclusionStore.isExcluded(photoSource))
         #expect(deleteStore.isQueued(fileSource))
 
         let exclusionStoreReload = ExclusionStore(url: exclusionURL)
         let deleteStoreReload = DeleteStore(url: deletionsURL)
-        let favoriteStoreReload = FavoriteStore(url: favoritesURL)
 
-        #expect(favoriteStoreReload.isFavorited(fileSource))
         #expect(exclusionStoreReload.isExcluded(photoSource))
         #expect(deleteStoreReload.isQueued(fileSource))
     }

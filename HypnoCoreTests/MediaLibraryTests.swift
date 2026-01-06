@@ -1,5 +1,5 @@
 //
-//  MediaSourcesLibraryTests.swift
+//  MediaLibraryTests.swift
 //  HypnoCoreTests
 //
 //  Created by Loren Johnson on 15.11.25.
@@ -15,9 +15,9 @@ import ImageIO
 import UniformTypeIdentifiers
 import HypnoCore
 
-struct MediaSourcesLibraryTests {
+struct MediaLibraryTests {
 
-    @Test func mediaSourcesLibraryRandomClipForImage() async throws {
+    @Test func mediaLibraryRandomClipForImage() async throws {
         let tempDir = try makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
@@ -25,7 +25,7 @@ struct MediaSourcesLibraryTests {
         let imageURL = tempDir.appendingPathComponent("library-image.png")
         try writeTestImage(to: imageURL, size: CGSize(width: 10, height: 10))
 
-        let library = MediaSourcesLibrary(
+        let library = MediaLibrary(
             sources: [tempDir.path],
             allowedMediaTypes: [.images],
             exclusionStore: stores.exclusion,
@@ -40,7 +40,7 @@ struct MediaSourcesLibraryTests {
         #expect(abs(clip.duration.seconds - 1.25) < 0.01)
     }
 
-    @Test func mediaSourcesLibraryRandomClipForVideo() async throws {
+    @Test func mediaLibraryRandomClipForVideo() async throws {
         let tempDir = try makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
@@ -48,7 +48,7 @@ struct MediaSourcesLibraryTests {
         let videoURL = tempDir.appendingPathComponent("library-video.mov")
         try await writeTestVideo(to: videoURL, size: CGSize(width: 12, height: 12), frameCount: 4, frameRate: 30)
 
-        let library = MediaSourcesLibrary(
+        let library = MediaLibrary(
             sources: [tempDir.path],
             allowedMediaTypes: [.videos],
             exclusionStore: stores.exclusion,
@@ -73,7 +73,7 @@ struct MediaSourcesLibraryTests {
         return dir
     }
 
-    private func makeStores(in directory: URL) throws -> (exclusion: ExclusionStore, delete: DeleteStore, favorite: FavoriteStore) {
+    private func makeStores(in directory: URL) throws -> (exclusion: ExclusionStore, delete: DeleteStore) {
         let fm = FileManager.default
         if !fm.fileExists(atPath: directory.path) {
             try fm.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -81,12 +81,10 @@ struct MediaSourcesLibraryTests {
 
         let exclusionURL = directory.appendingPathComponent("exclusions.json")
         let deleteURL = directory.appendingPathComponent("deletions.json")
-        let favoritesURL = directory.appendingPathComponent("favorites.json")
 
         return (
             exclusion: ExclusionStore(url: exclusionURL),
-            delete: DeleteStore(url: deleteURL),
-            favorite: FavoriteStore(url: favoritesURL)
+            delete: DeleteStore(url: deleteURL)
         )
     }
 

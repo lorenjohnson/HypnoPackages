@@ -17,10 +17,6 @@ public struct HypnoCoreConfig {
         appSupportDirectory.appendingPathComponent("deletions.json")
     }
 
-    public var favoritesURL: URL {
-        appSupportDirectory.appendingPathComponent("favorites.json")
-    }
-
     public var applePhotosHiddenIdentifiersCacheURL: URL {
         appSupportDirectory.appendingPathComponent("apple-photos-hidden-local-identifiers.txt")
     }

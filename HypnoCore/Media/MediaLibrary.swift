@@ -4,16 +4,9 @@ import CoreMedia
 import CoreImage
 import Photos
 
-// MARK: - Source Media Type
+// MARK: - MediaLibrary
 
-public enum SourceMediaType: String, Codable, CaseIterable {
-    case images
-    case videos
-}
-
-// MARK: - MediaSourcesLibrary
-
-public final class MediaSourcesLibrary {
+public final class MediaLibrary {
     // MARK: - Lazy Loading Optimization
     // For large libraries (5000+ files), we use a two-tier approach:
     // 1. Lightweight index: just source + media kind (fast startup, low memory)
@@ -122,7 +115,7 @@ public final class MediaSourcesLibrary {
             loadFromPhotosAssetIds(customPhotosAssetIds)
         }
 
-        print("MediaSourcesLibrary: combined library has \(sourceIndex.count) total sources")
+        print("MediaLibrary: combined library has \(sourceIndex.count) total sources")
     }
 
     /// Load specific Photos assets by their local identifiers
@@ -146,7 +139,7 @@ public final class MediaSourcesLibrary {
         }
 
         self.sourceIndex.append(contentsOf: results)
-        print("MediaSourcesLibrary: indexed \(results.count) assets from custom selection (\(identifiers.count) requested)")
+        print("MediaLibrary: indexed \(results.count) assets from custom selection (\(identifiers.count) requested)")
     }
 
     /// Load all assets from the entire Photos library
@@ -174,7 +167,7 @@ public final class MediaSourcesLibrary {
         }
 
         self.sourceIndex.append(contentsOf: results)
-        print("MediaSourcesLibrary: indexed \(results.count) assets from entire Photos library")
+        print("MediaLibrary: indexed \(results.count) assets from entire Photos library")
     }
 
     // MARK: - File system sources
@@ -242,7 +235,7 @@ public final class MediaSourcesLibrary {
         let originalsURL = photosLibURL.appendingPathComponent("originals", isDirectory: true)
 
         guard fm.fileExists(atPath: originalsURL.path) else {
-            print("MediaSourcesLibrary: Originals folder not found at \(originalsURL.path)")
+            print("MediaLibrary: Originals folder not found at \(originalsURL.path)")
             self.sourceIndex = []
             return
         }
@@ -282,7 +275,7 @@ public final class MediaSourcesLibrary {
         }
 
         self.sourceIndex.append(contentsOf: results)
-        print("MediaSourcesLibrary: indexed \(results.count) media files from Photos originals/")
+        print("MediaLibrary: indexed \(results.count) media files from Photos originals/")
     }
 
     // MARK: - Photos Album sources
@@ -309,7 +302,7 @@ public final class MediaSourcesLibrary {
         }
 
         self.sourceIndex.append(contentsOf: results)
-        print("MediaSourcesLibrary: indexed \(results.count) assets from Photos album '\(album.localizedTitle ?? "unknown")'")
+        print("MediaLibrary: indexed \(results.count) assets from Photos album '\(album.localizedTitle ?? "unknown")'")
     }
 
     // MARK: - Random clip selection (with lazy validation for video + image)
@@ -319,7 +312,7 @@ public final class MediaSourcesLibrary {
         // Consider *all* sources except those already marked bad.
         let candidates = sourceIndex.filter { !badSources.contains(sourceKey($0.source)) }
         guard !candidates.isEmpty else {
-            print("⚠️ MediaSourcesLibrary.randomClip: No candidates (sourceIndex: \(sourceIndex.count), badSources: \(badSources.count))")
+            print("⚠️ MediaLibrary.randomClip: No candidates (sourceIndex: \(sourceIndex.count), badSources: \(badSources.count))")
             return nil
         }
 
