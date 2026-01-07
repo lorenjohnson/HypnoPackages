@@ -211,8 +211,8 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             finalImage = manager.applyNormalization(to: finalImage)
         }
 
-        // Apply global effects from recipe
-        if instruction.enableEffects, let manager = manager {
+        // Apply global effects from recipe (unless suspended, e.g., holding 0 key)
+        if instruction.enableEffects, let manager = manager, !manager.isGlobalEffectSuspended {
             let recipe = manager.recipeProvider?()
             if let recipe = recipe {
                 var context = manager.createContext(

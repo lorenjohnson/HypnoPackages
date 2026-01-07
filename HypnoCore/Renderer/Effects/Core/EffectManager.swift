@@ -100,6 +100,11 @@ public final class EffectManager {
     /// When set, only render this source index (for flash solo preview)
     public var flashSoloIndex: Int?
 
+    // MARK: - Effect Suspend
+
+    /// When true, global effect chain is bypassed (e.g., while holding 0 or 1-9 key in Montage)
+    public var isGlobalEffectSuspended: Bool = false
+
     // MARK: - Blend Normalization
 
     /// Whether blend normalization is enabled (for A/B testing)
