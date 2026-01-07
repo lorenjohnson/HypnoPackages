@@ -8,13 +8,13 @@
 
 import Foundation
 
-/// Polymorphic type for source folder definitions in settings.
+/// Polymorphic type for media source folder definitions in settings.
 ///
 /// Supports three JSON formats:
 /// - Array: `["~/Movies/sources"]` → single "default" library
 /// - Dictionary with arrays: `{"Archive": ["~/path1", "~/path2"]}` → named libraries
 /// - Dictionary with strings: `{"Archive": "~/path"}` → convenience for single paths
-public enum SourcesParam: Codable, Sendable {
+public enum MediaSourcesParam: Codable, Sendable {
     case array([String])
     case dictionary([String: [String]])
 
@@ -40,7 +40,7 @@ public enum SourcesParam: Codable, Sendable {
         }
 
         throw DecodingError.typeMismatch(
-            SourcesParam.self,
+            MediaSourcesParam.self,
             .init(codingPath: decoder.codingPath,
                   debugDescription: "Expected [String], [String: String], or [String: [String]]")
         )

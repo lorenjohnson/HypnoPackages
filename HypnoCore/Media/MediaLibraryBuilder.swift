@@ -24,7 +24,7 @@ public protocol MediaLibrarySettings {
     var defaultSourceLibraryKey: String { get }
 
     /// Which media types to include
-    var sourceMediaTypes: Set<SourceMediaType> { get }
+    var sourceMediaTypes: Set<MediaType> { get }
 }
 
 // MARK: - Library Builder

@@ -23,7 +23,7 @@ public final class MediaLibrary {
     private var badSources = Set<String>()
 
     /// Which media types to include
-    private let allowedMediaTypes: Set<SourceMediaType>
+    private let allowedMediaTypes: Set<MediaType>
     private let exclusionStore: ExclusionStore
     private let deleteStore: DeleteStore
 
@@ -47,7 +47,7 @@ public final class MediaLibrary {
 
     public init(
         sources: [String],
-        allowedMediaTypes: Set<SourceMediaType> = [.images, .videos],
+        allowedMediaTypes: Set<MediaType> = [.images, .videos],
         exclusionStore: ExclusionStore,
         deleteStore: DeleteStore
     ) {
@@ -67,7 +67,7 @@ public final class MediaLibrary {
     /// Initialize from a Photos album
     public init(
         photosAlbum: PHAssetCollection,
-        allowedMediaTypes: Set<SourceMediaType> = [.images, .videos],
+        allowedMediaTypes: Set<MediaType> = [.images, .videos],
         exclusionStore: ExclusionStore,
         deleteStore: DeleteStore
     ) {
@@ -86,7 +86,7 @@ public final class MediaLibrary {
         photosAlbums: [PHAssetCollection] = [],
         includeAllPhotos: Bool = false,
         customPhotosAssetIds: [String] = [],
-        allowedMediaTypes: Set<SourceMediaType> = [.images, .videos],
+        allowedMediaTypes: Set<MediaType> = [.images, .videos],
         exclusionStore: ExclusionStore,
         deleteStore: DeleteStore
     ) {

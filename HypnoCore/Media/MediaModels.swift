@@ -11,9 +11,9 @@ public enum MediaKind: String, Codable {
     case image
 }
 
-// MARK: - Source Media Type
+// MARK: - Media Type
 
-public enum SourceMediaType: String, Codable, CaseIterable {
+public enum MediaType: String, Codable, CaseIterable {
     case images
     case videos
 }
