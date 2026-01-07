@@ -59,7 +59,7 @@ public enum EffectConfigLoader {
         if FileManager.default.fileExists(atPath: userConfigURL.path) {
             do {
                 let config = try loadConfigFromURL(userConfigURL)
-                return LoadResult(chains: config.effects, source: .user, error: nil)
+                return LoadResult(chains: config.effectChains, source: .user, error: nil)
             } catch {
                 print("⚠️ EffectConfigLoader: Failed to load user config: \(error)")
                 // Fall through to bundled
@@ -71,7 +71,7 @@ public enum EffectConfigLoader {
         if let sourceURL = sourceConfigURL {
             do {
                 let config = try loadConfigFromURL(sourceURL)
-                return LoadResult(chains: config.effects, source: .bundled, error: nil)
+                return LoadResult(chains: config.effectChains, source: .bundled, error: nil)
             } catch {
                 print("⚠️ EffectConfigLoader: Failed to load source config: \(error)")
                 // Fall through to bundled
@@ -83,7 +83,7 @@ public enum EffectConfigLoader {
         if let bundledURL = bundledConfigURL {
             do {
                 let config = try loadConfigFromURL(bundledURL)
-                return LoadResult(chains: config.effects, source: .bundled, error: nil)
+                return LoadResult(chains: config.effectChains, source: .bundled, error: nil)
             } catch {
                 print("⚠️ EffectConfigLoader: Failed to load bundled config: \(error)")
                 // Fall through to hardcoded
@@ -98,7 +98,7 @@ public enum EffectConfigLoader {
     /// Load effect chains from a specific URL
     public static func loadFromURL(_ url: URL) throws -> [EffectChain] {
         let config = try loadConfigFromURL(url)
-        return config.effects
+        return config.effectChains
     }
 
     /// Load config from a specific URL

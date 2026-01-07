@@ -19,17 +19,17 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
 
     /// The effect chains in this session
     public var chains: [EffectChain] {
-        get { value.effects }
+        get { value.effectChains }
     }
 
     /// Publisher for chains (maps from $value for reactive UI binding)
     public var chainsPublisher: some Publisher<[EffectChain], Never> {
-        $value.map { $0.effects }
+        $value.map { $0.effectChains }
     }
 
     /// Thread-safe snapshot of chains for non-main-actor contexts
     public nonisolated var chainsSnapshot: [EffectChain] {
-        snapshot.effects
+        snapshot.effectChains
     }
 
     // MARK: - Callbacks
@@ -50,7 +50,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
     public init(fileURL: URL) {
         let defaultConfig = EffectLibraryConfig(
             version: 1,
-            effects: EffectsSession.loadBundledDefaults()
+            effectChains: EffectsSession.loadBundledDefaults()
         )
         super.init(fileURL: fileURL, default: defaultConfig)
     }
@@ -67,9 +67,9 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
     /// Update chains and trigger instantiation callback
     private func updateChains(_ transform: (inout [EffectChain]) -> Void, notifyIndex: Int? = nil) {
         update { config in
-            var effects = config.effects
-            transform(&effects)
-            config = EffectLibraryConfig(version: config.version, effects: effects)
+            var chains = config.effectChains
+            transform(&chains)
+            config = EffectLibraryConfig(version: config.version, effectChains: chains)
         }
         if let index = notifyIndex {
             scheduleInstantiation(chainIndex: index)
@@ -215,7 +215,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
 
     /// Replace all chains (used when loading from external source)
     public func replaceChains(_ newChains: [EffectChain]) {
-        replace(EffectLibraryConfig(version: 1, effects: newChains))
+        replace(EffectLibraryConfig(version: 1, effectChains: newChains))
     }
 
     /// Merge chains from another source (e.g., a loaded recipe)
@@ -271,8 +271,8 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         do {
             let data = try Data(contentsOf: url)
             let config = try JSONDecoder().decode(EffectLibraryConfig.self, from: data)
-            print("✅ EffectsSession: Loaded \(config.effects.count) default chains from bundle")
-            return config.effects
+            print("✅ EffectsSession: Loaded \(config.effectChains.count) default chains from bundle")
+            return config.effectChains
         } catch {
             print("⚠️ EffectsSession: Failed to decode bundled defaults: \(error)")
             return minimalFallbackDefaults
