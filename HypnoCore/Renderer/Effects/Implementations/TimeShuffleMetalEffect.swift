@@ -24,11 +24,11 @@ struct TimeShuffleParamsGPU {
 }
 
 /// Time shuffle - regions show different chunks of frame history
-final class TimeShuffleMetalEffect: Effect {
+final class TimeShuffleMetalEffect: MetalEffect {
 
     // MARK: - Parameter Specs
 
-    static var parameterSpecs: [String: ParameterSpec] {
+    override class var parameterSpecs: [String: ParameterSpec] {
         [
             "numRegions": .int(default: 4, range: 2...8),
             "depth": .int(default: 60, range: 20...200),       // How far back in time to sample
@@ -38,21 +38,13 @@ final class TimeShuffleMetalEffect: Effect {
 
     // MARK: - Properties
 
-    var name: String { "Time Shuffle" }
-    var requiredLookback: Int { 300 }  // Need deep history
+    override var name: String { "Time Shuffle" }
+    override var requiredLookback: Int { 300 }  // Need deep history
+    override var shaderFunctionName: String { "timeShuffleKernel" }
 
     var numRegions: Int      // How many regions to divide into
     var depth: Int           // How far back in time to sample (frames)
     var shuffleRate: Float   // Probability of reshuffling per frame
-
-    // Metal state
-    private let device: MTLDevice?
-    private let commandQueue: MTLCommandQueue?
-    private var pipelineState: MTLComputePipelineState?
-    private var textureCache: CVMetalTextureCache?
-
-    // Output buffer
-    private var outputBuffer: CVPixelBuffer?
 
     // Shuffle state
     private var currentSeed: UInt32 = 0
@@ -64,17 +56,8 @@ final class TimeShuffleMetalEffect: Effect {
         self.numRegions = max(2, min(8, numRegions))
         self.depth = max(20, min(200, depth))
         self.shuffleRate = max(0, min(0.3, shuffleRate))
-
-        self.device = MTLCreateSystemDefaultDevice()
-        self.commandQueue = device?.makeCommandQueue()
-
-        if let device = device {
-            var cache: CVMetalTextureCache?
-            CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &cache)
-            self.textureCache = cache
-        }
-
-        loadShader()
+        super.init()
+        setupMetal()
     }
 
     required convenience init?(params: [String: AnyCodableValue]?) {
@@ -82,51 +65,9 @@ final class TimeShuffleMetalEffect: Effect {
         self.init(numRegions: p.int("numRegions"), depth: p.int("depth"), shuffleRate: p.float("shuffleRate"))
     }
 
-    private func loadShader() {
-        guard let device = device else { return }
-
-        do {
-            let library = try device.makeDefaultLibrary(bundle: HypnoEffectsBundle.bundle)
-            guard let function = library.makeFunction(name: "timeShuffleKernel") else {
-                print("⚠️ TimeShuffleMetalEffect: Kernel not found")
-                return
-            }
-            pipelineState = try device.makeComputePipelineState(function: function)
-        } catch {
-            print("⚠️ TimeShuffleMetalEffect: Pipeline error: \(error)")
-        }
-    }
-
-    private func ensureOutputBuffer(width: Int, height: Int) {
-        if let buf = outputBuffer,
-           CVPixelBufferGetWidth(buf) == width,
-           CVPixelBufferGetHeight(buf) == height {
-            return
-        }
-
-        let attrs: [String: Any] = [
-            kCVPixelBufferMetalCompatibilityKey as String: true,
-            kCVPixelBufferIOSurfacePropertiesKey as String: [:]
-        ]
-        CVPixelBufferCreate(kCFAllocatorDefault, width, height,
-                           kCVPixelFormatType_32BGRA, attrs as CFDictionary, &outputBuffer)
-    }
-
-    private func textureFromBuffer(_ buffer: CVPixelBuffer) -> MTLTexture? {
-        guard let cache = textureCache else { return nil }
-        let w = CVPixelBufferGetWidth(buffer)
-        let h = CVPixelBufferGetHeight(buffer)
-        var cvTex: CVMetalTexture?
-        let status = CVMetalTextureCacheCreateTextureFromImage(
-            kCFAllocatorDefault, cache, buffer, nil, .bgra8Unorm, w, h, 0, &cvTex
-        )
-        guard status == kCVReturnSuccess, let tex = cvTex else { return nil }
-        return CVMetalTextureGetTexture(tex)
-    }
-
     // MARK: - Effect Protocol
 
-    func apply(to image: CIImage, context: inout RenderContext) -> CIImage {
+    override func apply(to image: CIImage, context: inout RenderContext) -> CIImage {
         frameCounter += 1
 
         // Randomly reshuffle based on shuffleRate - this changes the pattern
@@ -138,12 +79,7 @@ final class TimeShuffleMetalEffect: Effect {
         let frameCount = context.frameBuffer.frameCount
         let minFrames = max(8, depth / 4)  // Need at least some history
         guard frameCount >= minFrames else { return image }
-
-        guard let _ = device,
-              let commandQueue = commandQueue,
-              let pipeline = pipelineState else {
-            return image
-        }
+        guard isMetalReady else { return image }
 
         let extent = image.extent
         let width = Int(extent.width)
@@ -151,8 +87,6 @@ final class TimeShuffleMetalEffect: Effect {
         guard width > 0, height > 0 else { return image }
 
         // Use seed to generate random but stable offsets within depth range
-        // This creates temporal variety - each slot shows a random point in history
-        // Offsets are regenerated each time seed changes (on shuffle)
         var rng = currentSeed
         func nextRandom() -> Int {
             rng = rng &* 1103515245 &+ 12345
@@ -184,9 +118,8 @@ final class TimeShuffleMetalEffect: Effect {
             }
         }
 
-        ensureOutputBuffer(width: width, height: height)
-        guard let outBuf = outputBuffer,
-              let outputTexture = textureFromBuffer(outBuf) else {
+        ensureBuffers(width: width, height: height, names: ["output"])
+        guard let outputTexture = texture(from: buffer(named: "output")!) else {
             return image
         }
 
@@ -203,43 +136,22 @@ final class TimeShuffleMetalEffect: Effect {
             orientation: orientation
         )
 
-        guard let commandBuffer = commandQueue.makeCommandBuffer(),
-              let encoder = commandBuffer.makeComputeCommandEncoder() else {
-            return image
+        return runShader(outputBufferName: "output", fallback: image) { encoder in
+            for (i, tex) in historyTextures.enumerated() {
+                encoder.setTexture(tex, index: i)
+            }
+            encoder.setTexture(outputTexture, index: 8)
+            encoder.setBytes(&gpuParams, length: MemoryLayout<TimeShuffleParamsGPU>.stride, index: 0)
         }
-
-        encoder.setComputePipelineState(pipeline)
-        for (i, tex) in historyTextures.enumerated() {
-            encoder.setTexture(tex, index: i)
-        }
-        encoder.setTexture(outputTexture, index: 8)
-        encoder.setBytes(&gpuParams, length: MemoryLayout<TimeShuffleParamsGPU>.stride, index: 0)
-
-        let threadWidth = pipeline.threadExecutionWidth
-        let threadHeight = pipeline.maxTotalThreadsPerThreadgroup / threadWidth
-        let threadsPerGroup = MTLSize(width: threadWidth, height: threadHeight, depth: 1)
-        let threadgroups = MTLSize(
-            width: (width + threadWidth - 1) / threadWidth,
-            height: (height + threadHeight - 1) / threadHeight,
-            depth: 1
-        )
-
-        encoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadsPerGroup)
-        encoder.endEncoding()
-        commandBuffer.commit()
-        commandBuffer.waitUntilCompleted()
-
-        return CIImage(cvPixelBuffer: outBuf)
     }
 
-    func reset() {
-        outputBuffer = nil
+    override func reset() {
+        super.reset()
         currentSeed = 0
         frameCounter = 0
     }
 
-    func copy() -> Effect {
+    override func copy() -> Effect {
         TimeShuffleMetalEffect(numRegions: numRegions, depth: depth, shuffleRate: shuffleRate)
     }
 }
-
