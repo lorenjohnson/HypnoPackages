@@ -17,6 +17,9 @@ Podfile.lock
 .build/
 .swiftpm/
 
+# Claude Code
+.claude/settings.local.json
+
 # Misc
 .DS_Store
 *.swp
