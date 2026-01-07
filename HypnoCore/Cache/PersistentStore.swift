@@ -109,10 +109,15 @@ open class PersistentStore<T: Codable>: ObservableObject {
 
     /// Save immediately (bypasses debounce)
     /// If `to` is provided, exports to that URL without affecting store state
-    public func save(to url: URL? = nil) {
+    /// If `synchronous` is true, blocks until save completes (use for app termination)
+    public func save(to url: URL? = nil, synchronous: Bool = false) {
         saveTimer?.invalidate()
         saveTimer = nil
-        saveToDisk(to: url)
+        if synchronous {
+            saveToDiskSync(to: url)
+        } else {
+            saveToDisk(to: url)
+        }
     }
 
     /// Whether there are unsaved changes
@@ -162,6 +167,27 @@ open class PersistentStore<T: Codable>: ObservableObject {
             } catch {
                 print("⚠️ PersistentStore: Failed to \(isExport ? "export" : "save") to \(targetURL.lastPathComponent): \(error)")
             }
+        }
+    }
+
+    /// Synchronous save - blocks until complete (use for app termination)
+    private func saveToDiskSync(to exportURL: URL? = nil) {
+        let valueToSave = value
+        let targetURL = exportURL ?? fileURL
+        let isExport = exportURL != nil
+
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            let data = try encoder.encode(valueToSave)
+            try data.write(to: targetURL, options: .atomic)
+            print("✅ PersistentStore: \(isExport ? "Exported" : "Saved") (sync) to \(targetURL.lastPathComponent)")
+
+            if !isExport {
+                updateSavedHash()
+            }
+        } catch {
+            print("⚠️ PersistentStore: Failed to \(isExport ? "export" : "save") (sync) to \(targetURL.lastPathComponent): \(error)")
         }
     }
 
