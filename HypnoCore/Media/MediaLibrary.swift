@@ -13,7 +13,7 @@ public final class MediaLibrary {
     // 2. Lazy metadata loading: only load AVAsset/duration when file is selected
 
     private struct SourceEntry {
-        let source: MediaFile.Source
+        let source: MediaSource
         let mediaKind: MediaKind
     }
 
@@ -130,9 +130,9 @@ public final class MediaLibrary {
 
             switch asset.mediaType {
             case .video where allowVideos:
-                results.append(SourceEntry(source: .photos(localIdentifier: asset.localIdentifier), mediaKind: .video))
+                results.append(SourceEntry(source: .external(identifier: asset.localIdentifier), mediaKind: .video))
             case .image where allowImages:
-                results.append(SourceEntry(source: .photos(localIdentifier: asset.localIdentifier), mediaKind: .image))
+                results.append(SourceEntry(source: .external(identifier: asset.localIdentifier), mediaKind: .image))
             default:
                 break
             }
@@ -158,9 +158,9 @@ public final class MediaLibrary {
 
             switch asset.mediaType {
             case .video where allowVideos:
-                results.append(SourceEntry(source: .photos(localIdentifier: asset.localIdentifier), mediaKind: .video))
+                results.append(SourceEntry(source: .external(identifier: asset.localIdentifier), mediaKind: .video))
             case .image where allowImages:
-                results.append(SourceEntry(source: .photos(localIdentifier: asset.localIdentifier), mediaKind: .image))
+                results.append(SourceEntry(source: .external(identifier: asset.localIdentifier), mediaKind: .image))
             default:
                 break
             }
@@ -293,9 +293,9 @@ public final class MediaLibrary {
 
             switch asset.mediaType {
             case .video where allowVideos:
-                results.append(SourceEntry(source: .photos(localIdentifier: asset.localIdentifier), mediaKind: .video))
+                results.append(SourceEntry(source: .external(identifier: asset.localIdentifier), mediaKind: .video))
             case .image where allowImages:
-                results.append(SourceEntry(source: .photos(localIdentifier: asset.localIdentifier), mediaKind: .image))
+                results.append(SourceEntry(source: .external(identifier: asset.localIdentifier), mediaKind: .image))
             default:
                 break
             }
@@ -370,9 +370,9 @@ public final class MediaLibrary {
                 duration: CMTime(seconds: length, preferredTimescale: 600)
             )
 
-        case .photos(let localIdentifier):
-            // Fetch PHAsset to get duration
-            guard let phAsset = ApplePhotos.shared.fetchAsset(localIdentifier: localIdentifier) else {
+        case .external(let identifier):
+            // Fetch PHAsset to get duration (app-level - uses ApplePhotos directly)
+            guard let phAsset = ApplePhotos.shared.fetchAsset(localIdentifier: identifier) else {
                 return nil
             }
 
@@ -414,9 +414,9 @@ public final class MediaLibrary {
                 duration: CMTime(seconds: length, preferredTimescale: 600)
             )
 
-        case .photos(let localIdentifier):
-            // Verify the asset exists
-            guard ApplePhotos.shared.fetchAsset(localIdentifier: localIdentifier) != nil else {
+        case .external(let identifier):
+            // Verify the asset exists (app-level - uses ApplePhotos directly)
+            guard ApplePhotos.shared.fetchAsset(localIdentifier: identifier) != nil else {
                 return nil
             }
 
@@ -434,10 +434,10 @@ public final class MediaLibrary {
     }
 
     /// Stable key for tracking bad sources
-    private func sourceKey(_ source: MediaFile.Source) -> String {
+    private func sourceKey(_ source: MediaSource) -> String {
         switch source {
         case .url(let url): return url.path
-        case .photos(let id): return id
+        case .external(let id): return id
         }
     }
 

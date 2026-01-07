@@ -45,13 +45,10 @@ final class RenderQueue {
                 print("Render job finished: \(url.path)")
                 onStatusMessage?("Saved: \(url.lastPathComponent)")
 
-                // Also save to Apple Photos if write access is available
-                if ApplePhotos.shared.status.canWrite {
+                // Notify via hook for external destinations (e.g., Apple Photos)
+                if let hook = HypnoCoreHooks.shared.onVideoExportCompleted {
                     Task {
-                        let success = await ApplePhotos.shared.saveVideo(at: url)
-                        if success {
-                            print("✅ RenderQueue: Render added to Apple Photos")
-                        }
+                        await hook(url)
                     }
                 }
 

@@ -19,19 +19,19 @@ struct CoreStoreTests {
         let deleteStore = DeleteStore(url: deletionsURL)
 
         let fileURL = tempDir.appendingPathComponent("sample.mov")
-        let fileSource = MediaFile.Source.url(fileURL)
-        let photoSource = MediaFile.Source.photos(localIdentifier: "test-asset")
+        let fileSource = MediaSource.url(fileURL)
+        let externalSource = MediaSource.external(identifier: "test-asset")
 
-        exclusionStore.add(photoSource)
+        exclusionStore.add(externalSource)
         deleteStore.add(fileSource)
 
-        #expect(exclusionStore.isExcluded(photoSource))
+        #expect(exclusionStore.isExcluded(externalSource))
         #expect(deleteStore.isQueued(fileSource))
 
         let exclusionStoreReload = ExclusionStore(url: exclusionURL)
         let deleteStoreReload = DeleteStore(url: deletionsURL)
 
-        #expect(exclusionStoreReload.isExcluded(photoSource))
+        #expect(exclusionStoreReload.isExcluded(externalSource))
         #expect(deleteStoreReload.isQueued(fileSource))
     }
 

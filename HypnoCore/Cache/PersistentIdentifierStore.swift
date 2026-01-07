@@ -9,7 +9,7 @@
 import Foundation
 
 /// Thread-safe persistent store for media source identifiers.
-/// Stores identifiers derived from `MediaFile.Source` as strings.
+/// Stores identifiers derived from `MediaSource` as strings.
 public class PersistentIdentifierStore {
     private var identifiers: Set<String> = []
     private let queue: DispatchQueue
@@ -25,14 +25,14 @@ public class PersistentIdentifierStore {
     // MARK: - Public API
 
     /// Check if a source is in this store
-    public func contains(_ source: MediaFile.Source) -> Bool {
+    public func contains(_ source: MediaSource) -> Bool {
         queue.sync {
             identifiers.contains(identifier(for: source))
         }
     }
 
     /// Add a source to the store
-    public func add(_ source: MediaFile.Source) {
+    public func add(_ source: MediaSource) {
         queue.sync {
             identifiers.insert(identifier(for: source))
             save()
@@ -40,7 +40,7 @@ public class PersistentIdentifierStore {
     }
 
     /// Remove a source from the store
-    public func remove(_ source: MediaFile.Source) {
+    public func remove(_ source: MediaSource) {
         queue.sync {
             identifiers.remove(identifier(for: source))
             save()
@@ -49,7 +49,7 @@ public class PersistentIdentifierStore {
 
     /// Toggle a source's presence in the store, returns new state (true = now in store)
     @discardableResult
-    public func toggle(_ source: MediaFile.Source) -> Bool {
+    public func toggle(_ source: MediaSource) -> Bool {
         queue.sync {
             let id = identifier(for: source)
             if identifiers.contains(id) {
@@ -85,12 +85,12 @@ public class PersistentIdentifierStore {
     // MARK: - Internal
 
     /// Extract a stable identifier from the source for persistence
-    func identifier(for source: MediaFile.Source) -> String {
+    func identifier(for source: MediaSource) -> String {
         switch source {
         case .url(let url):
             return "file:" + url.standardizedFileURL.path
-        case .photos(let id):
-            return "photos:" + id
+        case .external(let id):
+            return "external:" + id
         }
     }
 
@@ -127,7 +127,7 @@ public final class ExclusionStore: PersistentIdentifierStore {
     }
 
     /// Check if a source is excluded (convenience alias)
-    public func isExcluded(_ source: MediaFile.Source) -> Bool {
+    public func isExcluded(_ source: MediaSource) -> Bool {
         contains(source)
     }
 }
@@ -140,7 +140,7 @@ public final class DeleteStore: PersistentIdentifierStore {
     }
 
     /// Check if a source is queued for deletion (convenience alias)
-    public func isQueued(_ source: MediaFile.Source) -> Bool {
+    public func isQueued(_ source: MediaSource) -> Bool {
         contains(source)
     }
 

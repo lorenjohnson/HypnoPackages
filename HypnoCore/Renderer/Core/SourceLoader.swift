@@ -83,19 +83,18 @@ final class SourceLoader {
     private func loadVideoSource(source: HypnogramSource) async -> Result<LoadedSource, RenderError> {
         let file = source.clip.file
 
-        // Get AVAsset - either from URL or Photos
+        // Get AVAsset - either from URL or external source via hooks
         let asset: AVAsset
         switch file.source {
         case .url(let url):
             asset = AVURLAsset(url: url)
-        case .photos(let localIdentifier):
-            guard let phAsset = ApplePhotos.shared.fetchAsset(localIdentifier: localIdentifier),
-                  let avAsset = await ApplePhotos.shared.requestAVAsset(for: phAsset) else {
+        case .external(let identifier):
+            guard let avAsset = await HypnoCoreHooks.shared.resolveExternalVideo?(identifier) else {
                 return .failure(.sourceLoadFailed(
                     index: -1,
                     name: file.displayName,
                     underlying: NSError(domain: "SourceLoader", code: 2,
-                        userInfo: [NSLocalizedDescriptionKey: "Failed to load video from Photos"])
+                        userInfo: [NSLocalizedDescriptionKey: "Failed to load video from external source (hook not configured or returned nil)"])
                 ))
             }
             asset = avAsset
@@ -138,20 +137,13 @@ final class SourceLoader {
     private func loadImageSource(source: HypnogramSource) async -> Result<LoadedSource, RenderError> {
         let file = source.clip.file
 
-        // Get CIImage - either from URL or Photos
+        // Get CIImage - either from URL or external source via hooks
         let ciImage: CIImage?
         switch file.source {
         case .url(let url):
             ciImage = StillImageCache.ciImage(for: url)
-        case .photos(let localIdentifier):
-            guard let phAsset = ApplePhotos.shared.fetchAsset(localIdentifier: localIdentifier) else {
-                return .failure(.imageLoadFailed(
-                    name: file.displayName,
-                    underlying: NSError(domain: "SourceLoader", code: 3,
-                        userInfo: [NSLocalizedDescriptionKey: "Photos asset not found"])
-                ))
-            }
-            ciImage = await ApplePhotos.shared.requestCIImage(for: phAsset)
+        case .external(let identifier):
+            ciImage = await HypnoCoreHooks.shared.resolveExternalImage?(identifier)
         }
 
         guard let ciImage = ciImage else {
@@ -164,12 +156,12 @@ final class SourceLoader {
 
         let extent = ciImage.extent
 
-        // For Photos images, we need a dummy asset - use an empty composition
+        // For external images, we need a dummy asset - use an empty composition
         let dummyAsset: AVAsset
         switch file.source {
         case .url(let url):
             dummyAsset = AVURLAsset(url: url)
-        case .photos:
+        case .external:
             dummyAsset = AVMutableComposition()
         }
 

@@ -73,49 +73,60 @@ public struct CodableCGAffineTransform: Codable {
     }
 }
 
-/// A single media file that we can select clips from.
-/// Abstracts over local files and Apple Photos sources.
-public struct MediaFile: Identifiable, Codable {
+// MARK: - Media Source
 
-    /// Where the media comes from
-    public enum Source: Codable {
-        case url(URL)
-        case photos(localIdentifier: String)
+/// Where media comes from - either a local URL or an external source (e.g., Apple Photos).
+/// External sources use an opaque identifier that apps resolve via HypnoCoreHooks.
+public enum MediaSource: Codable {
+    case url(URL)
+    case external(identifier: String)
 
-        private enum CodingKeys: String, CodingKey {
-            case type, path, localIdentifier
-        }
+    private enum CodingKeys: String, CodingKey {
+        case type, path, identifier
+    }
 
-        public init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            let type = try container.decode(String.self, forKey: .type)
-            switch type {
-            case "url":
-                let path = try container.decode(String.self, forKey: .path)
-                self = .url(URL(fileURLWithPath: path))
-            case "photos":
-                let id = try container.decode(String.self, forKey: .localIdentifier)
-                self = .photos(localIdentifier: id)
-            default:
-                throw DecodingError.dataCorruptedError(forKey: .type, in: container, debugDescription: "Unknown source type: \(type)")
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try container.decode(String.self, forKey: .type)
+        switch type {
+        case "url":
+            let path = try container.decode(String.self, forKey: .path)
+            self = .url(URL(fileURLWithPath: path))
+        case "external", "photos":  // "photos" for backwards compatibility
+            let id: String
+            if let identifier = try container.decodeIfPresent(String.self, forKey: .identifier) {
+                id = identifier
+            } else {
+                // Legacy format used "localIdentifier" key
+                id = try container.decode(String.self, forKey: CodingKeys(stringValue: "localIdentifier")!)
             }
-        }
-
-        public func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            switch self {
-            case .url(let url):
-                try container.encode("url", forKey: .type)
-                try container.encode(url.path, forKey: .path)
-            case .photos(let id):
-                try container.encode("photos", forKey: .type)
-                try container.encode(id, forKey: .localIdentifier)
-            }
+            self = .external(identifier: id)
+        default:
+            throw DecodingError.dataCorruptedError(forKey: .type, in: container, debugDescription: "Unknown source type: \(type)")
         }
     }
 
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .url(let url):
+            try container.encode("url", forKey: .type)
+            try container.encode(url.path, forKey: .path)
+        case .external(let id):
+            try container.encode("external", forKey: .type)
+            try container.encode(id, forKey: .identifier)
+        }
+    }
+}
+
+// MARK: - Media File
+
+/// A single media file that we can select clips from.
+/// Abstracts over local files and external sources (e.g., Apple Photos).
+public struct MediaFile: Identifiable, Codable {
+
     public let id: UUID
-    public let source: Source
+    public let source: MediaSource
     public let mediaKind: MediaKind
     public let duration: CMTime
 
@@ -126,7 +137,7 @@ public struct MediaFile: Identifiable, Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
-        source = try container.decode(Source.self, forKey: .source)
+        source = try container.decode(MediaSource.self, forKey: .source)
         mediaKind = try container.decode(MediaKind.self, forKey: .mediaKind)
         let codableDuration = try container.decode(CodableCMTime.self, forKey: .duration)
         duration = codableDuration.cmTime
@@ -144,7 +155,7 @@ public struct MediaFile: Identifiable, Codable {
 
     public init(
         id: UUID = UUID(),
-        source: Source,
+        source: MediaSource,
         mediaKind: MediaKind = .video,
         duration: CMTime
     ) {
@@ -170,51 +181,45 @@ public struct MediaFile: Identifiable, Codable {
     public var displayName: String {
         switch source {
         case .url(let url): return url.lastPathComponent
-        case .photos(let id): return "Photos:\(id.prefix(8))"
+        case .external(let id): return "External:\(id.prefix(8))"
         }
     }
 
     // MARK: - Asset Loading
 
     /// Get AVAsset for video sources (async - works for all source types)
+    /// External sources are resolved via HypnoCoreHooks.resolveExternalVideo
     public func loadAsset() async -> AVAsset? {
         switch source {
         case .url(let url):
             return AVURLAsset(url: url)
-        case .photos(let localIdentifier):
-            guard let phAsset = ApplePhotos.shared.fetchAsset(localIdentifier: localIdentifier) else {
-                return nil
-            }
-            return await ApplePhotos.shared.requestAVAsset(for: phAsset)
+        case .external(let identifier):
+            return await HypnoCoreHooks.shared.resolveExternalVideo?(identifier)
         }
     }
 
     /// Load CIImage for still image sources
+    /// External sources are resolved via HypnoCoreHooks.resolveExternalImage
     public func loadImage() async -> CIImage? {
         guard mediaKind == .image else { return nil }
         switch source {
         case .url(let url):
             return StillImageCache.ciImage(for: url)
-        case .photos(let localIdentifier):
-            guard let phAsset = ApplePhotos.shared.fetchAsset(localIdentifier: localIdentifier) else {
-                return nil
-            }
-            return await ApplePhotos.shared.requestCIImage(for: phAsset)
+        case .external(let identifier):
+            return await HypnoCoreHooks.shared.resolveExternalImage?(identifier)
         }
     }
 
     /// Load CGImage for still image sources (used by Divine for thumbnails)
+    /// External sources are resolved via HypnoCoreHooks.resolveExternalImage
     public func loadCGImage() async -> CGImage? {
         guard mediaKind == .image else { return nil }
         switch source {
         case .url(let url):
             return StillImageCache.cgImage(for: url)
-        case .photos(let localIdentifier):
-            guard let phAsset = ApplePhotos.shared.fetchAsset(localIdentifier: localIdentifier) else {
-                return nil
-            }
-            // Get CIImage and convert to CGImage
-            guard let ciImage = await ApplePhotos.shared.requestCIImage(for: phAsset) else {
+        case .external(let identifier):
+            // Get CIImage via hook and convert to CGImage
+            guard let ciImage = await HypnoCoreHooks.shared.resolveExternalImage?(identifier) else {
                 return nil
             }
             let context = CIContext()
