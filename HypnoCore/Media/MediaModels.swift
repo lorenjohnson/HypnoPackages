@@ -77,9 +77,19 @@ public struct CodableCGAffineTransform: Codable {
 
 /// Where media comes from - either a local URL or an external source (e.g., Apple Photos).
 /// External sources use an opaque identifier that apps resolve via HypnoCoreHooks.
-public enum MediaSource: Codable {
+public enum MediaSource: Codable, Hashable {
     case url(URL)
     case external(identifier: String)
+
+    /// A stable identifier for this source (URL path or external identifier)
+    public var identifier: String {
+        switch self {
+        case .url(let url):
+            return url.path
+        case .external(let id):
+            return id
+        }
+    }
 
     private enum CodingKeys: String, CodingKey {
         case type, path, identifier

@@ -108,14 +108,20 @@ public enum MediaLibraryBuilder {
         } else {
             // Adding - handle "All" keys that should deselect others of same type
             if toggledKey == ApplePhotosLibraryKeys.photosAll {
-                // Deselect all other Photos albums
+                // Deselect all other Photos albums and custom selection
                 keys = keys.filter { !$0.hasPrefix(ApplePhotosLibraryKeys.photosPrefix) }
+                keys.remove(ApplePhotosLibraryKeys.photosCustom)
+            } else if toggledKey == ApplePhotosLibraryKeys.photosCustom {
+                // Custom selection is exclusive - deselect all other Photos sources
+                keys = keys.filter { !$0.hasPrefix(ApplePhotosLibraryKeys.photosPrefix) }
+                keys.remove(ApplePhotosLibraryKeys.photosAll)
             } else if toggledKey == ApplePhotosLibraryKeys.foldersAll {
                 // Deselect all individual folder libraries
                 keys = keys.subtracting(folderLibraryKeys)
             } else if toggledKey.hasPrefix(ApplePhotosLibraryKeys.photosPrefix) {
-                // Selecting a specific album deselects "All Items"
+                // Selecting a specific album deselects "All Items" and custom selection
                 keys.remove(ApplePhotosLibraryKeys.photosAll)
+                keys.remove(ApplePhotosLibraryKeys.photosCustom)
             } else if folderLibraryKeys.contains(toggledKey) {
                 // Selecting a specific folder deselects "All Folders"
                 keys.remove(ApplePhotosLibraryKeys.foldersAll)
