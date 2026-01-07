@@ -163,8 +163,13 @@ public struct EffectDefinition: Codable, Equatable {
 
 /// Root configuration for the effects library JSON file
 public struct EffectLibraryConfig: Codable {
-    public let version: Int
-    public let effects: [EffectChain]
+    public var version: Int
+    public var effects: [EffectChain]
+
+    public init(version: Int, effects: [EffectChain]) {
+        self.version = version
+        self.effects = effects
+    }
 }
 
 // MARK: - Deprecated Aliases (for transition)
