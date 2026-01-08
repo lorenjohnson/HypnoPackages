@@ -1,11 +1,12 @@
 //
-//  NSColor+Hex.swift
+//  AppKit.swift
 //  HypnoCore
 //
-//  Extension for converting NSColor to/from hex strings.
-//
+//  Extensions for AppKit types.
 
 import AppKit
+
+// MARK: - NSColor
 
 public extension NSColor {
     /// Create an NSColor from a hex string (e.g., "#FFFFFF" or "FF0000")
