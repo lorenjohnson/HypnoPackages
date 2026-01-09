@@ -11,10 +11,10 @@ import CoreGraphics
 
 /// Calculate render size for an aspect ratio to fit within a container.
 /// Returns the largest size with the given aspect ratio that fits in the container.
-/// For fillScreen, returns the container size directly.
+/// For fillWindow, returns the container size directly.
 public func renderSize(aspectRatio: AspectRatio, fitting containerSize: CGSize) -> CGSize {
-    // Fill screen - use container size directly (no letterboxing)
-    if aspectRatio.isFillScreen {
+    // Fill window - use container size directly (no letterboxing)
+    if aspectRatio.isFillWindow {
         return containerSize
     }
 
@@ -35,12 +35,12 @@ public func renderSize(aspectRatio: AspectRatio, fitting containerSize: CGSize) 
 
 /// Calculate render size for an aspect ratio constrained by maxDimension.
 /// maxDimension constrains height for landscape, width for portrait.
-/// For fillScreen, uses the current screen's aspect ratio.
+/// For fillWindow, uses the current screen's aspect ratio for export.
 public func renderSize(aspectRatio: AspectRatio, maxDimension: Int) -> CGSize {
     let maxDim = CGFloat(maxDimension)
 
-    // For fillScreen, use screen's aspect ratio
-    let effectiveValue = aspectRatio.isFillScreen
+    // For fillWindow export, use screen's aspect ratio as reasonable default
+    let effectiveValue = aspectRatio.isFillWindow
         ? AspectRatio.screenAspectRatio()
         : aspectRatio.value
 
