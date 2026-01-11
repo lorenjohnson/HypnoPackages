@@ -78,6 +78,32 @@ public enum ParameterSpec: Equatable {
         return false
     }
 
+    /// Generate a random value within the spec's constraints
+    public func randomValue() -> AnyCodableValue {
+        switch self {
+        case .double(_, let range):
+            return .double(Double.random(in: range))
+        case .float(_, let range):
+            return .double(Double(Float.random(in: range)))
+        case .int(_, let range):
+            return .int(Int.random(in: range))
+        case .bool:
+            return .bool(Bool.random())
+        case .choice(_, let options):
+            return .string(options.randomElement()?.key ?? options.first?.key ?? "")
+        case .color:
+            // Random hex color
+            let r = Int.random(in: 0...255)
+            let g = Int.random(in: 0...255)
+            let b = Int.random(in: 0...255)
+            return .string(String(format: "#%02X%02X%02X", r, g, b))
+        case .file:
+            // Pick random from available files, or keep default
+            let files = availableFiles
+            return .string(files.randomElement()?.key ?? "")
+        }
+    }
+
     /// Get file picker info (extension and directory)
     public var filePickerInfo: (fileExtension: String, directory: URL)? {
         if case .file(let ext, let dirProvider) = self {

@@ -166,6 +166,32 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         }, notifyIndex: chainIndex)
     }
 
+    /// Randomize all parameters for an effect in a chain
+    public func randomizeEffect(chainIndex: Int, effectIndex: Int) {
+        guard chainIndex >= 0 && chainIndex < chains.count else { return }
+
+        updateChains({ effects in
+            var chain = effects[chainIndex]
+            guard effectIndex >= 0 && effectIndex < chain.effects.count else { return }
+
+            let effectDef = chain.effects[effectIndex]
+            let specs = EffectRegistry.parameterSpecs(for: effectDef.type)
+            var randomParams: [String: AnyCodableValue] = [:]
+
+            for (key, spec) in specs {
+                randomParams[key] = spec.randomValue()
+            }
+
+            // Preserve _enabled state
+            if let wasEnabled = effectDef.params?["_enabled"] {
+                randomParams["_enabled"] = wasEnabled
+            }
+
+            chain.effects[effectIndex].params = randomParams
+            effects[chainIndex] = chain
+        }, notifyIndex: chainIndex)
+    }
+
     /// Update the name of a chain
     public func updateChainName(chainIndex: Int, name: String) {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
