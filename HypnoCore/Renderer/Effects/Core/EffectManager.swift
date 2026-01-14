@@ -406,9 +406,18 @@ public final class EffectManager {
         clearEffect(for: layer, captureToRecent: true)
     }
 
+    private func captureChainToRecent(_ chain: EffectChain) {
+        guard !chain.effects.isEmpty else { return }
+        let store = recentStore
+        let snapshot = chain.clone()
+        Task { @MainActor in
+            store?.addToFront(snapshot)
+        }
+    }
+
     private func clearEffect(for layer: Int, captureToRecent: Bool) {
-        if captureToRecent, let existing = effectChain(for: layer), !existing.effects.isEmpty {
-            recentStore?.addToFront(existing)
+        if captureToRecent, let existing = effectChain(for: layer) {
+            captureChainToRecent(existing)
         }
         if layer == -1 {
             globalEffectChainSetter?(EffectChain())
@@ -459,8 +468,8 @@ public final class EffectManager {
     /// Replace CURRENT with a snapshot/template, capturing the old chain into RECENT.
     /// This is the shared implementation behind applying a template or a recent entry.
     public func applyChainSnapshot(_ chain: EffectChain?, sourceTemplateId: UUID?, to layer: Int) {
-        if let existing = effectChain(for: layer), !existing.effects.isEmpty {
-            recentStore?.addToFront(existing)
+        if let existing = effectChain(for: layer) {
+            captureChainToRecent(existing)
         }
 
         if let chain {
