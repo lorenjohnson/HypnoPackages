@@ -9,6 +9,7 @@
 
 import Foundation
 import CoreImage
+import CryptoKit
 
 // MARK: - Core Types
 
@@ -19,6 +20,12 @@ import CoreImage
 /// runtime Effect objects when apply() is called. Instantiated effects are cached for
 /// live and reset when the chain definition changes.
 public final class EffectChain: Codable, Equatable {
+    /// Stable identity for this chain instance (used for template linking, recent history, etc.)
+    public var id: UUID
+
+    /// If this chain originated from a library template, this links back to that template's id.
+    public var sourceTemplateId: UUID?
+
     /// Display name for the chain
     public var name: String?
 
@@ -38,6 +45,38 @@ public final class EffectChain: Codable, Equatable {
     /// Cached instantiated effects (lazily created from definitions)
     private var _instantiatedEffects: [Effect]?
 
+    // MARK: - paramsHash
+
+    /// Deterministic hash of chain parameters (for "Recent" dedupe and variant detection).
+    /// Excludes identity (`id`, `sourceTemplateId`) and display name (`name`).
+    public var paramsHash: String {
+        struct PayloadEffect: Codable {
+            var type: String
+            var params: [String: AnyCodableValue]
+        }
+        struct Payload: Codable {
+            var effects: [PayloadEffect]
+            var params: [String: AnyCodableValue]
+        }
+
+        let payload = Payload(
+            effects: effects.map { def in
+                var effectParams = def.params ?? [:]
+                if effectParams["_enabled"] == nil {
+                    effectParams["_enabled"] = .bool(true)
+                }
+                return PayloadEffect(type: def.type, params: effectParams)
+            },
+            params: params ?? [:]
+        )
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let data = (try? encoder.encode(payload)) ?? Data()
+        let digest = SHA256.hash(data: data)
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
     /// Get or create instantiated effects from definitions
     public var instantiatedEffects: [Effect] {
         if let cached = _instantiatedEffects {
@@ -50,6 +89,8 @@ public final class EffectChain: Codable, Equatable {
 
     /// Create an empty chain
     public init() {
+        self.id = UUID()
+        self.sourceTemplateId = nil
         self.name = nil
         self.effects = []
         self.params = nil
@@ -57,6 +98,8 @@ public final class EffectChain: Codable, Equatable {
 
     /// Create a named chain with effects
     public init(name: String?, effects: [EffectDefinition], params: [String: AnyCodableValue]? = nil) {
+        self.id = UUID()
+        self.sourceTemplateId = nil
         self.name = name
         self.effects = effects
         self.params = params
@@ -109,11 +152,26 @@ public final class EffectChain: Codable, Equatable {
         _instantiatedEffects = nil
     }
 
+    /// Create a deep copy with fresh effect instances, preserving identity.
+    /// Use when you need a separate object instance without changing the chain's UUID.
+    public func clone() -> EffectChain {
+        let newChain = EffectChain(name: name, effects: effects, params: params)
+        newChain.id = id
+        newChain.sourceTemplateId = sourceTemplateId
+        return newChain
+    }
+
+    /// Create a new chain with a new identity, duplicating the definitions.
+    /// `sourceTemplateId` must be provided explicitly (often the template's id).
+    public convenience init(duplicating chain: EffectChain, sourceTemplateId: UUID?) {
+        self.init(name: chain.name, effects: chain.effects, params: chain.params)
+        self.sourceTemplateId = sourceTemplateId
+    }
+
+    @available(*, deprecated, message: "Use clone() (same id) or init(duplicating:sourceTemplateId:) (new id).")
     /// Create a deep copy with fresh effect instances
     public func copy() -> EffectChain {
-        let newChain = EffectChain(name: name, effects: effects, params: params)
-        // Don't copy cached effects - let them be freshly instantiated
-        return newChain
+        clone()
     }
 
     // MARK: - Equatable
@@ -181,6 +239,8 @@ public struct EffectLibraryConfig: Codable {
 extension EffectChain {
     /// Coding keys for JSON
     enum CodingKeys: String, CodingKey {
+        case id
+        case sourceTemplateId
         case name
         case effects
         case params
@@ -189,15 +249,21 @@ extension EffectChain {
     public convenience init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
+        let id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        let sourceTemplateId = try container.decodeIfPresent(UUID.self, forKey: .sourceTemplateId)
         let name = try container.decodeIfPresent(String.self, forKey: .name)
         let params = try container.decodeIfPresent([String: AnyCodableValue].self, forKey: .params)
         let effects = try container.decodeIfPresent([EffectDefinition].self, forKey: .effects) ?? []
 
         self.init(name: name, effects: effects, params: params)
+        self.id = id
+        self.sourceTemplateId = sourceTemplateId
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(sourceTemplateId, forKey: .sourceTemplateId)
         try container.encodeIfPresent(name, forKey: .name)
         try container.encode(effects, forKey: .effects)
         try container.encodeIfPresent(params, forKey: .params)

@@ -91,7 +91,7 @@ public struct HypnogramRecipe: Codable {
         // Copy per-source effect chains
         let copiedSources = sources.map { source in
             var copy = source
-            copy.effectChain = source.effectChain.copy()
+            copy.effectChain = source.effectChain.clone()
             return copy
         }
 
@@ -99,10 +99,10 @@ public struct HypnogramRecipe: Codable {
             sources: copiedSources,
             targetDuration: targetDuration,
             playRate: playRate,
-            effectChain: effectChain.copy(),
+            effectChain: effectChain.clone(),
             mode: mode,
             createdAt: createdAt,
-            effectsLibrarySnapshot: effectsLibrarySnapshot?.map { $0.copy() }
+            effectsLibrarySnapshot: effectsLibrarySnapshot?.map { $0.clone() }
         )
     }
 

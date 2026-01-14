@@ -210,7 +210,7 @@ public final class EffectManager {
     /// Set global effect from an effect chain - the chain handles instantiation internally
     /// Copies the chain so the recipe has its own instance (not shared with library)
     public func setGlobalEffect(from chain: EffectChain) {
-        globalEffectChainSetter?(chain.copy())
+        globalEffectChainSetter?(chain.clone())
         onEffectChanged?()
     }
 
@@ -223,7 +223,7 @@ public final class EffectManager {
     ///   - key: parameter key
     ///   - value: new parameter value
     public func updateEffectParameter(for layer: Int, effectDefIndex: Int, key: String, value: AnyCodableValue) {
-        guard var chain = effectChain(for: layer) else { return }
+        guard var chain = effectChain(for: layer)?.clone() else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         var params = chain.effects[effectDefIndex].params ?? [:]
@@ -239,7 +239,7 @@ public final class EffectManager {
     ///   - key: parameter key
     ///   - value: new parameter value
     public func updateChainParameter(for layer: Int, key: String, value: AnyCodableValue) {
-        guard var chain = effectChain(for: layer) else { return }
+        guard var chain = effectChain(for: layer)?.clone() else { return }
 
         var params = chain.params ?? [:]
         params[key] = value
@@ -253,7 +253,7 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectType: the type of effect to add (e.g. "DatamoshMetalEffect")
     public func addEffectToChain(for layer: Int, effectType: String) {
-        guard var chain = effectChain(for: layer) else { return }
+        guard var chain = effectChain(for: layer)?.clone() else { return }
 
         let defaults = EffectRegistry.defaults(for: effectType)
         let newEffect = EffectDefinition(type: effectType, params: defaults)
@@ -267,7 +267,7 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectDefIndex: index of the effect to remove
     public func removeEffectFromChain(for layer: Int, effectDefIndex: Int) {
-        guard var chain = effectChain(for: layer) else { return }
+        guard var chain = effectChain(for: layer)?.clone() else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         chain.effects.remove(at: effectDefIndex)
@@ -280,7 +280,7 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - name: new name for the chain
     public func updateChainName(for layer: Int, name: String) {
-        guard var chain = effectChain(for: layer) else { return }
+        guard var chain = effectChain(for: layer)?.clone() else { return }
         chain.name = name
         setEffect(from: chain, for: layer)
     }
@@ -291,7 +291,7 @@ public final class EffectManager {
     ///   - fromIndex: source index
     ///   - toIndex: destination index
     public func reorderEffectsInChain(for layer: Int, fromIndex: Int, toIndex: Int) {
-        guard var chain = effectChain(for: layer) else { return }
+        guard var chain = effectChain(for: layer)?.clone() else { return }
         guard fromIndex >= 0, fromIndex < chain.effects.count else { return }
         guard toIndex >= 0, toIndex < chain.effects.count else { return }
 
@@ -306,7 +306,7 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectDefIndex: index of the effect to reset
     public func resetEffectToDefaults(for layer: Int, effectDefIndex: Int) {
-        guard var chain = effectChain(for: layer) else { return }
+        guard var chain = effectChain(for: layer)?.clone() else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         let effectType = chain.effects[effectDefIndex].type
@@ -319,6 +319,31 @@ public final class EffectManager {
 
         chain.effects[effectDefIndex].params = defaults
 
+        setEffect(from: chain, for: layer)
+    }
+
+    /// Toggle effect enabled state in the recipe.
+    public func setEffectEnabled(for layer: Int, effectDefIndex: Int, enabled: Bool) {
+        updateEffectParameter(for: layer, effectDefIndex: effectDefIndex, key: "_enabled", value: .bool(enabled))
+    }
+
+    /// Randomize all parameters for an effect in the recipe.
+    public func randomizeEffect(for layer: Int, effectDefIndex: Int) {
+        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
+
+        let effectDef = chain.effects[effectDefIndex]
+        let specs = EffectRegistry.parameterSpecs(for: effectDef.type)
+        var randomParams: [String: AnyCodableValue] = [:]
+
+        for (key, spec) in specs {
+            randomParams[key] = spec.randomValue()
+        }
+
+        // Preserve _enabled state (default to true if absent)
+        randomParams["_enabled"] = effectDef.params?["_enabled"] ?? .bool(true)
+
+        chain.effects[effectDefIndex].params = randomParams
         setEffect(from: chain, for: layer)
     }
 
@@ -338,7 +363,7 @@ public final class EffectManager {
         let currentName = recipe.effectChain.name
         if let freshChain = availableChains.first(where: { $0.name == currentName }) {
             // Replace with fresh chain - it will re-instantiate effects on next apply()
-            globalEffectChainSetter?(freshChain.copy())
+            globalEffectChainSetter?(freshChain.clone())
             print("🔄 Reapplied global effect: \(currentName ?? "unnamed")")
         }
 
@@ -346,7 +371,7 @@ public final class EffectManager {
         for (index, source) in recipe.sources.enumerated() {
             let currentSourceName = source.effectChain.name
             if let freshChain = availableChains.first(where: { $0.name == currentSourceName }) {
-                sourceEffectChainSetter?(index, freshChain.copy())
+                sourceEffectChainSetter?(index, freshChain.clone())
                 print("🔄 Reapplied source \(index) effect: \(currentSourceName ?? "unnamed")")
             }
         }
@@ -369,7 +394,7 @@ public final class EffectManager {
     /// Set source effect from a chain - the chain handles instantiation internally
     /// Copies the chain so the source has its own instance (not shared with library)
     public func setSourceEffect(from chain: EffectChain, for sourceIndex: Int) {
-        sourceEffectChainSetter?(sourceIndex, chain.copy())
+        sourceEffectChainSetter?(sourceIndex, chain.clone())
         onEffectChanged?()
     }
 
@@ -412,12 +437,24 @@ public final class EffectManager {
     }
 
     /// Set effect from a chain for a layer (-1 = global, 0+ = source index)
-    /// This is the preferred method for selecting effects from the library
+    /// This sets CURRENT (the recipe-owned working copy) to the provided chain.
     public func setEffect(from chain: EffectChain?, for layer: Int) {
         if layer == -1 {
             setGlobalEffect(from: chain ?? EffectChain())
         } else {
             setSourceEffect(from: chain ?? EffectChain(), for: layer)
+        }
+    }
+
+    /// Apply a library template to CURRENT without churning IDs during edits.
+    /// - If template is non-nil, creates a new recipe-owned instance with a new id and links it via `sourceTemplateId`.
+    /// - If template is nil, clears the chain on the recipe.
+    public func applyTemplate(_ template: EffectChain?, to layer: Int) {
+        if let template {
+            let recipeChain = EffectChain(duplicating: template, sourceTemplateId: template.id)
+            setEffect(from: recipeChain, for: layer)
+        } else {
+            clearEffect(for: layer)
         }
     }
 
@@ -447,7 +484,7 @@ public final class EffectManager {
         let next0Based = (current0Based + direction + totalStates) % totalStates
         let nextIndex = next0Based - 1  // Back to -1 based
 
-        setEffect(from: nextIndex >= 0 ? chains[nextIndex] : nil, for: layer)
+        applyTemplate(nextIndex >= 0 ? chains[nextIndex] : nil, to: layer)
     }
 
     // MARK: - Application
