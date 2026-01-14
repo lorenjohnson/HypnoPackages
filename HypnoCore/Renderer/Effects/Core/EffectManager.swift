@@ -95,6 +95,9 @@ public final class EffectManager {
     /// Set by the owner (HypnographState, LivePlayer, etc.)
     public weak var session: EffectsSession?
 
+    /// Global store for recently replaced/cleared chains (shared across modes).
+    public weak var recentStore: RecentEffectChainsStore?
+
     // MARK: - Flash Solo
 
     /// When set, only render this source index (for flash solo preview)
@@ -400,6 +403,13 @@ public final class EffectManager {
 
     /// Clear effect for a layer (-1 = global, 0+ = source index)
     public func clearEffect(for layer: Int) {
+        clearEffect(for: layer, captureToRecent: true)
+    }
+
+    private func clearEffect(for layer: Int, captureToRecent: Bool) {
+        if captureToRecent, let existing = effectChain(for: layer), !existing.effects.isEmpty {
+            recentStore?.addToFront(existing)
+        }
         if layer == -1 {
             globalEffectChainSetter?(EffectChain())
         } else {
@@ -446,16 +456,26 @@ public final class EffectManager {
         }
     }
 
+    /// Replace CURRENT with a snapshot/template, capturing the old chain into RECENT.
+    /// This is the shared implementation behind applying a template or a recent entry.
+    public func applyChainSnapshot(_ chain: EffectChain?, sourceTemplateId: UUID?, to layer: Int) {
+        if let existing = effectChain(for: layer), !existing.effects.isEmpty {
+            recentStore?.addToFront(existing)
+        }
+
+        if let chain {
+            let recipeChain = EffectChain(duplicating: chain, sourceTemplateId: sourceTemplateId)
+            setEffect(from: recipeChain, for: layer)
+        } else {
+            clearEffect(for: layer, captureToRecent: false)
+        }
+    }
+
     /// Apply a library template to CURRENT without churning IDs during edits.
     /// - If template is non-nil, creates a new recipe-owned instance with a new id and links it via `sourceTemplateId`.
     /// - If template is nil, clears the chain on the recipe.
     public func applyTemplate(_ template: EffectChain?, to layer: Int) {
-        if let template {
-            let recipeChain = EffectChain(duplicating: template, sourceTemplateId: template.id)
-            setEffect(from: recipeChain, for: layer)
-        } else {
-            clearEffect(for: layer)
-        }
+        applyChainSnapshot(template, sourceTemplateId: template?.id, to: layer)
     }
 
     /// Cycle effect for a layer (-1 = global, 0+ = source index)

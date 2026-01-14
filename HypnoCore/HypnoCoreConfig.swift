@@ -25,6 +25,11 @@ public struct HypnoCoreConfig {
         ensureDirectory(appSupportDirectory.appendingPathComponent("effect-libraries", isDirectory: true))
     }
 
+    /// Global RECENT effects store (shared across modes)
+    public var recentEffectChainsURL: URL {
+        appSupportDirectory.appendingPathComponent("recent-effects.json")
+    }
+
     public var lutsDirectory: URL {
         ensureDirectory(appSupportDirectory.appendingPathComponent("luts", isDirectory: true))
     }
