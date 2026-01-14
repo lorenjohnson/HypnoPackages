@@ -288,6 +288,13 @@ public final class EffectManager {
         setEffect(from: chain, for: layer)
     }
 
+    /// Link/unlink the CURRENT chain to a template id (used for Update/Copy-to-Library actions).
+    public func updateSourceTemplateId(for layer: Int, sourceTemplateId: UUID?) {
+        guard var chain = effectChain(for: layer)?.clone() else { return }
+        chain.sourceTemplateId = sourceTemplateId
+        setEffect(from: chain, for: layer)
+    }
+
     /// Reorder effects in the recipe's effect chain for a layer
     /// - Parameters:
     ///   - layer: -1 for global, 0+ for source index

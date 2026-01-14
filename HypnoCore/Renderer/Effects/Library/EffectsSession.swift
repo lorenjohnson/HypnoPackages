@@ -234,6 +234,62 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         }
     }
 
+    public func chainIndex(id: UUID) -> Int? {
+        chains.firstIndex { $0.id == id }
+    }
+
+    public func chain(id: UUID) -> EffectChain? {
+        guard let idx = chainIndex(id: id) else { return nil }
+        return chains[idx]
+    }
+
+    /// Create a new template entry from a chain, ensuring template semantics (no sourceTemplateId).
+    /// Returns the new template's id.
+    @discardableResult
+    public func addTemplate(from chain: EffectChain, name: String? = nil) -> UUID {
+        let template = EffectChain(duplicating: chain, sourceTemplateId: nil)
+        if let name, !name.isEmpty {
+            template.name = name
+        }
+        // Templates should not themselves be linked to other templates.
+        template.sourceTemplateId = nil
+
+        updateChains { effects in
+            effects.append(template)
+        }
+        return template.id
+    }
+
+    /// Replace an existing template in-place by id, preserving identity and name by default.
+    public func updateTemplate(id: UUID, from chain: EffectChain, preserveName: Bool = true) {
+        guard let idx = chainIndex(id: id) else { return }
+
+        updateChains({ effects in
+            let existingName = effects[idx].name
+            let newTemplate = EffectChain(duplicating: chain, sourceTemplateId: nil)
+            newTemplate.id = id
+            newTemplate.sourceTemplateId = nil
+            if preserveName {
+                newTemplate.name = existingName
+            }
+            effects[idx] = newTemplate
+        }, notifyIndex: idx)
+    }
+
+    /// Duplicate a template by id (or any chain), returning the new template id.
+    @discardableResult
+    public func duplicateTemplate(id: UUID, name: String? = nil) -> UUID? {
+        guard let template = chain(id: id) else { return nil }
+        let baseName = template.name ?? "Effect"
+        let newName = name ?? "\(baseName) Copy"
+        return addTemplate(from: template, name: newName)
+    }
+
+    public func deleteChain(id: UUID) {
+        guard let idx = chainIndex(id: id) else { return }
+        deleteChain(at: idx)
+    }
+
     /// Get chain by name
     public func chain(named name: String) -> EffectChain? {
         chains.first { $0.name == name }
