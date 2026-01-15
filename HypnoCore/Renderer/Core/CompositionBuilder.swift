@@ -28,16 +28,16 @@ final class CompositionBuilder {
     
     // MARK: - Build
 
-    /// Build a montage composition from a recipe.
+    /// Build a montage composition from a clip.
     /// - Parameters:
-    ///   - recipe: The recipe to build
+    ///   - clip: The clip to build
     ///   - outputSize: Output dimensions
     ///   - frameRate: Output frame rate
     ///   - enableEffects: Whether to apply effects
     ///   - effectManager: The EffectManager to use for this composition.
     ///                  Pass nil only for legacy callers; all new code should provide a manager.
     func build(
-        recipe: HypnogramRecipe,
+        clip: HypnogramClip,
         outputSize: CGSize,
         frameRate: Int = 30,
         enableEffects: Bool = true,
@@ -45,7 +45,7 @@ final class CompositionBuilder {
     ) async -> Result<BuildResult, RenderError> {
 
         // Validate
-        guard !recipe.sources.isEmpty else {
+        guard !clip.sources.isEmpty else {
             return .failure(.noSources)
         }
 
@@ -54,8 +54,8 @@ final class CompositionBuilder {
         }
 
         return await buildMontage(
-            recipe: recipe,
-            targetDuration: recipe.targetDuration,
+            clip: clip,
+            targetDuration: clip.targetDuration,
             outputSize: outputSize,
             frameRate: frameRate,
             enableEffects: enableEffects,
@@ -66,7 +66,7 @@ final class CompositionBuilder {
     // MARK: - Montage Builder
 
     private func buildMontage(
-        recipe: HypnogramRecipe,
+        clip: HypnogramClip,
         targetDuration: CMTime,
         outputSize: CGSize,
         frameRate: Int,
@@ -77,7 +77,7 @@ final class CompositionBuilder {
         // Load all sources
         var loadedSources: [(source: HypnogramSource, loaded: LoadedSource)] = []
 
-        for (index, source) in recipe.sources.enumerated() {
+        for (index, source) in clip.sources.enumerated() {
             let result = await sourceLoader.load(source: source)
 
             switch result {
@@ -85,7 +85,7 @@ final class CompositionBuilder {
                 loadedSources.append((source, loaded))
             case .failure(let error):
                 error.log(context: "CompositionBuilder.montage[\(index)]")
-                // Skip failed sources for now (in Phase 3 we'll replace with fallback)
+                // Skip failed sources for now (we can replace with fallback later if needed)
                 continue
             }
         }

@@ -133,7 +133,7 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
                 }
 
                 // Apply slow-mo interpolation if needed
-                let playRate = manager?.recipeProvider?()?.playRate ?? 1.0
+                let playRate = manager?.clipProvider?()?.playRate ?? 1.0
 
                 if playRate < 1.0 {
                     layerImage = processSlowMo(
@@ -158,30 +158,30 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             // Aspect-fill to output size (handles origin normalization internally)
             img = RendererImageUtils.aspectFill(image: img, to: outputSize)
 
-            // Apply per-source effects from recipe
+            // Apply per-source effects from clip
             if instruction.enableEffects, let manager = manager {
-                let recipe = manager.recipeProvider?()
-                if let recipe = recipe, sourceIndex < recipe.sources.count {
+                let clip = manager.clipProvider?()
+                if let clip = clip, sourceIndex < clip.sources.count {
                     var sourceContext = manager.createContext(
                         frameIndex: frameIndex,
                         time: request.compositionTime,
                         outputSize: outputSize,
                         sourceIndex: sourceIndex
                     )
-                    img = recipe.sources[sourceIndex].effectChain.apply(to: img, context: &sourceContext)
+                    img = clip.sources[sourceIndex].effectChain.apply(to: img, context: &sourceContext)
                 }
             }
 
             // Blend with previous layers
             if let base = composited {
-                // Get blend mode from recipe
+                // Get blend mode from clip
                 let blendMode: String
-                let recipe = manager?.recipeProvider?()
+                let clip = manager?.clipProvider?()
 
-                if let recipe = recipe, sourceIndex < recipe.sources.count {
+                if let clip = clip, sourceIndex < clip.sources.count {
                     blendMode = sourceIndex == 0
                         ? BlendMode.sourceOver
-                        : (recipe.sources[sourceIndex].blendMode ?? BlendMode.defaultMontage)
+                        : (clip.sources[sourceIndex].blendMode ?? BlendMode.defaultMontage)
                 } else {
                     blendMode = instruction.blendModes[index]
                 }
@@ -211,16 +211,16 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             finalImage = manager.applyNormalization(to: finalImage)
         }
 
-        // Apply global effects from recipe (unless suspended, e.g., holding 0 key)
+        // Apply global effects from clip (unless suspended, e.g., holding 0 key)
         if instruction.enableEffects, let manager = manager, !manager.isGlobalEffectSuspended {
-            let recipe = manager.recipeProvider?()
-            if let recipe = recipe {
+            let clip = manager.clipProvider?()
+            if let clip = clip {
                 var context = manager.createContext(
                     frameIndex: frameIndex,
                     time: request.compositionTime,
                     outputSize: outputSize
                 )
-                finalImage = recipe.effectChain.apply(to: finalImage, context: &context)
+                finalImage = clip.effectChain.apply(to: finalImage, context: &context)
             }
         }
 

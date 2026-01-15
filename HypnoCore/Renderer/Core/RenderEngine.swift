@@ -42,17 +42,17 @@ public final class RenderEngine {
 
     /// Build a player item for preview or isolated playback
     /// - Parameters:
-    ///   - recipe: The recipe to build
+    ///   - clip: The clip to build
     ///   - config: Render configuration
     ///   - effectManager: The EffectManager to use. If nil, uses global effects.
     public func makePlayerItem(
-        recipe: HypnogramRecipe,
+        clip: HypnogramClip,
         config: Config,
         effectManager: EffectManager? = nil
     ) async -> Result<AVPlayerItem, RenderError> {
 
         let buildResult = await compositionBuilder.build(
-            recipe: recipe,
+            clip: clip,
             outputSize: config.outputSize,
             frameRate: config.frameRate,
             enableEffects: config.enableEffects,
@@ -81,22 +81,22 @@ public final class RenderEngine {
 
     /// Export to file
     public func export(
-        recipe: HypnogramRecipe,
+        clip: HypnogramClip,
         outputURL: URL,
         config: Config
     ) async -> Result<URL, RenderError> {
 
         print("🎬 RenderEngine.export: Starting export to \(outputURL.lastPathComponent)...")
 
-        // Create isolated copy of recipe with fresh effect state for export
+        // Create isolated copy of clip with fresh effect state for export
         // This prevents stateful effects (like TextOverlayEffect) from sharing state with preview
-        let exportRecipe = recipe.copyForExport()
-        let exportManager = EffectManager.forExport(recipe: exportRecipe)
+        let exportClip = clip.copyForExport()
+        let exportManager = EffectManager.forExport(clip: exportClip)
 
         // Build composition with the export manager
         let builder = CompositionBuilder()
         let buildResult = await builder.build(
-            recipe: exportRecipe,
+            clip: exportClip,
             outputSize: config.outputSize,
             frameRate: config.frameRate,
             enableEffects: config.enableEffects,
@@ -205,7 +205,7 @@ public final class RenderEngine {
         public init() {}
 
         public func enqueue(
-            recipe: HypnogramRecipe,
+            clip: HypnogramClip,
             outputFolder: URL,
             outputSize: CGSize,
             frameRate: Int = 30,
@@ -231,7 +231,7 @@ public final class RenderEngine {
 
                 let engine = RenderEngine()
                 let result = await engine.export(
-                    recipe: recipe,
+                    clip: clip,
                     outputURL: outputURL,
                     config: config
                 )
