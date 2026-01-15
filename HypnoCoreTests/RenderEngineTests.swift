@@ -31,7 +31,7 @@ struct RenderEngineTests {
         let recipe = HypnogramRecipe(sources: [source], targetDuration: duration, mode: .montage)
 
         let engine = RenderEngine()
-        let config = RenderEngine.Config(outputSize: CGSize(width: 320, height: 180), frameRate: 30, enableGlobalEffects: true)
+        let config = RenderEngine.Config(outputSize: CGSize(width: 320, height: 180), frameRate: 30, enableEffects: true)
         let result = await engine.makePlayerItem(
             recipe: recipe,
             config: config,
@@ -60,7 +60,7 @@ struct RenderEngineTests {
         let recipe = HypnogramRecipe(sources: [source], targetDuration: duration, mode: .montage)
 
         let outputURL = tempDir.appendingPathComponent("export-output.png")
-        let config = RenderEngine.Config(outputSize: CGSize(width: 128, height: 72), frameRate: 30, enableGlobalEffects: true)
+        let config = RenderEngine.Config(outputSize: CGSize(width: 128, height: 72), frameRate: 30, enableEffects: true)
 
         let engine = RenderEngine()
         let result = await engine.export(
@@ -94,7 +94,7 @@ struct RenderEngineTests {
         let recipe = HypnogramRecipe(sources: [source], targetDuration: duration, mode: .montage)
 
         let outputURL = tempDir.appendingPathComponent("export-output.mov")
-        let config = RenderEngine.Config(outputSize: CGSize(width: 128, height: 72), frameRate: frameRate, enableGlobalEffects: true)
+        let config = RenderEngine.Config(outputSize: CGSize(width: 128, height: 72), frameRate: frameRate, enableEffects: true)
 
         let engine = RenderEngine()
         let result = await engine.export(

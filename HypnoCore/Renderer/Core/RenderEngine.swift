@@ -19,23 +19,17 @@ public final class RenderEngine {
     public struct Config {
         public let outputSize: CGSize
         public let frameRate: Int
-        public let enableGlobalEffects: Bool  // false for export
+        public let enableEffects: Bool
 
         public init(
             outputSize: CGSize,
             frameRate: Int,
-            enableGlobalEffects: Bool
+            enableEffects: Bool
         ) {
             self.outputSize = outputSize
             self.frameRate = frameRate
-            self.enableGlobalEffects = enableGlobalEffects
+            self.enableEffects = enableEffects
         }
-
-        public static let preview = Config(
-            outputSize: CGSize(width: 1920, height: 1080),
-            frameRate: 30,
-            enableGlobalEffects: true
-        )
     }
     
     // MARK: - Dependencies
@@ -61,7 +55,7 @@ public final class RenderEngine {
             recipe: recipe,
             outputSize: config.outputSize,
             frameRate: config.frameRate,
-            enableEffects: true,
+            enableEffects: config.enableEffects,
             effectManager: effectManager
         )
 
@@ -89,8 +83,7 @@ public final class RenderEngine {
     public func export(
         recipe: HypnogramRecipe,
         outputURL: URL,
-        config: Config,
-        progress: ((Double) -> Void)? = nil
+        config: Config
     ) async -> Result<URL, RenderError> {
 
         print("🎬 RenderEngine.export: Starting export to \(outputURL.lastPathComponent)...")
@@ -106,7 +99,7 @@ public final class RenderEngine {
             recipe: exportRecipe,
             outputSize: config.outputSize,
             frameRate: config.frameRate,
-            enableEffects: config.enableGlobalEffects,
+            enableEffects: config.enableEffects,
             effectManager: exportManager
         )
 
@@ -216,7 +209,7 @@ public final class RenderEngine {
             outputFolder: URL,
             outputSize: CGSize,
             frameRate: Int = 30,
-            enableGlobalEffects: Bool = true,
+            enableEffects: Bool = true,
             completion: ((Result<URL, RenderError>) -> Void)? = nil
         ) {
             activeJobs += 1
@@ -233,7 +226,7 @@ public final class RenderEngine {
                 let config = RenderEngine.Config(
                     outputSize: outputSize,
                     frameRate: frameRate,
-                    enableGlobalEffects: enableGlobalEffects
+                    enableEffects: enableEffects
                 )
 
                 let engine = RenderEngine()
