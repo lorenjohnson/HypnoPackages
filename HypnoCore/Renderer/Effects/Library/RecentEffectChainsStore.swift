@@ -74,7 +74,7 @@ public final class RecentEffectChainsStore: PersistentStore<RecentEffectChainsCo
         }
     }
 
-    public func updateEntryName(id: UUID, name: String) {
+    public func updateChainName(id: UUID, name: String) {
         update { config in
             guard let index = config.entries.firstIndex(where: { $0.id == id }) else { return }
             config.entries[index].chain.name = name
