@@ -73,6 +73,15 @@ public final class RecentEffectChainsStore: PersistentStore<RecentEffectChainsCo
             config.version = Self.currentVersion
         }
     }
+
+    public func updateEntryName(id: UUID, name: String) {
+        update { config in
+            guard let index = config.entries.firstIndex(where: { $0.id == id }) else { return }
+            config.entries[index].chain.name = name
+            config.entries[index].templateNameHint = name
+            config.version = Self.currentVersion
+        }
+    }
 }
 
 public struct RecentEffectChainsConfig: Codable {
@@ -110,4 +119,3 @@ public struct RecentEntry: Codable, Identifiable {
         self.variantHint = variantHint
     }
 }
-
