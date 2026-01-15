@@ -27,9 +27,6 @@ public struct HypnogramRecipe: Codable {
     /// Base64-encoded JPEG snapshot of the hypnogram (1080p resolution)
     public var snapshot: String?
 
-    /// Legacy: mode this recipe was created in. Always `.montage` in current Hypnograph.
-    public var mode: DreamMode
-
     /// When this recipe was created
     public var createdAt: Date
 
@@ -38,7 +35,7 @@ public struct HypnogramRecipe: Codable {
     public var effectsLibrarySnapshot: [EffectChain]?
 
     private enum CodingKeys: String, CodingKey {
-        case sources, targetDuration, playRate, effectChain, snapshot, mode, createdAt, effectsLibrarySnapshot
+        case sources, targetDuration, playRate, effectChain, snapshot, createdAt, effectsLibrarySnapshot
     }
 
     public init(
@@ -47,7 +44,6 @@ public struct HypnogramRecipe: Codable {
         playRate: Float = 1.0,
         effectChain: EffectChain? = nil,
         snapshot: String? = nil,
-        mode: DreamMode = .montage,
         createdAt: Date = Date(),
         effectsLibrarySnapshot: [EffectChain]? = nil
     ) {
@@ -56,7 +52,6 @@ public struct HypnogramRecipe: Codable {
         self.playRate = playRate
         self.effectChain = effectChain ?? EffectChain()
         self.snapshot = snapshot
-        self.mode = mode
         self.createdAt = createdAt
         self.effectsLibrarySnapshot = effectsLibrarySnapshot
     }
@@ -68,7 +63,6 @@ public struct HypnogramRecipe: Codable {
         playRate = try container.decodeIfPresent(Float.self, forKey: .playRate) ?? 1.0
         effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
         snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
-        mode = try container.decodeIfPresent(DreamMode.self, forKey: .mode) ?? .montage
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
         effectsLibrarySnapshot = try container.decodeIfPresent([EffectChain].self, forKey: .effectsLibrarySnapshot)
     }
@@ -80,7 +74,6 @@ public struct HypnogramRecipe: Codable {
         try container.encode(playRate, forKey: .playRate)
         try container.encode(effectChain, forKey: .effectChain)
         try container.encodeIfPresent(snapshot, forKey: .snapshot)
-        try container.encode(mode, forKey: .mode)
         try container.encode(createdAt, forKey: .createdAt)
         try container.encodeIfPresent(effectsLibrarySnapshot, forKey: .effectsLibrarySnapshot)
     }
@@ -100,7 +93,6 @@ public struct HypnogramRecipe: Codable {
             targetDuration: targetDuration,
             playRate: playRate,
             effectChain: effectChain.clone(),
-            mode: mode,
             createdAt: createdAt,
             effectsLibrarySnapshot: effectsLibrarySnapshot?.map { $0.clone() }
         )

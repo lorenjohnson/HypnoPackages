@@ -38,7 +38,7 @@ struct EffectsTests {
         let transform = CGAffineTransform(a: 1, b: 0.1, c: -0.1, d: 1, tx: 5, ty: -3)
         let chain = EffectChain(name: "Global", effects: [EffectDefinition(type: "BasicEffect")])
         let source = HypnogramSource(clip: clip, transforms: [transform], blendMode: BlendMode.sourceOver, effectChain: chain)
-        let recipe = HypnogramRecipe(sources: [source], targetDuration: duration, playRate: 0.8, effectChain: chain, mode: .montage)
+        let recipe = HypnogramRecipe(sources: [source], targetDuration: duration, playRate: 0.8, effectChain: chain)
 
         let data = try JSONEncoder().encode(recipe)
         let decoded = try JSONDecoder().decode(HypnogramRecipe.self, from: data)
@@ -46,7 +46,7 @@ struct EffectsTests {
         #expect(decoded.sources.count == 1)
         #expect(decoded.targetDuration.seconds == recipe.targetDuration.seconds)
         #expect(decoded.playRate == recipe.playRate)
-        #expect(decoded.mode == recipe.mode)
+        // Note: legacy recipe `mode` has been removed; decoding should remain stable.
 
         let decodedTransform = decoded.sources[0].transforms[0]
         #expect(decodedTransform.a == transform.a)
