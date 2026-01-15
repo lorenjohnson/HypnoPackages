@@ -27,7 +27,7 @@ public struct HypnogramRecipe: Codable {
     /// Base64-encoded JPEG snapshot of the hypnogram (1080p resolution)
     public var snapshot: String?
 
-    /// The mode this hypnogram was created in (montage vs sequence)
+    /// Legacy: mode this recipe was created in. Always `.montage` in current Hypnograph.
     public var mode: DreamMode
 
     /// When this recipe was created

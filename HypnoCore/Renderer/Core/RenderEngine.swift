@@ -37,11 +37,6 @@ public final class RenderEngine {
             enableGlobalEffects: true
         )
     }
-
-    public enum Timeline {
-        case montage(targetDuration: CMTime)
-        case sequence
-    }
     
     // MARK: - Dependencies
     
@@ -51,35 +46,22 @@ public final class RenderEngine {
     
     // MARK: - Preview
 
-    /// Result of making a player item
-    public struct PlayerItemResult {
-        public let playerItem: AVPlayerItem
-        public let clipStartTimes: [CMTime]
-        /// Still images for each source index (for sequence mode override when seeking to still images)
-        public let stillImagesBySourceIndex: [Int: CIImage]
-    }
-
     /// Build a player item for preview or isolated playback
     /// - Parameters:
     ///   - recipe: The recipe to build
-    ///   - timeline: Montage or sequence timeline
     ///   - config: Render configuration
     ///   - effectManager: The EffectManager to use. If nil, uses global effects.
     public func makePlayerItem(
         recipe: HypnogramRecipe,
-        timeline: Timeline,
         config: Config,
         effectManager: EffectManager? = nil
-    ) async -> Result<PlayerItemResult, RenderError> {
+    ) async -> Result<AVPlayerItem, RenderError> {
 
-        let strategy = mapTimeline(timeline)
-
-        // Build composition
         let buildResult = await compositionBuilder.build(
             recipe: recipe,
-            strategy: strategy,
             outputSize: config.outputSize,
             frameRate: config.frameRate,
+            enableEffects: true,
             effectManager: effectManager
         )
 
@@ -98,56 +80,6 @@ public final class RenderEngine {
         let playerItem = AVPlayerItem(asset: build.composition)
         playerItem.videoComposition = build.videoComposition
 
-        // Extract still images by source index from instructions (for sequence mode)
-        var stillImagesBySourceIndex: [Int: CIImage] = [:]
-        for instruction in build.instructions {
-            for (layerIndex, sourceIndex) in instruction.sourceIndices.enumerated() {
-                if layerIndex < instruction.stillImages.count,
-                   let stillImage = instruction.stillImages[layerIndex] {
-                    stillImagesBySourceIndex[sourceIndex] = stillImage
-                }
-            }
-        }
-
-        let result = PlayerItemResult(
-            playerItem: playerItem,
-            clipStartTimes: build.clipStartTimes,
-            stillImagesBySourceIndex: stillImagesBySourceIndex
-        )
-
-        return .success(result)
-    }
-
-    /// Build a player item for a single source (used by sequence mode per-clip playback)
-    public func makePlayerItemForSource(
-        _ source: HypnogramSource,
-        sourceIndex: Int,
-        outputSize: CGSize,
-        frameRate: Int = 30,
-        enableEffects: Bool = true,
-        effectManager: EffectManager? = nil
-    ) async -> Result<AVPlayerItem, RenderError> {
-        let buildResult = await compositionBuilder.buildSingleSource(
-            source: source,
-            sourceIndex: sourceIndex,
-            outputSize: outputSize,
-            frameRate: frameRate,
-            enableEffects: enableEffects,
-            effectManager: effectManager
-        )
-
-        guard case .success(let build) = buildResult else {
-            if case .failure(let error) = buildResult {
-                error.log(context: "RenderEngine.makePlayerItemForSource")
-                return .failure(error)
-            }
-            return .failure(.playerItemCreationFailed)
-        }
-
-        build.videoComposition.customVideoCompositorClass = FrameCompositor.self
-
-        let playerItem = AVPlayerItem(asset: build.composition)
-        playerItem.videoComposition = build.videoComposition
         return .success(playerItem)
     }
     
@@ -156,7 +88,6 @@ public final class RenderEngine {
     /// Export to file
     public func export(
         recipe: HypnogramRecipe,
-        timeline: Timeline,
         outputURL: URL,
         config: Config,
         progress: ((Double) -> Void)? = nil
@@ -173,7 +104,6 @@ public final class RenderEngine {
         let builder = CompositionBuilder()
         let buildResult = await builder.build(
             recipe: exportRecipe,
-            strategy: mapTimeline(timeline),
             outputSize: config.outputSize,
             frameRate: config.frameRate,
             enableEffects: config.enableGlobalEffects,
@@ -194,27 +124,25 @@ public final class RenderEngine {
         // Configure video composition with compositor BEFORE creating export session
         build.videoComposition.customVideoCompositorClass = FrameCompositor.self
 
-        // For montage with all still images, export as PNG instead of video
-        if case .montage = timeline {
-            let videoTracks = build.composition.tracks(withMediaType: .video)
-            let hasActualVideoSegments = videoTracks.contains { track in
-                track.segments.contains { !$0.isEmpty }
-            }
+        // For all-still compositions, export as PNG instead of video.
+        let videoTracks = build.composition.tracks(withMediaType: .video)
+        let hasActualVideoSegments = videoTracks.contains { track in
+            track.segments.contains { !$0.isEmpty }
+        }
 
-            if !hasActualVideoSegments, let instruction = build.instructions.first {
-                print("🎬 Montage with all still images - exporting as PNG")
-                guard let montage = PhotoMontage(instruction: instruction, outputSize: config.outputSize) else {
-                    return .failure(.exportFailed(
-                        underlying: NSError(domain: "RenderEngine", code: 10,
-                            userInfo: [NSLocalizedDescriptionKey: "No images for photo montage"])))
-                }
-                switch montage.exportPNG(to: outputURL) {
-                case .success(let url):
-                    print("✅ Export complete (PNG): \(url.lastPathComponent)")
-                    return .success(url)
-                case .failure(let error):
-                    return .failure(.exportFailed(underlying: error))
-                }
+        if !hasActualVideoSegments, let instruction = build.instructions.first {
+            print("🎬 All still images - exporting as PNG")
+            guard let montage = PhotoMontage(instruction: instruction, outputSize: config.outputSize) else {
+                return .failure(.exportFailed(
+                    underlying: NSError(domain: "RenderEngine", code: 10,
+                        userInfo: [NSLocalizedDescriptionKey: "No images for photo montage"])))
+            }
+            switch montage.exportPNG(to: outputURL) {
+            case .success(let url):
+                print("✅ Export complete (PNG): \(url.lastPathComponent)")
+                return .success(url)
+            case .failure(let error):
+                return .failure(.exportFailed(underlying: error))
             }
         }
 
@@ -287,7 +215,6 @@ public final class RenderEngine {
             recipe: HypnogramRecipe,
             outputFolder: URL,
             outputSize: CGSize,
-            timeline: Timeline,
             frameRate: Int = 30,
             enableGlobalEffects: Bool = true,
             completion: ((Result<URL, RenderError>) -> Void)? = nil
@@ -312,7 +239,6 @@ public final class RenderEngine {
                 let engine = RenderEngine()
                 let result = await engine.export(
                     recipe: recipe,
-                    timeline: timeline,
                     outputURL: outputURL,
                     config: config
                 )
@@ -344,17 +270,6 @@ public final class RenderEngine {
                     }
                 }
             }
-        }
-    }
-
-    // MARK: - Timeline Mapping
-
-    private func mapTimeline(_ timeline: Timeline) -> CompositionBuilder.TimelineStrategy {
-        switch timeline {
-        case .montage(let targetDuration):
-            return .montage(targetDuration: targetDuration)
-        case .sequence:
-            return .sequence
         }
     }
 }

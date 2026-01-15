@@ -34,71 +34,7 @@ struct RenderEngineTests {
         let config = RenderEngine.Config(outputSize: CGSize(width: 320, height: 180), frameRate: 30, enableGlobalEffects: true)
         let result = await engine.makePlayerItem(
             recipe: recipe,
-            timeline: .montage(targetDuration: duration),
             config: config,
-            effectManager: nil
-        )
-
-        switch result {
-        case .success(let item):
-            #expect(item.clipStartTimes.count == 1)
-            #expect(item.stillImagesBySourceIndex[0] != nil)
-        case .failure(let error):
-            #expect(Bool(false), "Expected player item, got error: \(error)")
-        }
-    }
-
-    @Test func renderEngineBuildsSingleSourcePlayerItem() async throws {
-        let tempDir = try makeTempDirectory()
-        defer { try? FileManager.default.removeItem(at: tempDir) }
-
-        let imageURL = tempDir.appendingPathComponent("single.png")
-        try writeTestImage(to: imageURL, size: CGSize(width: 4, height: 4))
-
-        let duration = CMTime(seconds: 1, preferredTimescale: 600)
-        let file = MediaFile(source: .url(imageURL), mediaKind: .image, duration: duration)
-        let clip = VideoClip(file: file, startTime: .zero, duration: duration)
-        let source = HypnogramSource(clip: clip)
-
-        let engine = RenderEngine()
-        let result = await engine.makePlayerItemForSource(
-            source,
-            sourceIndex: 0,
-            outputSize: CGSize(width: 160, height: 90),
-            frameRate: 30,
-            enableEffects: true,
-            effectManager: nil
-        )
-
-        switch result {
-        case .success:
-            #expect(true)
-        case .failure(let error):
-            #expect(Bool(false), "Expected player item, got error: \(error)")
-        }
-    }
-
-    @Test func renderEngineBuildsSingleSourcePlayerItemForVideo() async throws {
-        let tempDir = try makeTempDirectory()
-        defer { try? FileManager.default.removeItem(at: tempDir) }
-
-        let videoURL = tempDir.appendingPathComponent("single.mov")
-        let frameRate = 30
-        let frameCount = 4
-        try await writeTestVideo(to: videoURL, size: CGSize(width: 16, height: 16), frameCount: frameCount, frameRate: frameRate)
-
-        let duration = CMTime(value: CMTimeValue(frameCount), timescale: CMTimeScale(frameRate))
-        let file = MediaFile(source: .url(videoURL), mediaKind: .video, duration: duration)
-        let clip = VideoClip(file: file, startTime: .zero, duration: duration)
-        let source = HypnogramSource(clip: clip)
-
-        let engine = RenderEngine()
-        let result = await engine.makePlayerItemForSource(
-            source,
-            sourceIndex: 0,
-            outputSize: CGSize(width: 160, height: 90),
-            frameRate: frameRate,
-            enableEffects: true,
             effectManager: nil
         )
 
@@ -129,7 +65,6 @@ struct RenderEngineTests {
         let engine = RenderEngine()
         let result = await engine.export(
             recipe: recipe,
-            timeline: .montage(targetDuration: duration),
             outputURL: outputURL,
             config: config
         )
@@ -164,7 +99,6 @@ struct RenderEngineTests {
         let engine = RenderEngine()
         let result = await engine.export(
             recipe: recipe,
-            timeline: .montage(targetDuration: duration),
             outputURL: outputURL,
             config: config
         )

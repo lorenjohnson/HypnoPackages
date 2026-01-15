@@ -3,7 +3,7 @@
 //  HypnoCore
 //
 //  Single source of truth for effect chains in a given context.
-//  Each mode (montage, sequence, live) has its own session instance.
+//  Each playback context (preview, live, export) typically owns its own session instance.
 //  Built on PersistentStore for automatic persistence.
 //
 
