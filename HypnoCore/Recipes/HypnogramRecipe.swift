@@ -13,6 +13,8 @@ import CoreMedia
 
 /// A single clip: layered sources, effects, duration, and playback rate.
 public struct HypnogramClip: Codable {
+    /// Stable identity for this clip (for UI/state and future history operations).
+    public var id: UUID
     public var sources: [HypnogramSource]
     public var targetDuration: CMTime
 
@@ -26,16 +28,18 @@ public struct HypnogramClip: Codable {
     public var createdAt: Date
 
     private enum CodingKeys: String, CodingKey {
-        case sources, targetDuration, playRate, effectChain, createdAt
+        case id, sources, targetDuration, playRate, effectChain, createdAt
     }
 
     public init(
+        id: UUID = UUID(),
         sources: [HypnogramSource],
         targetDuration: CMTime,
         playRate: Float = 1.0,
         effectChain: EffectChain? = nil,
         createdAt: Date = Date()
     ) {
+        self.id = id
         self.sources = sources
         self.targetDuration = targetDuration
         self.playRate = playRate
@@ -45,6 +49,7 @@ public struct HypnogramClip: Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         sources = try container.decode([HypnogramSource].self, forKey: .sources)
         targetDuration = try container.decode(CodableCMTime.self, forKey: .targetDuration).cmTime
         playRate = try container.decodeIfPresent(Float.self, forKey: .playRate) ?? 1.0
@@ -54,6 +59,7 @@ public struct HypnogramClip: Codable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
         try container.encode(sources, forKey: .sources)
         try container.encode(CodableCMTime(targetDuration), forKey: .targetDuration)
         try container.encode(playRate, forKey: .playRate)
@@ -72,6 +78,7 @@ public struct HypnogramClip: Codable {
         }
 
         return HypnogramClip(
+            id: id,
             sources: copiedSources,
             targetDuration: targetDuration,
             playRate: playRate,
