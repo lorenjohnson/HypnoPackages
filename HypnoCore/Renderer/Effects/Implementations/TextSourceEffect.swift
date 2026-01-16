@@ -505,5 +505,3 @@ final class TextOverlayEffect: Effect {
         return brightness > 0.5 ? NSColor(white: 0.1, alpha: 1.0) : NSColor(white: 0.9, alpha: 1.0)
     }
 }
-
-

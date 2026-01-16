@@ -158,6 +158,11 @@ public final class EffectChain: Codable, Equatable {
         let newChain = EffectChain(name: name, effects: effects, params: params)
         newChain.id = id
         newChain.sourceTemplateId = sourceTemplateId
+        // Preserve runtime effect behavior (e.g., seeded randomness) across clone boundaries.
+        // This keeps Preview/Live/Export consistent without requiring seeds to be persisted in params.
+        if let instantiated = _instantiatedEffects {
+            newChain._instantiatedEffects = instantiated.map { $0.copy() }
+        }
         return newChain
     }
 
