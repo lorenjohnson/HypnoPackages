@@ -75,7 +75,7 @@ public final class MediaLibrary {
         self.exclusionStore = exclusionStore
         self.deleteStore = deleteStore
         loadFromPhotosAlbum(photosAlbum)
-        // No exclusions for Photos albums - they're curated
+        applyExclusions()
     }
 
     /// Initialize from both folder paths AND Photos albums (combined sources)
@@ -115,6 +115,7 @@ public final class MediaLibrary {
             loadFromPhotosAssetIds(customPhotosAssetIds)
         }
 
+        applyExclusions()
         print("MediaLibrary: combined library has \(sourceIndex.count) total sources")
     }
 
@@ -443,11 +444,28 @@ public final class MediaLibrary {
 
     private func applyExclusions() {
         let hiddenUUIDs = ApplePhotos.shared.cachedHiddenUUIDs
+        let excludedPhotoAssetIds: Set<String>
+        let deletedPhotoAssetIds: Set<String>
+
+        if ApplePhotos.shared.status.canRead {
+            excludedPhotoAssetIds = ApplePhotos.shared.fetchExcludedAssetIdentifiersInHypnographFolder()
+            deletedPhotoAssetIds = ApplePhotos.shared.fetchDeletedAssetIdentifiersInHypnographFolder()
+        } else {
+            excludedPhotoAssetIds = []
+            deletedPhotoAssetIds = []
+        }
 
         sourceIndex.removeAll { entry in
             // Standard exclusions
             if exclusionStore.isExcluded(entry.source) || deleteStore.isQueued(entry.source) {
                 return true
+            }
+
+            // Apple Photos curation albums
+            if case .external(let identifier) = entry.source {
+                if excludedPhotoAssetIds.contains(identifier) || deletedPhotoAssetIds.contains(identifier) {
+                    return true
+                }
             }
 
             // Hidden asset filter: check filename base against cached hidden UUIDs
@@ -472,5 +490,9 @@ public final class MediaLibrary {
     public func markForDeletion(file: MediaFile) {
         deleteStore.add(file.source)
         sourceIndex.removeAll { sourceKey($0.source) == sourceKey(file.source) }
+    }
+
+    public func removeFromIndex(source: MediaSource) {
+        sourceIndex.removeAll { sourceKey($0.source) == sourceKey(source) }
     }
 }

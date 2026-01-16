@@ -150,3 +150,14 @@ public final class DeleteStore: PersistentIdentifierStore {
     }
 }
 
+/// Persistent favorites list for source media.
+/// This does not affect library selection yet; it is a lightweight curation list.
+public final class SourceFavoritesStore: PersistentIdentifierStore {
+    public init(url: URL) {
+        super.init(url: url, queueLabel: "SourceFavoritesStore.queue")
+    }
+
+    public func isFavorite(_ source: MediaSource) -> Bool {
+        contains(source)
+    }
+}

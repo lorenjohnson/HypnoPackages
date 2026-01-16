@@ -399,6 +399,12 @@ public final class ApplePhotos {
     /// Album name for sources marked for deletion (curation workflow)
     private static let deleteAlbumName = "Deleted"
 
+    /// Album name for sources excluded from random selection (curation workflow)
+    private static let excludedAlbumName = "Excluded"
+
+    /// Album name for sources marked as favorites (curation workflow)
+    private static let favoritesAlbumName = "Favorites"
+
     /// Find an existing top-level album by name
     private func findAlbum(named name: String) -> PHAssetCollection? {
         let options = PHFetchOptions()
@@ -412,6 +418,18 @@ public final class ApplePhotos {
         options.predicate = NSPredicate(format: "title == %@", name)
         let folders = PHCollectionList.fetchCollectionLists(with: .folder, subtype: .any, options: options)
         return folders.firstObject
+    }
+
+    private func findAlbum(named albumName: String, inFolderNamed folderName: String) -> PHAssetCollection? {
+        guard let folder = findFolder(named: folderName) else { return nil }
+        let children = PHCollection.fetchCollections(in: folder, options: nil)
+        for idx in 0..<children.count {
+            guard let album = children.object(at: idx) as? PHAssetCollection else { continue }
+            if album.localizedTitle == albumName {
+                return album
+            }
+        }
+        return nil
     }
 
     private func findOrCreateAlbum(named name: String) async -> PHAssetCollection? {
@@ -496,17 +514,50 @@ public final class ApplePhotos {
         return album
     }
 
+    private func fetchAssetIdentifiers(inAlbumNamed albumName: String, inFolderNamed folderName: String) -> Set<String> {
+        refreshStatus()
+        guard status.canRead else { return [] }
+
+        let album = findAlbum(named: albumName, inFolderNamed: folderName) ?? findAlbum(named: albumName)
+        guard let album else { return [] }
+
+        let assets = PHAsset.fetchAssets(in: album, options: nil)
+        var identifiers = Set<String>()
+        identifiers.reserveCapacity(assets.count)
+
+        for i in 0..<assets.count {
+            identifiers.insert(assets.object(at: i).localIdentifier)
+        }
+        return identifiers
+    }
+
     /// Find or create the Hypnograms album (top-level, not in a folder)
     public func findOrCreateHypnogramsAlbum() async -> PHAssetCollection? {
         refreshStatus()
         return await findOrCreateAlbum(named: Self.hypnogramsAlbumName, inFolderNamed: Self.hypnogramsFolderName)
     }
 
-    /// Add an existing Photos asset to the "Hypnograms" folder's "Delete" album.
-    /// Used when the user marks a source for deletion so it is easy to review in Photos.
-    public func addAssetToDeleteAlbumInHypnogramsFolder(localIdentifier: String) async -> Bool {
+    public func fetchExcludedAssetIdentifiersInHypnographFolder() -> Set<String> {
+        fetchAssetIdentifiers(inAlbumNamed: Self.excludedAlbumName, inFolderNamed: Self.hypnogramsFolderName)
+    }
+
+    public func fetchDeletedAssetIdentifiersInHypnographFolder() -> Set<String> {
+        fetchAssetIdentifiers(inAlbumNamed: Self.deleteAlbumName, inFolderNamed: Self.hypnogramsFolderName)
+    }
+
+    public func addAssetToDeletedAlbumInHypnographFolder(localIdentifier: String) async -> Bool {
         refreshStatus()
         return await addAsset(localIdentifier: localIdentifier, toAlbumNamed: Self.deleteAlbumName, inFolderNamed: Self.hypnogramsFolderName)
+    }
+
+    public func addAssetToExcludedAlbumInHypnographFolder(localIdentifier: String) async -> Bool {
+        refreshStatus()
+        return await addAsset(localIdentifier: localIdentifier, toAlbumNamed: Self.excludedAlbumName, inFolderNamed: Self.hypnogramsFolderName)
+    }
+
+    public func addAssetToFavoritesAlbumInHypnographFolder(localIdentifier: String) async -> Bool {
+        refreshStatus()
+        return await addAsset(localIdentifier: localIdentifier, toAlbumNamed: Self.favoritesAlbumName, inFolderNamed: Self.hypnogramsFolderName)
     }
 
     private func resolveAsset(identifier: String) -> PHAsset? {
