@@ -13,26 +13,26 @@ struct CoreStoreTests {
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         let exclusionURL = tempDir.appendingPathComponent("exclusions.json")
-        let deletionsURL = tempDir.appendingPathComponent("deletions.json")
+        let favoritesURL = tempDir.appendingPathComponent("source-favorites.json")
 
         let exclusionStore = ExclusionStore(url: exclusionURL)
-        let deleteStore = DeleteStore(url: deletionsURL)
+        let favoritesStore = SourceFavoritesStore(url: favoritesURL)
 
         let fileURL = tempDir.appendingPathComponent("sample.mov")
         let fileSource = MediaSource.url(fileURL)
         let externalSource = MediaSource.external(identifier: "test-asset")
 
         exclusionStore.add(externalSource)
-        deleteStore.add(fileSource)
+        favoritesStore.add(fileSource)
 
         #expect(exclusionStore.isExcluded(externalSource))
-        #expect(deleteStore.isQueued(fileSource))
+        #expect(favoritesStore.isFavorite(fileSource))
 
         let exclusionStoreReload = ExclusionStore(url: exclusionURL)
-        let deleteStoreReload = DeleteStore(url: deletionsURL)
+        let favoritesStoreReload = SourceFavoritesStore(url: favoritesURL)
 
         #expect(exclusionStoreReload.isExcluded(externalSource))
-        #expect(deleteStoreReload.isQueued(fileSource))
+        #expect(favoritesStoreReload.isFavorite(fileSource))
     }
 
     private func makeTempDirectory() throws -> URL {

@@ -13,10 +13,6 @@ public struct HypnoCoreConfig {
         appSupportDirectory.appendingPathComponent("exclusions.json")
     }
 
-    public var deletionsURL: URL {
-        appSupportDirectory.appendingPathComponent("deletions.json")
-    }
-
     public var sourceFavoritesURL: URL {
         appSupportDirectory.appendingPathComponent("source-favorites.json")
     }

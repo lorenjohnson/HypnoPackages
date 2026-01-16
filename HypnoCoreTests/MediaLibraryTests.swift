@@ -21,15 +21,14 @@ struct MediaLibraryTests {
         let tempDir = try makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        let stores = try makeStores(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let exclusionStore = try makeExclusionStore(in: tempDir.appendingPathComponent("core", isDirectory: true))
         let imageURL = tempDir.appendingPathComponent("library-image.png")
         try writeTestImage(to: imageURL, size: CGSize(width: 10, height: 10))
 
         let library = MediaLibrary(
             sources: [tempDir.path],
             allowedMediaTypes: [.images],
-            exclusionStore: stores.exclusion,
-            deleteStore: stores.delete
+            exclusionStore: exclusionStore
         )
         guard let clip = library.randomClip(clipLength: 1.25) else {
             #expect(Bool(false), "Expected image clip from library")
@@ -44,15 +43,14 @@ struct MediaLibraryTests {
         let tempDir = try makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        let stores = try makeStores(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let exclusionStore = try makeExclusionStore(in: tempDir.appendingPathComponent("core", isDirectory: true))
         let videoURL = tempDir.appendingPathComponent("library-video.mov")
         try await writeTestVideo(to: videoURL, size: CGSize(width: 12, height: 12), frameCount: 4, frameRate: 30)
 
         let library = MediaLibrary(
             sources: [tempDir.path],
             allowedMediaTypes: [.videos],
-            exclusionStore: stores.exclusion,
-            deleteStore: stores.delete
+            exclusionStore: exclusionStore
         )
         guard let clip = library.randomClip(clipLength: 0.5) else {
             #expect(Bool(false), "Expected video clip from library")
@@ -73,19 +71,14 @@ struct MediaLibraryTests {
         return dir
     }
 
-    private func makeStores(in directory: URL) throws -> (exclusion: ExclusionStore, delete: DeleteStore) {
+    private func makeExclusionStore(in directory: URL) throws -> ExclusionStore {
         let fm = FileManager.default
         if !fm.fileExists(atPath: directory.path) {
             try fm.createDirectory(at: directory, withIntermediateDirectories: true)
         }
 
         let exclusionURL = directory.appendingPathComponent("exclusions.json")
-        let deleteURL = directory.appendingPathComponent("deletions.json")
-
-        return (
-            exclusion: ExclusionStore(url: exclusionURL),
-            delete: DeleteStore(url: deleteURL)
-        )
+        return ExclusionStore(url: exclusionURL)
     }
 
     private func writeTestImage(to url: URL, size: CGSize) throws {

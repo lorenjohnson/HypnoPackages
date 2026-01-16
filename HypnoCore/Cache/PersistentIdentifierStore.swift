@@ -3,7 +3,7 @@
 //  HypnoCore
 //
 //  Generic thread-safe persistent store for tracking media sources by identifier.
-//  Base functionality for ExclusionStore and DeleteStore.
+//  Base functionality for identifier-backed persistent stores.
 //
 
 import Foundation
@@ -129,24 +129,6 @@ public final class ExclusionStore: PersistentIdentifierStore {
     /// Check if a source is excluded (convenience alias)
     public func isExcluded(_ source: MediaSource) -> Bool {
         contains(source)
-    }
-}
-
-/// Persistent queue of sources marked for deletion.
-/// The actual deletion is deferred - this just tracks the list.
-public final class DeleteStore: PersistentIdentifierStore {
-    public init(url: URL) {
-        super.init(url: url, queueLabel: "DeleteStore.queue")
-    }
-
-    /// Check if a source is queued for deletion (convenience alias)
-    public func isQueued(_ source: MediaSource) -> Bool {
-        contains(source)
-    }
-
-    /// Get all queued identifiers (convenience alias for processing)
-    public var allQueued: [String] {
-        allIdentifiers
     }
 }
 

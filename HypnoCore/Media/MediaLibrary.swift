@@ -25,7 +25,6 @@ public final class MediaLibrary {
     /// Which media types to include
     private let allowedMediaTypes: Set<MediaType>
     private let exclusionStore: ExclusionStore
-    private let deleteStore: DeleteStore
 
     let allowedPhotoExtensions = Set([
         "jpeg", "jpg", "png", "heic", "gif"
@@ -48,12 +47,10 @@ public final class MediaLibrary {
     public init(
         sources: [String],
         allowedMediaTypes: Set<MediaType> = [.images, .videos],
-        exclusionStore: ExclusionStore,
-        deleteStore: DeleteStore
+        exclusionStore: ExclusionStore
     ) {
         self.allowedMediaTypes = allowedMediaTypes
         self.exclusionStore = exclusionStore
-        self.deleteStore = deleteStore
         if sources.isEmpty {
             // No explicit sources → default to Photos library videos
             loadFilesFromPhotosLibrary()
@@ -68,12 +65,10 @@ public final class MediaLibrary {
     public init(
         photosAlbum: PHAssetCollection,
         allowedMediaTypes: Set<MediaType> = [.images, .videos],
-        exclusionStore: ExclusionStore,
-        deleteStore: DeleteStore
+        exclusionStore: ExclusionStore
     ) {
         self.allowedMediaTypes = allowedMediaTypes
         self.exclusionStore = exclusionStore
-        self.deleteStore = deleteStore
         loadFromPhotosAlbum(photosAlbum)
         applyExclusions()
     }
@@ -87,12 +82,10 @@ public final class MediaLibrary {
         includeAllPhotos: Bool = false,
         customPhotosAssetIds: [String] = [],
         allowedMediaTypes: Set<MediaType> = [.images, .videos],
-        exclusionStore: ExclusionStore,
-        deleteStore: DeleteStore
+        exclusionStore: ExclusionStore
     ) {
         self.allowedMediaTypes = allowedMediaTypes
         self.exclusionStore = exclusionStore
-        self.deleteStore = deleteStore
 
         /// Load folder/file sources
         if !sources.isEmpty {
@@ -445,25 +438,22 @@ public final class MediaLibrary {
     private func applyExclusions() {
         let hiddenUUIDs = ApplePhotos.shared.cachedHiddenUUIDs
         let excludedPhotoAssetIds: Set<String>
-        let deletedPhotoAssetIds: Set<String>
 
         if ApplePhotos.shared.status.canRead {
             excludedPhotoAssetIds = ApplePhotos.shared.fetchExcludedAssetIdentifiersInHypnographFolder()
-            deletedPhotoAssetIds = ApplePhotos.shared.fetchDeletedAssetIdentifiersInHypnographFolder()
         } else {
             excludedPhotoAssetIds = []
-            deletedPhotoAssetIds = []
         }
 
         sourceIndex.removeAll { entry in
             // Standard exclusions
-            if exclusionStore.isExcluded(entry.source) || deleteStore.isQueued(entry.source) {
+            if exclusionStore.isExcluded(entry.source) {
                 return true
             }
 
             // Apple Photos curation albums
             if case .external(let identifier) = entry.source {
-                if excludedPhotoAssetIds.contains(identifier) || deletedPhotoAssetIds.contains(identifier) {
+                if excludedPhotoAssetIds.contains(identifier) {
                     return true
                 }
             }
@@ -484,11 +474,6 @@ public final class MediaLibrary {
 
     public func exclude(file: MediaFile) {
         exclusionStore.add(file.source)
-        sourceIndex.removeAll { sourceKey($0.source) == sourceKey(file.source) }
-    }
-
-    public func markForDeletion(file: MediaFile) {
-        deleteStore.add(file.source)
         sourceIndex.removeAll { sourceKey($0.source) == sourceKey(file.source) }
     }
 

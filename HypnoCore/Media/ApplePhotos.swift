@@ -396,9 +396,6 @@ public final class ApplePhotos {
     /// Album name for saved hypnograms (snapshots and renders)
     private static let hypnogramsAlbumName = "Saved"
 
-    /// Album name for sources marked for deletion (curation workflow)
-    private static let deleteAlbumName = "Deleted"
-
     /// Album name for sources excluded from random selection (curation workflow)
     private static let excludedAlbumName = "Excluded"
 
@@ -539,15 +536,6 @@ public final class ApplePhotos {
 
     public func fetchExcludedAssetIdentifiersInHypnographFolder() -> Set<String> {
         fetchAssetIdentifiers(inAlbumNamed: Self.excludedAlbumName, inFolderNamed: Self.hypnogramsFolderName)
-    }
-
-    public func fetchDeletedAssetIdentifiersInHypnographFolder() -> Set<String> {
-        fetchAssetIdentifiers(inAlbumNamed: Self.deleteAlbumName, inFolderNamed: Self.hypnogramsFolderName)
-    }
-
-    public func addAssetToDeletedAlbumInHypnographFolder(localIdentifier: String) async -> Bool {
-        refreshStatus()
-        return await addAsset(localIdentifier: localIdentifier, toAlbumNamed: Self.deleteAlbumName, inFolderNamed: Self.hypnogramsFolderName)
     }
 
     public func addAssetToExcludedAlbumInHypnographFolder(localIdentifier: String) async -> Bool {
