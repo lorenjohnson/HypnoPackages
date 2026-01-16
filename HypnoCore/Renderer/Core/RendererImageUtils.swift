@@ -27,14 +27,7 @@ enum RendererImageUtils {
 
     /// Scale and crop an image to fill the target size while maintaining aspect ratio.
     static func aspectFill(image: CIImage, to size: CGSize) -> CIImage {
-        var img = image
-        if img.extent.origin != .zero {
-            img = img.transformed(by: CGAffineTransform(
-                translationX: -img.extent.origin.x,
-                y: -img.extent.origin.y
-            ))
-        }
-
+        var img = normalizeOrigin(image)
         let imageSize = img.extent.size
         guard imageSize.width > 0, imageSize.height > 0, size.width > 0, size.height > 0 else {
             return img
@@ -51,6 +44,41 @@ enum RendererImageUtils {
         let translated = scaledImage.transformed(by: CGAffineTransform(translationX: x, y: y))
 
         return translated.cropped(to: CGRect(origin: .zero, size: size))
+    }
+
+    /// Scale an image to fit inside the target size while maintaining aspect ratio.
+    /// Empty/unused area is transparent so lower layers show through.
+    static func aspectFit(image: CIImage, to size: CGSize) -> CIImage {
+        var img = normalizeOrigin(image)
+
+        let imageSize = img.extent.size
+        guard imageSize.width > 0, imageSize.height > 0, size.width > 0, size.height > 0 else {
+            return img
+        }
+
+        let scale = min(size.width / imageSize.width, size.height / imageSize.height)
+
+        let scaledImage = img.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let scaledSize = scaledImage.extent.size
+
+        let x = (size.width - scaledSize.width) / 2
+        let y = (size.height - scaledSize.height) / 2
+
+        let translated = scaledImage.transformed(by: CGAffineTransform(translationX: x, y: y))
+
+        let clearBackground = CIImage(color: .clear).cropped(to: CGRect(origin: .zero, size: size))
+        let composited = translated.composited(over: clearBackground)
+
+        return composited.cropped(to: CGRect(origin: .zero, size: size))
+    }
+
+    static func applySourceFraming(image: CIImage, to size: CGSize, framing: SourceFraming) -> CIImage {
+        switch framing {
+        case .fill:
+            return aspectFill(image: image, to: size)
+        case .fit:
+            return aspectFit(image: image, to: size)
+        }
     }
 
     /// Blend a foreground layer over a background using a Core Image blend filter.
@@ -95,5 +123,13 @@ enum RendererImageUtils {
         composite.setValue(background, forKey: kCIInputBackgroundImageKey)
 
         return composite.outputImage ?? foreground
+    }
+
+    private static func normalizeOrigin(_ image: CIImage) -> CIImage {
+        guard image.extent.origin != .zero else { return image }
+        return image.transformed(by: CGAffineTransform(
+            translationX: -image.extent.origin.x,
+            y: -image.extent.origin.y
+        ))
     }
 }

@@ -28,10 +28,12 @@ struct PhotoMontage {
     
     private let layers: [Layer]
     private let outputSize: CGSize
+    private let sourceFraming: SourceFraming
     
-    init(layers: [Layer], outputSize: CGSize) {
+    init(layers: [Layer], outputSize: CGSize, sourceFraming: SourceFraming = .fill) {
         self.layers = layers
         self.outputSize = outputSize
+        self.sourceFraming = sourceFraming
     }
     
     /// Convenience init from RenderInstruction (for integration with existing pipeline)
@@ -46,6 +48,7 @@ struct PhotoMontage {
         guard !layers.isEmpty else { return nil }
         self.layers = layers
         self.outputSize = outputSize
+        self.sourceFraming = instruction.sourceFraming
     }
     
     // MARK: - Composite
@@ -66,17 +69,7 @@ struct PhotoMontage {
 
         for (index, layer) in layers.enumerated() {
             var img = layer.image.transformed(by: layer.transform)
-
-            // Scale to fill output size
-            let scaleX = outputSize.width / img.extent.width
-            let scaleY = outputSize.height / img.extent.height
-            let scale = max(scaleX, scaleY)
-            img = img.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-
-            // Center in output
-            let offsetX = (outputSize.width - img.extent.width) / 2 - img.extent.origin.x
-            let offsetY = (outputSize.height - img.extent.height) / 2 - img.extent.origin.y
-            img = img.transformed(by: CGAffineTransform(translationX: offsetX, y: offsetY))
+            img = RendererImageUtils.applySourceFraming(image: img, to: outputSize, framing: sourceFraming)
 
             // First layer uses source-over, subsequent use their blend mode
             if index == 0 {

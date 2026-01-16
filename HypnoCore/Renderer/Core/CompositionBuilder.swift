@@ -41,6 +41,7 @@ final class CompositionBuilder {
         outputSize: CGSize,
         frameRate: Int = 30,
         enableEffects: Bool = true,
+        sourceFraming: SourceFraming = .fill,
         effectManager: EffectManager? = nil
     ) async -> Result<BuildResult, RenderError> {
 
@@ -59,6 +60,7 @@ final class CompositionBuilder {
             outputSize: outputSize,
             frameRate: frameRate,
             enableEffects: enableEffects,
+            sourceFraming: sourceFraming,
             effectManager: effectManager
         )
     }
@@ -71,6 +73,7 @@ final class CompositionBuilder {
         outputSize: CGSize,
         frameRate: Int,
         enableEffects: Bool,
+        sourceFraming: SourceFraming,
         effectManager: EffectManager?
     ) async -> Result<BuildResult, RenderError> {
 
@@ -209,6 +212,7 @@ final class CompositionBuilder {
             sourceIndices: sourceIndices,
             enableEffects: enableEffects,
             stillImages: stillImages,
+            sourceFraming: sourceFraming,
             effectManager: effectManager
         )
 

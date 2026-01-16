@@ -155,8 +155,12 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             let transform = instruction.transforms[index]
             img = img.transformed(by: transform)
 
-            // Aspect-fill to output size (handles origin normalization internally)
-            img = RendererImageUtils.aspectFill(image: img, to: outputSize)
+            // Map source into output frame
+            img = RendererImageUtils.applySourceFraming(
+                image: img,
+                to: outputSize,
+                framing: instruction.sourceFraming
+            )
 
             // Apply per-source effects from clip
             if instruction.enableEffects, let manager = manager {

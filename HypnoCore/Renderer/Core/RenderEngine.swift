@@ -20,15 +20,18 @@ public final class RenderEngine {
         public let outputSize: CGSize
         public let frameRate: Int
         public let enableEffects: Bool
+        public let sourceFraming: SourceFraming
 
         public init(
             outputSize: CGSize,
             frameRate: Int,
-            enableEffects: Bool
+            enableEffects: Bool,
+            sourceFraming: SourceFraming = .fill
         ) {
             self.outputSize = outputSize
             self.frameRate = frameRate
             self.enableEffects = enableEffects
+            self.sourceFraming = sourceFraming
         }
     }
     
@@ -56,6 +59,7 @@ public final class RenderEngine {
             outputSize: config.outputSize,
             frameRate: config.frameRate,
             enableEffects: config.enableEffects,
+            sourceFraming: config.sourceFraming,
             effectManager: effectManager
         )
 
@@ -100,6 +104,7 @@ public final class RenderEngine {
             outputSize: config.outputSize,
             frameRate: config.frameRate,
             enableEffects: config.enableEffects,
+            sourceFraming: config.sourceFraming,
             effectManager: exportManager
         )
 
@@ -210,6 +215,7 @@ public final class RenderEngine {
             outputSize: CGSize,
             frameRate: Int = 30,
             enableEffects: Bool = true,
+            sourceFraming: SourceFraming = .fill,
             completion: ((Result<URL, RenderError>) -> Void)? = nil
         ) {
             activeJobs += 1
@@ -226,7 +232,8 @@ public final class RenderEngine {
                 let config = RenderEngine.Config(
                     outputSize: outputSize,
                     frameRate: frameRate,
-                    enableEffects: enableEffects
+                    enableEffects: enableEffects,
+                    sourceFraming: sourceFraming
                 )
 
                 let engine = RenderEngine()

@@ -42,6 +42,9 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol {
     /// Still images for layers that are images (indexed by layer, nil for video layers)
     public let stillImages: [CIImage?]
 
+    /// How each source should be mapped into the output frame.
+    public let sourceFraming: SourceFraming
+
     /// The EffectManager to use for effects processing.
     /// - Preview: passes state.effectManager (mutable, changes affect playback)
     /// - Live Display: passes livePlayer.effectManager (isolated instance)
@@ -58,6 +61,7 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol {
         sourceIndices: [Int],
         enableEffects: Bool = false,
         stillImages: [CIImage?] = [],
+        sourceFraming: SourceFraming = .fill,
         effectManager: EffectManager? = nil
     ) {
         self.timeRange = timeRange
@@ -67,6 +71,7 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol {
         self.sourceIndices = sourceIndices
         self.enableEffects = enableEffects
         self.stillImages = stillImages
+        self.sourceFraming = sourceFraming
         self.effectManager = effectManager
 
         // Required track IDs for AVFoundation
