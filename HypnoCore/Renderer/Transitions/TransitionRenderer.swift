@@ -18,6 +18,7 @@ public final class TransitionRenderer {
     public enum TransitionType: String, CaseIterable, Codable {
         case none           // Instant cut (no transition)
         case crossfade      // Linear alpha blend
+        case blur           // Gaussian blur into next
         case destroy        // Moshing/glitch effect
 
         /// Display name for UI
@@ -25,6 +26,7 @@ public final class TransitionRenderer {
             switch self {
             case .none: return "None"
             case .crossfade: return "Crossfade"
+            case .blur: return "Blur"
             case .destroy: return "Destroy"
             }
         }
@@ -34,6 +36,7 @@ public final class TransitionRenderer {
             switch self {
             case .none: return nil
             case .crossfade: return "transitionCrossfade"
+            case .blur: return "transitionBlur"
             case .destroy: return "transitionDestroy"
             }
         }
