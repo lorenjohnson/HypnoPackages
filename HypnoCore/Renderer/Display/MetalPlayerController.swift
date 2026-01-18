@@ -47,9 +47,13 @@ public final class MetalPlayerController: ObservableObject {
         set { frameSource?.audioOutputDeviceUniqueID = newValue }
     }
 
+    // MARK: - Frame Source
+
+    /// The frame source (exposed for observer setup by clients)
+    public private(set) var frameSource: AVPlayerFrameSource?
+
     // MARK: - Private Properties
 
-    private var frameSource: AVPlayerFrameSource?
     private let textureCache = TextureCache()
     private var displayLink: CVDisplayLink?
     private var timeObserverToken: Any?
