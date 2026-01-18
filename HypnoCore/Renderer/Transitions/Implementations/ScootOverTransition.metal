@@ -42,12 +42,17 @@ kernel void transitionScootOver(
     // Film-strip imperfection: jitter scanline bands + mild flicker + stuttery motion.
     float intensity = 0.35 + 0.65 * (1.0 - abs(p - 0.5) * 2.0); // strongest mid-transition
 
-    // Monotonic "stutter": quantize progress a bit so motion holds then jumps forward.
-    // Keep it subtle and mostly mid-transition.
-    float stutterAmount = smoothstep(0.08, 0.28, p) * (1.0 - smoothstep(0.72, 0.92, p));
-    float stepsF = mix(1.0, 26.0, intensity);
-    float pHold = floor(p * stepsF) / max(stepsF, 1.0);
-    float p2 = mix(p, pHold, 0.35 * stutterAmount);
+    // Monotonic "stutter": slightly hold then catch up within small progress steps.
+    // Keep it subtle and mostly mid-transition (film strip isn't perfectly smooth).
+    float stutterAmount = smoothstep(0.10, 0.32, p) * (1.0 - smoothstep(0.70, 0.92, p));
+    float stepsF = mix(1.0, 48.0, intensity);
+    float sp = p * stepsF;
+    float base = floor(sp);
+    float f = fract(sp);
+    float hold = mix(0.05, 0.22, intensity) * stutterAmount;
+    float fEase = smoothstep(hold, 1.0, f);
+    float pStutter = (base + fEase) / max(stepsF, 1.0);
+    float p2 = mix(p, pStutter, 0.20 * stutterAmount);
 
     float band = floor(px.y / 7.0);
     float tA = floor(p2 * 72.0);
@@ -108,11 +113,11 @@ kernel void transitionScootOver(
     result.rgb = saturate(result.rgb + scratch);
 
     // A clearer divide line between frames (slightly dirty, not a perfect vector line).
-    float lineW = 1.2 + 1.2 * intensity;
+    float lineW = 0.9 + 1.0 * intensity;
     float line = 1.0 - smoothstep(0.0, lineW, abs(px.x - seamX));
     float lineNoise = hash(float2(band + floor(p2 * 22.0), 91.0), params.seed);
     float3 lineColor = mix(float3(0.02), float3(0.75), 0.35 + 0.65 * lineNoise);
-    result.rgb = saturate(mix(result.rgb, lineColor, line * (0.35 + 0.25 * intensity)));
+    result.rgb = saturate(mix(result.rgb, lineColor, line * (0.22 + 0.18 * intensity)));
 
     output.write(result, gid);
 }
