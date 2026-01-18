@@ -10,40 +10,43 @@ import Metal
 import simd
 
 /// Renders shader-based transitions between two textures.
-public final class TransitionRenderer {
+    public final class TransitionRenderer {
 
-    // MARK: - Types
+        // MARK: - Types
 
-    /// Available transition types
-    public enum TransitionType: String, CaseIterable, Codable {
-        case none           // Instant cut (no transition)
-        case crossfade      // Linear alpha blend
-        case blur           // Gaussian blur into next
-        case dissolve       // Noise dissolve into next
-        case destroy        // Moshing/glitch effect
+        /// Available transition types
+        public enum TransitionType: String, CaseIterable, Codable {
+            case none           // Instant cut (no transition)
+            case crossfade      // Linear alpha blend
+            case blur           // Gaussian blur into next
+            case dissolve       // Noise dissolve into next
+            case scootOver      // Both clips on screen; incoming wipes right with film-strip jitter
+            case destroy        // Moshing/glitch effect
 
-        /// Display name for UI
-        public var displayName: String {
-            switch self {
-            case .none: return "None"
-            case .crossfade: return "Crossfade"
-            case .blur: return "Blur"
-            case .dissolve: return "Dissolve"
-            case .destroy: return "Destroy"
+            /// Display name for UI
+            public var displayName: String {
+                switch self {
+                case .none: return "None"
+                case .crossfade: return "Crossfade"
+                case .blur: return "Blur"
+                case .dissolve: return "Dissolve"
+                case .scootOver: return "Scoot Over"
+                case .destroy: return "Destroy"
+                }
+            }
+
+            /// Shader function name for this transition (nil for instant cut)
+            var shaderName: String? {
+                switch self {
+                case .none: return nil
+                case .crossfade: return "transitionCrossfade"
+                case .blur: return "transitionBlur"
+                case .dissolve: return "transitionDissolve"
+                case .scootOver: return "transitionScootOver"
+                case .destroy: return "transitionDestroy"
+                }
             }
         }
-
-        /// Shader function name for this transition (nil for instant cut)
-        var shaderName: String? {
-            switch self {
-            case .none: return nil
-            case .crossfade: return "transitionCrossfade"
-            case .blur: return "transitionBlur"
-            case .dissolve: return "transitionDissolve"
-            case .destroy: return "transitionDestroy"
-            }
-        }
-    }
 
     /// Parameters passed to transition shaders
     struct TransitionParams {
