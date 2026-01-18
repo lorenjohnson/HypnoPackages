@@ -257,7 +257,10 @@ public final class PlayerView: MTKView {
         secondarySource = newSource
         activeTransition = type
         transitionDuration = duration ?? self.transitionDuration
-        transitionStartTime = startTime ?? CACurrentMediaTime()
+        // If `startTime` is nil, defer starting progress until we can actually render
+        // (i.e., we have both outgoing and incoming textures). This avoids transitions
+        // that appear to "cut" because the incoming source hasn't produced a frame yet.
+        transitionStartTime = startTime
         transitionProgress = 0
         isTransitionCompletionPending = false
         // Generate a fresh seed for this transition (stays constant throughout)
@@ -310,9 +313,6 @@ public final class PlayerView: MTKView {
 
         let hostTime = CACurrentMediaTime()
 
-        // Update transition progress (may return a completion callback)
-        let transitionCompletion = updateTransition(now: hostTime)
-
         // Get frames from sources
         let primaryFrame = primarySource?.bestFrame(forHostTime: hostTime)
         let secondaryFrame = secondarySource?.bestFrame(forHostTime: hostTime)
@@ -325,6 +325,20 @@ public final class PlayerView: MTKView {
         textureLock.lock()
         let directTexture = currentTexture
         textureLock.unlock()
+
+        // If this transition was started without an explicit `startTime`, begin counting
+        // progress only once we have both textures needed to render it.
+        if activeTransition != nil,
+           transitionStartTime == nil,
+           (primaryTexture ?? directTexture) != nil,
+           secondaryTexture != nil {
+            transitionStartTime = hostTime
+            transitionProgress = 0
+            isTransitionCompletionPending = false
+        }
+
+        // Update transition progress (may return a completion callback)
+        let transitionCompletion = updateTransition(now: hostTime)
 
         let outputTexture: MTLTexture?
 

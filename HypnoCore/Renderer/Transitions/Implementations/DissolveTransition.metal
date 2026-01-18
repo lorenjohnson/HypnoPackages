@@ -22,18 +22,28 @@ kernel void transitionDissolve(
     float p = clamp(params.progress, 0.0, 1.0);
     float2 px = float2(float(gid.x), float(gid.y));
 
+    if (p <= 0.001) {
+        output.write(outgoing.read(gid), gid);
+        return;
+    }
+    if (p >= 0.999) {
+        output.write(incoming.read(gid), gid);
+        return;
+    }
+
     // Multi-scale noise: combine a fine grain with a blockier field.
     float2 block = floor(px / float2(18.0, 14.0));
     float nFine = hash(px * 0.20, params.seed);
     float nBlock = hash(block, params.seed);
     float n = mix(nFine, nBlock, 0.55);
 
-    // Ease curve so it starts dissolving quickly but finishes clean.
+    // Ease curve for threshold progression.
     float t = smoothstep(0.0, 1.0, p);
 
     // Soft threshold band to avoid harsh popping.
     float softness = 0.10;
-    float mask = smoothstep(t - softness, t + softness, n);
+    // "Incoming when threshold exceeds noise" so it starts mostly outgoing and ends fully incoming.
+    float mask = smoothstep(n - softness, n + softness, t);
 
     float4 a = outgoing.read(gid);
     float4 b = incoming.read(gid);
@@ -49,4 +59,3 @@ kernel void transitionDissolve(
 
     output.write(result, gid);
 }
-
