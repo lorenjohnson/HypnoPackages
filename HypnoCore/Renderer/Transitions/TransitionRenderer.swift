@@ -19,6 +19,7 @@ public final class TransitionRenderer {
         case none           // Instant cut (no transition)
         case crossfade      // Linear alpha blend
         case blur           // Gaussian blur into next
+        case dissolve       // Noise dissolve into next
         case destroy        // Moshing/glitch effect
 
         /// Display name for UI
@@ -27,6 +28,7 @@ public final class TransitionRenderer {
             case .none: return "None"
             case .crossfade: return "Crossfade"
             case .blur: return "Blur"
+            case .dissolve: return "Dissolve"
             case .destroy: return "Destroy"
             }
         }
@@ -37,6 +39,7 @@ public final class TransitionRenderer {
             case .none: return nil
             case .crossfade: return "transitionCrossfade"
             case .blur: return "transitionBlur"
+            case .dissolve: return "transitionDissolve"
             case .destroy: return "transitionDestroy"
             }
         }
