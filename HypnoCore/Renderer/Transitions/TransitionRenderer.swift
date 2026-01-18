@@ -16,24 +16,25 @@ public final class TransitionRenderer {
 
     /// Available transition types
     public enum TransitionType: String, CaseIterable, Codable {
+        case none           // Instant cut (no transition)
         case crossfade      // Linear alpha blend
-        case punk           // Stepped/jittery blend with noise
-        case wipeLeft       // Wipe from right to left
-        case wipeRight      // Wipe from left to right
-        case wipeUp         // Wipe from bottom to top
-        case wipeDown       // Wipe from top to bottom
-        case dissolve       // Noise-based dissolve
+        case destroy        // Moshing/glitch effect
 
-        /// Shader function name for this transition
-        var shaderName: String {
+        /// Display name for UI
+        public var displayName: String {
             switch self {
+            case .none: return "None"
+            case .crossfade: return "Crossfade"
+            case .destroy: return "Destroy"
+            }
+        }
+
+        /// Shader function name for this transition (nil for instant cut)
+        var shaderName: String? {
+            switch self {
+            case .none: return nil
             case .crossfade: return "transitionCrossfade"
-            case .punk: return "transitionPunk"
-            case .wipeLeft: return "transitionWipeLeft"
-            case .wipeRight: return "transitionWipeRight"
-            case .wipeUp: return "transitionWipeUp"
-            case .wipeDown: return "transitionWipeDown"
-            case .dissolve: return "transitionDissolve"
+            case .destroy: return "transitionDestroy"
             }
         }
     }
@@ -53,6 +54,7 @@ public final class TransitionRenderer {
     private let device: MTLDevice
     private let commandQueue: MTLCommandQueue
     private var pipelineStates: [TransitionType: MTLComputePipelineState] = [:]
+    private var frameCounter: Int = 0
 
     /// Whether the renderer is properly initialized
     public var isValid: Bool {
@@ -74,15 +76,21 @@ public final class TransitionRenderer {
             return
         }
 
+        print("TransitionRenderer: Loading shaders from library with function names: \(library.functionNames)")
+
         for type in TransitionType.allCases {
-            guard let function = library.makeFunction(name: type.shaderName) else {
-                print("TransitionRenderer: Shader '\(type.shaderName)' not found")
+            // Skip types without shaders (e.g., .none)
+            guard let shaderName = type.shaderName else { continue }
+
+            guard let function = library.makeFunction(name: shaderName) else {
+                print("TransitionRenderer: Shader '\(shaderName)' not found in library")
                 continue
             }
 
             do {
                 let pipeline = try device.makeComputePipelineState(function: function)
                 pipelineStates[type] = pipeline
+                print("TransitionRenderer: Loaded pipeline for \(type) (\(shaderName))")
             } catch {
                 print("TransitionRenderer: Failed to create pipeline for \(type): \(error)")
             }
@@ -98,6 +106,7 @@ public final class TransitionRenderer {
     ///   - output: The output texture to write to
     ///   - type: The type of transition to apply
     ///   - progress: Transition progress (0.0 = fully outgoing, 1.0 = fully incoming)
+    ///   - seed: Random seed for noise-based transitions (should stay constant per transition)
     ///   - softness: Edge softness for wipe transitions (0.0 to 0.5)
     ///   - commandBuffer: The command buffer to encode into
     public func render(
@@ -106,9 +115,16 @@ public final class TransitionRenderer {
         output: MTLTexture,
         type: TransitionType,
         progress: Float,
+        seed: UInt32 = 0,
         softness: Float = 0.02,
         commandBuffer: MTLCommandBuffer
     ) {
+        // Log every 30 frames to avoid spam
+        frameCounter += 1
+        if frameCounter % 30 == 0 {
+            print("TransitionRenderer: \(type) progress=\(progress) seed=\(seed) size=\(output.width)x\(output.height)")
+        }
+
         guard let pipeline = pipelineStates[type] else {
             print("TransitionRenderer: No pipeline for \(type)")
             return
@@ -130,7 +146,7 @@ public final class TransitionRenderer {
             progress: progress,
             width: Int32(output.width),
             height: Int32(output.height),
-            seed: UInt32.random(in: 0...UInt32.max),
+            seed: seed,
             softness: softness
         )
         encoder.setBytes(&params, length: MemoryLayout<TransitionParams>.size, index: 0)
@@ -156,6 +172,7 @@ public final class TransitionRenderer {
         output: MTLTexture,
         type: TransitionType,
         progress: Float,
+        seed: UInt32 = 0,
         softness: Float = 0.02
     ) -> Bool {
         guard let commandBuffer = commandQueue.makeCommandBuffer() else {
@@ -168,6 +185,7 @@ public final class TransitionRenderer {
             output: output,
             type: type,
             progress: progress,
+            seed: seed,
             softness: softness,
             commandBuffer: commandBuffer
         )

@@ -24,9 +24,10 @@ public final class AVPlayerFrameSource: FrameSource {
     private var videoOutput: AVPlayerItemVideoOutput?
 
     /// Output pixel buffer settings
-    /// Using bi-planar YUV for efficiency (no CPU-side color conversion)
+    /// Using BGRA since FrameCompositor (AVVideoCompositing) outputs BGRA via CIContext.
+    /// When no custom compositor is used, AVFoundation will convert to BGRA anyway.
     private let outputSettings: [String: Any] = [
-        kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange,
+        kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
         kCVPixelBufferMetalCompatibilityKey as String: true,
         kCVPixelBufferIOSurfacePropertiesKey as String: [:]
     ]

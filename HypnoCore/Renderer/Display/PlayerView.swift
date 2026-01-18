@@ -1,5 +1,5 @@
 //
-//  MetalPlayerView.swift
+//  PlayerView.swift
 //  HypnoCore
 //
 //  MTKView-based display surface for the Metal playback pipeline.
@@ -14,7 +14,7 @@ import CoreMedia
 
 /// MTKView subclass that displays video frames as Metal textures.
 /// Designed for use with AVPlayerFrameSource to pull frames from AVPlayer.
-public final class MetalPlayerView: MTKView {
+public final class PlayerView: MTKView {
 
     // MARK: - Public Properties
 
@@ -67,6 +67,9 @@ public final class MetalPlayerView: MTKView {
     private var transitionOutputTexture: MTLTexture?
     private let textureLock = NSLock()
 
+    /// Seed for transition effects (stays constant for one transition)
+    private var transitionSeed: UInt32 = 0
+
     /// Set the texture to display directly (bypasses frame sources)
     public func setTexture(_ texture: MTLTexture?) {
         textureLock.lock()
@@ -106,7 +109,7 @@ public final class MetalPlayerView: MTKView {
 
     private func configure() {
         guard let device = self.device else {
-            print("MetalPlayerView: No Metal device available")
+            print("PlayerView: No Metal device available")
             return
         }
 
@@ -137,14 +140,14 @@ public final class MetalPlayerView: MTKView {
 
         let library: MTLLibrary?
         do {
-            library = try device.makeDefaultLibrary(bundle: Bundle(for: MetalPlayerView.self))
+            library = try device.makeDefaultLibrary(bundle: Bundle(for: PlayerView.self))
         } catch {
-            print("MetalPlayerView: Failed to load shader library: \(error)")
+            print("PlayerView: Failed to load shader library: \(error)")
             return
         }
 
         guard let lib = library else {
-            print("MetalPlayerView: No shader library found")
+            print("PlayerView: No shader library found")
             return
         }
 
@@ -160,7 +163,7 @@ public final class MetalPlayerView: MTKView {
 
         guard let vertexFunction = library.makeFunction(name: "passthroughVertex"),
               let fragmentFunction = library.makeFunction(name: "passthroughFragment") else {
-            print("MetalPlayerView: Passthrough shader functions not found")
+            print("PlayerView: Passthrough shader functions not found")
             return
         }
 
@@ -178,7 +181,7 @@ public final class MetalPlayerView: MTKView {
         do {
             renderPipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
         } catch {
-            print("MetalPlayerView: Failed to create passthrough pipeline: \(error)")
+            print("PlayerView: Failed to create passthrough pipeline: \(error)")
         }
     }
 
@@ -187,7 +190,7 @@ public final class MetalPlayerView: MTKView {
 
         guard let vertexFunction = library.makeFunction(name: "yuvDisplayVertex"),
               let fragmentFunction = library.makeFunction(name: "yuvDisplayFragment") else {
-            print("MetalPlayerView: YUV shader functions not found")
+            print("PlayerView: YUV shader functions not found")
             return
         }
 
@@ -199,7 +202,7 @@ public final class MetalPlayerView: MTKView {
         do {
             yuvRenderPipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
         } catch {
-            print("MetalPlayerView: Failed to create YUV pipeline: \(error)")
+            print("PlayerView: Failed to create YUV pipeline: \(error)")
         }
     }
 
@@ -220,13 +223,19 @@ public final class MetalPlayerView: MTKView {
         guard let device = device else { return }
 
         // Fullscreen quad vertices as packed float4 (posX, posY, texU, texV)
+        // NDC: (-1,-1) = bottom-left, (1,1) = top-right
+        // Texture coords: (0,0) = top-left, (1,1) = bottom-right
+        // So bottom-left vertex (-1,-1) maps to texture (0,1)
+        // And top-right vertex (1,1) maps to texture (1,0)
         let vertices: [SIMD4<Float>] = [
-            SIMD4(-1, -1, 0, 1),  // bottom-left
-            SIMD4( 1, -1, 1, 1),  // bottom-right
-            SIMD4(-1,  1, 0, 0),  // top-left
-            SIMD4( 1, -1, 1, 1),  // bottom-right
-            SIMD4( 1,  1, 1, 0),  // top-right
-            SIMD4(-1,  1, 0, 0),  // top-left
+            // Triangle 1: bottom-left, bottom-right, top-left
+            SIMD4(-1, -1, 0, 1),  // bottom-left  -> tex (0,1)
+            SIMD4( 1, -1, 1, 1),  // bottom-right -> tex (1,1)
+            SIMD4(-1,  1, 0, 0),  // top-left     -> tex (0,0)
+            // Triangle 2: bottom-right, top-right, top-left
+            SIMD4( 1, -1, 1, 1),  // bottom-right -> tex (1,1)
+            SIMD4( 1,  1, 1, 0),  // top-right    -> tex (1,0)
+            SIMD4(-1,  1, 0, 0),  // top-left     -> tex (0,0)
         ]
 
         vertexBuffer = device.makeBuffer(
@@ -249,6 +258,8 @@ public final class MetalPlayerView: MTKView {
         transitionDuration = duration ?? self.transitionDuration
         transitionStartTime = CACurrentMediaTime()
         transitionProgress = 0
+        // Generate a fresh seed for this transition (stays constant throughout)
+        transitionSeed = UInt32.random(in: 0...UInt32.max)
     }
 
     /// Cancel an in-progress transition
@@ -296,6 +307,14 @@ public final class MetalPlayerView: MTKView {
                 commandBuffer: commandBuffer
             )
         } else {
+            // Debug: log when transition should be active but textures are missing
+            if activeTransition != nil {
+                let hasOutgoing = (primaryTexture ?? directTexture) != nil
+                let hasIncoming = secondaryTexture != nil
+                if !hasOutgoing || !hasIncoming {
+                    print("PlayerView: Transition \(activeTransition!) stalled - outgoing=\(hasOutgoing) incoming=\(hasIncoming) progress=\(transitionProgress)")
+                }
+            }
             // Use primary texture or direct texture
             outputTexture = primaryTexture ?? directTexture
         }
@@ -355,7 +374,7 @@ public final class MetalPlayerView: MTKView {
         }
 
         // Load compute shader
-        guard let library = try? device.makeDefaultLibrary(bundle: Bundle(for: MetalPlayerView.self)),
+        guard let library = try? device.makeDefaultLibrary(bundle: Bundle(for: PlayerView.self)),
               let function = library.makeFunction(name: "yuvToRGBA"),
               let pipeline = try? device.makeComputePipelineState(function: function) else {
             return nil
@@ -428,6 +447,7 @@ public final class MetalPlayerView: MTKView {
             output: output,
             type: type,
             progress: progress,
+            seed: transitionSeed,
             commandBuffer: commandBuffer
         )
 
