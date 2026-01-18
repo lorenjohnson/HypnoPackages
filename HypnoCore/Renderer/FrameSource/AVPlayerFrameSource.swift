@@ -10,6 +10,7 @@
 import AVFoundation
 import CoreMedia
 import CoreVideo
+import QuartzCore
 
 /// Frame source that pulls frames from an AVPlayer via AVPlayerItemVideoOutput.
 /// AVPlayer handles decoding and A/V sync; we pull frames at display cadence.
@@ -22,6 +23,16 @@ public final class AVPlayerFrameSource: FrameSource {
 
     /// Video output for pulling frames
     private var videoOutput: AVPlayerItemVideoOutput?
+
+    /// The item that currently has `videoOutput` attached (for clean removal on swap)
+    private weak var attachedItem: AVPlayerItem?
+
+    /// Observe player.currentItem so we can attach output even when items are swapped externally.
+    private var currentItemObservation: NSKeyValueObservation?
+
+    /// Cache the last frame so callers can keep displaying when no new buffer is ready.
+    private let cacheLock = NSLock()
+    private var cachedFrame: DecodedFrame?
 
     /// Output pixel buffer settings
     /// Using BGRA since FrameCompositor (AVVideoCompositing) outputs BGRA via CIContext.
@@ -44,11 +55,7 @@ public final class AVPlayerFrameSource: FrameSource {
     public init(player: AVPlayer) {
         self.player = player
 
-        // If player already has an item, attach output
-        if let item = player.currentItem {
-            attachOutput(to: item)
-            updateMetadata(from: item)
-        }
+        observeCurrentItem()
     }
 
     /// Create a frame source with a new AVPlayer
@@ -58,19 +65,51 @@ public final class AVPlayerFrameSource: FrameSource {
 
     // MARK: - Configuration
 
-    /// Attach video output to a player item
-    public func attachOutput(to item: AVPlayerItem) {
-        // Remove existing output if any
+    private func observeCurrentItem() {
+        currentItemObservation = player.observe(\.currentItem, options: [.initial, .new]) { [weak self] _, change in
+            guard let self else { return }
+            guard let item = (change.newValue ?? nil) else {
+                self.detachOutput()
+                self.updateMetadata(from: nil)
+                self.clearCachedFrame()
+                return
+            }
+
+            self.attachOutput(to: item)
+            self.clearCachedFrame()
+        }
+    }
+
+    private func clearCachedFrame() {
+        cacheLock.lock()
+        cachedFrame = nil
+        cacheLock.unlock()
+    }
+
+    /// Detach video output from the previously attached item, if any.
+    private func detachOutput() {
+        guard let existing = videoOutput else { return }
+        attachedItem?.remove(existing)
+        attachedItem = nil
+        videoOutput = nil
+    }
+
+    /// Attach video output to a player item.
+    private func attachOutput(to item: AVPlayerItem) {
+        // Remove existing output from prior item, if any.
         if let existing = videoOutput {
-            item.remove(existing)
+            attachedItem?.remove(existing)
         }
 
         // Create new output
         let output = AVPlayerItemVideoOutput(pixelBufferAttributes: outputSettings)
-        output.suppressesPlayerRendering = false  // Allow AVPlayer to still render audio
+        // We pull frames via the output; AVPlayer's own video rendering isn't used.
+        // (Audio continues regardless of this flag.)
+        output.suppressesPlayerRendering = true
 
         item.add(output)
         videoOutput = output
+        attachedItem = item
 
         // Update cached metadata
         updateMetadata(from: item)
@@ -78,12 +117,17 @@ public final class AVPlayerFrameSource: FrameSource {
 
     /// Configure with a new player item (replaces current item)
     public func configure(with item: AVPlayerItem) {
-        attachOutput(to: item)
         player.replaceCurrentItem(with: item)
     }
 
     /// Update cached metadata from player item
-    private func updateMetadata(from item: AVPlayerItem) {
+    private func updateMetadata(from item: AVPlayerItem?) {
+        guard let item else {
+            _naturalSize = .zero
+            _duration = .invalid
+            return
+        }
+
         // Get natural size from video track
         if let track = item.asset.tracks(withMediaType: .video).first {
             _naturalSize = track.naturalSize
@@ -106,8 +150,15 @@ public final class AVPlayerFrameSource: FrameSource {
 
     public var isReady: Bool {
         guard let output = videoOutput else { return false }
-        let time = player.currentTime()
-        return output.hasNewPixelBuffer(forItemTime: time)
+        let hostTime = CACurrentMediaTime()
+        let itemTime = output.itemTime(forHostTime: hostTime)
+        if output.hasNewPixelBuffer(forItemTime: itemTime) {
+            return true
+        }
+        cacheLock.lock()
+        let hasCached = cachedFrame != nil
+        cacheLock.unlock()
+        return hasCached
     }
 
     public var naturalSize: CGSize {
@@ -120,6 +171,7 @@ public final class AVPlayerFrameSource: FrameSource {
 
     public func prepare(at time: CMTime) {
         // For AVPlayer-based source, seeking handles preparation
+        clearCachedFrame()
         player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
     }
 
@@ -128,19 +180,67 @@ public final class AVPlayerFrameSource: FrameSource {
 
         var actualTime = CMTime.zero
         guard let pixelBuffer = output.copyPixelBuffer(forItemTime: targetPTS, itemTimeForDisplay: &actualTime) else {
-            return nil
+            cacheLock.lock()
+            let cached = cachedFrame
+            cacheLock.unlock()
+            return cached
         }
 
         // Get color space (CVImageBufferGetColorSpace returns Unmanaged, need to unwrap)
         let colorSpace: CGColorSpace? = CVImageBufferGetColorSpace(pixelBuffer)?.takeUnretainedValue()
 
-        return DecodedFrame(
+        let frame = DecodedFrame(
             pixelBuffer: pixelBuffer,
             pts: actualTime,
             duration: nil,
             isKeyframe: false,  // AVPlayer doesn't expose this
             colorSpace: colorSpace
         )
+        cacheLock.lock()
+        cachedFrame = frame
+        cacheLock.unlock()
+        return frame
+    }
+
+    public func bestFrame(forHostTime hostTime: CFTimeInterval) -> DecodedFrame? {
+        guard let output = videoOutput else { return nil }
+
+        let itemTime = output.itemTime(forHostTime: hostTime)
+        guard itemTime.isValid, itemTime.isNumeric else {
+            cacheLock.lock()
+            let cached = cachedFrame
+            cacheLock.unlock()
+            return cached
+        }
+
+        if !output.hasNewPixelBuffer(forItemTime: itemTime) {
+            cacheLock.lock()
+            let cached = cachedFrame
+            cacheLock.unlock()
+            return cached
+        }
+
+        var actualTime = CMTime.zero
+        guard let pixelBuffer = output.copyPixelBuffer(forItemTime: itemTime, itemTimeForDisplay: &actualTime) else {
+            cacheLock.lock()
+            let cached = cachedFrame
+            cacheLock.unlock()
+            return cached
+        }
+
+        let colorSpace: CGColorSpace? = CVImageBufferGetColorSpace(pixelBuffer)?.takeUnretainedValue()
+
+        let frame = DecodedFrame(
+            pixelBuffer: pixelBuffer,
+            pts: actualTime,
+            duration: nil,
+            isKeyframe: false,
+            colorSpace: colorSpace
+        )
+        cacheLock.lock()
+        cachedFrame = frame
+        cacheLock.unlock()
+        return frame
     }
 
     // MARK: - Playback Control (convenience pass-through)
@@ -162,6 +262,7 @@ public final class AVPlayerFrameSource: FrameSource {
 
     /// Seek to time
     public func seek(to time: CMTime, completion: ((Bool) -> Void)? = nil) {
+        clearCachedFrame()
         player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero) { finished in
             completion?(finished)
         }
@@ -189,6 +290,11 @@ public final class AVPlayerFrameSource: FrameSource {
     public var audioOutputDeviceUniqueID: String? {
         get { player.audioOutputDeviceUniqueID }
         set { player.audioOutputDeviceUniqueID = newValue }
+    }
+
+    deinit {
+        currentItemObservation?.invalidate()
+        detachOutput()
     }
 }
 

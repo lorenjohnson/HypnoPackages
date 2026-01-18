@@ -54,7 +54,6 @@ public final class TransitionRenderer {
     private let device: MTLDevice
     private let commandQueue: MTLCommandQueue
     private var pipelineStates: [TransitionType: MTLComputePipelineState] = [:]
-    private var frameCounter: Int = 0
 
     /// Whether the renderer is properly initialized
     public var isValid: Bool {
@@ -76,8 +75,6 @@ public final class TransitionRenderer {
             return
         }
 
-        print("TransitionRenderer: Loading shaders from library with function names: \(library.functionNames)")
-
         for type in TransitionType.allCases {
             // Skip types without shaders (e.g., .none)
             guard let shaderName = type.shaderName else { continue }
@@ -90,7 +87,6 @@ public final class TransitionRenderer {
             do {
                 let pipeline = try device.makeComputePipelineState(function: function)
                 pipelineStates[type] = pipeline
-                print("TransitionRenderer: Loaded pipeline for \(type) (\(shaderName))")
             } catch {
                 print("TransitionRenderer: Failed to create pipeline for \(type): \(error)")
             }
@@ -119,14 +115,7 @@ public final class TransitionRenderer {
         softness: Float = 0.02,
         commandBuffer: MTLCommandBuffer
     ) {
-        // Log every 30 frames to avoid spam
-        frameCounter += 1
-        if frameCounter % 30 == 0 {
-            print("TransitionRenderer: \(type) progress=\(progress) seed=\(seed) size=\(output.width)x\(output.height)")
-        }
-
         guard let pipeline = pipelineStates[type] else {
-            print("TransitionRenderer: No pipeline for \(type)")
             return
         }
 

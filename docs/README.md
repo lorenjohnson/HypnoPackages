@@ -1,22 +1,24 @@
-# Documentation Index
+# Docs
 
-## Top-level
-- `docs/roadmap.md`: product roadmap and open issues
-- `docs/product/`: mission, tech stack, coding practices
-- `docs/architecture/`: system architecture docs and subsystem references
-- `docs/reference/`: quick operational references
-- `docs/reference/controls.md`: keyboard shortcuts, HUD notes, and controller mapping
-- `docs/projects/`: per-initiative specs and plans (features, refactors, research)
-- `agents/`: AI agent role definitions (root)
+This repository contains two macOS apps:
 
-## Project doc conventions
-- `spec.md`: describes current behavior or target design
-- `plan.md` or `requirements.md`: implementation approach or constraints
-- `tasks.md`: concrete execution checklist
-- `notes.md`: research or analysis
-- `planning/`: optional folder for in-progress material
+- `Hypnograph/` (target: `HypnographApp`)
+- `Divine/` (target: `DivineApp`)
 
-## Maintenance
-- Keep `docs/architecture/` in sync with refactors and behavior changes
-- Keep `docs/projects/` focused on a single initiative per folder
-- When a plan is superseded, keep it but add a short status note at the top
+Both share `HypnoCore/` (and `HypnoUI/`).
+
+## Current Layout
+
+- `docs/architecture/` — architecture notes (currently a mix of shared + app-specific details)
+- `docs/projects/` — planning docs and historical implementation notes
+- `docs/reference/` — user-facing reference (e.g., controls)
+
+## Planned Layout (Future Cleanup)
+
+To reduce confusion, a future docs-only refactor can split app-specific docs from shared core docs:
+
+- `docs/` — shared, core docs (primarily `HypnoCore`)
+- `Hypnograph/docs/` — Hypnograph-specific docs
+- `Divine/docs/` — Divine-specific docs
+
+This will require updating intra-doc links and any references from code comments/README files.

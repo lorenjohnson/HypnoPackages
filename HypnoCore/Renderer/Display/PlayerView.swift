@@ -11,6 +11,7 @@ import AppKit
 import MetalKit
 import CoreVideo
 import CoreMedia
+import QuartzCore
 
 /// MTKView subclass that displays video frames as Metal textures.
 /// Designed for use with AVPlayerFrameSource to pull frames from AVPlayer.
@@ -55,20 +56,35 @@ public final class PlayerView: MTKView {
     public var transitionDuration: CFTimeInterval = 1.5
 
     /// Transition start time
-    private var transitionStartTime: CFTimeInterval?
+    public private(set) var transitionStartTime: CFTimeInterval?
 
     /// Callback when transition completes
     public var onTransitionComplete: (() -> Void)?
+
+    /// Callback for transition progress updates (0.0 to 1.0)
+    public var onTransitionProgress: ((Float) -> Void)?
+
+    /// If false, the view won't auto-swap sources and clear state when progress reaches 1.0.
+    /// Useful for mirrored views that should follow an external controller.
+    public var autoCompleteTransitions: Bool = true
 
     // MARK: - Texture Management
 
     private let textureCache = TextureCache()
     private var currentTexture: MTLTexture?
-    private var transitionOutputTexture: MTLTexture?
     private let textureLock = NSLock()
 
     /// Seed for transition effects (stays constant for one transition)
-    private var transitionSeed: UInt32 = 0
+    public private(set) var transitionSeed: UInt32 = 0
+
+    private var isTransitionCompletionPending: Bool = false
+
+    private static let maxInFlightFrames: Int = 3
+    private let inFlightSemaphore = DispatchSemaphore(value: maxInFlightFrames)
+    private var inFlightIndex: Int = 0
+
+    private var transitionOutputTextures: [MTLTexture] = []
+    private var yuvConvertedTextures: [MTLTexture] = []
 
     /// Set the texture to display directly (bypasses frame sources)
     public func setTexture(_ texture: MTLTexture?) {
@@ -81,10 +97,11 @@ public final class PlayerView: MTKView {
 
     private var commandQueue: MTLCommandQueue?
     private var renderPipelineState: MTLRenderPipelineState?
-    private var yuvRenderPipelineState: MTLRenderPipelineState?
+    private var yuvToRGBAPipelineState: MTLComputePipelineState?
     private var samplerState: MTLSamplerState?
     private var vertexBuffer: MTLBuffer?
     private var transitionRenderer: TransitionRenderer?
+    private var shaderLibrary: MTLLibrary?
 
     // YUV conversion parameters
     private struct YUVParams {
@@ -115,7 +132,7 @@ public final class PlayerView: MTKView {
 
         // MTKView configuration
         colorPixelFormat = .bgra8Unorm
-        framebufferOnly = false  // Need to read back for transitions
+        framebufferOnly = true
         isPaused = false
         enableSetNeedsDisplay = false
         preferredFramesPerSecond = 60
@@ -150,12 +167,15 @@ public final class PlayerView: MTKView {
             print("PlayerView: No shader library found")
             return
         }
+        shaderLibrary = lib
 
         // Passthrough pipeline (BGRA textures)
         setupPassthroughPipeline(library: lib)
 
-        // YUV pipeline
-        setupYUVPipeline(library: lib)
+        // YUV conversion compute pipeline (optional)
+        if let function = lib.makeFunction(name: "yuvToRGBA") {
+            yuvToRGBAPipelineState = try? device.makeComputePipelineState(function: function)
+        }
     }
 
     private func setupPassthroughPipeline(library: MTLLibrary) {
@@ -182,27 +202,6 @@ public final class PlayerView: MTKView {
             renderPipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
         } catch {
             print("PlayerView: Failed to create passthrough pipeline: \(error)")
-        }
-    }
-
-    private func setupYUVPipeline(library: MTLLibrary) {
-        guard let device = device else { return }
-
-        guard let vertexFunction = library.makeFunction(name: "yuvDisplayVertex"),
-              let fragmentFunction = library.makeFunction(name: "yuvDisplayFragment") else {
-            print("PlayerView: YUV shader functions not found")
-            return
-        }
-
-        let descriptor = MTLRenderPipelineDescriptor()
-        descriptor.vertexFunction = vertexFunction
-        descriptor.fragmentFunction = fragmentFunction
-        descriptor.colorAttachments[0].pixelFormat = colorPixelFormat
-
-        do {
-            yuvRenderPipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
-        } catch {
-            print("PlayerView: Failed to create YUV pipeline: \(error)")
         }
     }
 
@@ -251,15 +250,34 @@ public final class PlayerView: MTKView {
     public func startTransition(
         to newSource: FrameSource,
         type: TransitionRenderer.TransitionType,
-        duration: CFTimeInterval? = nil
+        duration: CFTimeInterval? = nil,
+        seed: UInt32? = nil,
+        startTime: CFTimeInterval? = nil
     ) {
         secondarySource = newSource
         activeTransition = type
         transitionDuration = duration ?? self.transitionDuration
-        transitionStartTime = CACurrentMediaTime()
+        transitionStartTime = startTime ?? CACurrentMediaTime()
         transitionProgress = 0
+        isTransitionCompletionPending = false
         // Generate a fresh seed for this transition (stays constant throughout)
-        transitionSeed = UInt32.random(in: 0...UInt32.max)
+        transitionSeed = seed ?? UInt32.random(in: 0...UInt32.max)
+    }
+
+    /// Apply externally-controlled transition state (for mirrored views).
+    public func setTransitionState(
+        secondarySource: FrameSource?,
+        type: TransitionRenderer.TransitionType?,
+        startTime: CFTimeInterval?,
+        duration: CFTimeInterval,
+        seed: UInt32
+    ) {
+        self.secondarySource = secondarySource
+        self.activeTransition = type
+        self.transitionStartTime = startTime
+        self.transitionDuration = duration
+        self.transitionSeed = seed
+        self.isTransitionCompletionPending = false
     }
 
     /// Cancel an in-progress transition
@@ -268,6 +286,7 @@ public final class PlayerView: MTKView {
         activeTransition = nil
         transitionStartTime = nil
         transitionProgress = 0
+        isTransitionCompletionPending = false
     }
 
     // MARK: - Drawing
@@ -275,18 +294,32 @@ public final class PlayerView: MTKView {
     public override func draw(_ dirtyRect: NSRect) {
         guard isRenderingEnabled else { return }
 
-        guard let commandBuffer = commandQueue?.makeCommandBuffer() else { return }
+        inFlightSemaphore.wait()
 
-        // Update transition progress
-        updateTransition()
+        guard let commandBuffer = commandQueue?.makeCommandBuffer() else {
+            inFlightSemaphore.signal()
+            return
+        }
+
+        let frameIndex = inFlightIndex
+        inFlightIndex = (inFlightIndex + 1) % Self.maxInFlightFrames
+
+        commandBuffer.addCompletedHandler { [weak self] _ in
+            self?.inFlightSemaphore.signal()
+        }
+
+        let hostTime = CACurrentMediaTime()
+
+        // Update transition progress (may return a completion callback)
+        let transitionCompletion = updateTransition(now: hostTime)
 
         // Get frames from sources
-        let primaryFrame = primarySource?.bestFrame(for: primarySource?.currentTime ?? .zero)
-        let secondaryFrame = secondarySource?.bestFrame(for: secondarySource?.currentTime ?? .zero)
+        let primaryFrame = primarySource?.bestFrame(forHostTime: hostTime)
+        let secondaryFrame = secondarySource?.bestFrame(forHostTime: hostTime)
 
         // Convert to textures
-        let primaryTexture = primaryFrame.flatMap { frameToTexture($0) }
-        let secondaryTexture = secondaryFrame.flatMap { frameToTexture($0) }
+        let primaryTexture = primaryFrame.flatMap { frameToTexture($0, commandBuffer: commandBuffer, frameIndex: frameIndex) }
+        let secondaryTexture = secondaryFrame.flatMap { frameToTexture($0, commandBuffer: commandBuffer, frameIndex: frameIndex) }
 
         // Determine what to render
         textureLock.lock()
@@ -304,17 +337,10 @@ public final class PlayerView: MTKView {
                 incoming: incoming,
                 type: transition,
                 progress: transitionProgress,
-                commandBuffer: commandBuffer
+                commandBuffer: commandBuffer,
+                frameIndex: frameIndex
             )
         } else {
-            // Debug: log when transition should be active but textures are missing
-            if activeTransition != nil {
-                let hasOutgoing = (primaryTexture ?? directTexture) != nil
-                let hasIncoming = secondaryTexture != nil
-                if !hasOutgoing || !hasIncoming {
-                    print("PlayerView: Transition \(activeTransition!) stalled - outgoing=\(hasOutgoing) incoming=\(hasIncoming) progress=\(transitionProgress)")
-                }
-            }
             // Use primary texture or direct texture
             outputTexture = primaryTexture ?? directTexture
         }
@@ -322,66 +348,105 @@ public final class PlayerView: MTKView {
         // Render to screen
         renderToScreen(texture: outputTexture, commandBuffer: commandBuffer)
 
+        if let transitionCompletion {
+            commandBuffer.addCompletedHandler { _ in
+                DispatchQueue.main.async {
+                    transitionCompletion()
+                }
+            }
+        }
+
         commandBuffer.commit()
     }
 
-    private func updateTransition() {
-        guard let startTime = transitionStartTime else { return }
+    private func updateTransition(now: CFTimeInterval) -> (() -> Void)? {
+        guard activeTransition != nil, let startTime = transitionStartTime else { return nil }
 
-        let elapsed = CACurrentMediaTime() - startTime
-        transitionProgress = Float(min(elapsed / transitionDuration, 1.0))
+        let elapsed = now - startTime
+        let progress = Float(min(max(elapsed / max(transitionDuration, 0.0001), 0), 1.0))
+        transitionProgress = progress
 
-        if transitionProgress >= 1.0 {
-            // Transition complete
-            primarySource = secondarySource
-            secondarySource = nil
-            activeTransition = nil
-            transitionStartTime = nil
-            transitionProgress = 0
+        if let onTransitionProgress {
+            if Thread.isMainThread {
+                onTransitionProgress(progress)
+            } else {
+                DispatchQueue.main.async {
+                    onTransitionProgress(progress)
+                }
+            }
+        }
 
-            onTransitionComplete?()
+        guard progress >= 1.0 else {
+            isTransitionCompletionPending = false
+            return nil
+        }
+        guard autoCompleteTransitions else { return nil }
+        guard !isTransitionCompletionPending else { return nil }
+
+        isTransitionCompletionPending = true
+        let completion = onTransitionComplete
+        onTransitionComplete = nil
+        return { [weak self] in
+            guard let self else { return }
+            self.primarySource = self.secondarySource
+            self.secondarySource = nil
+            self.activeTransition = nil
+            self.transitionStartTime = nil
+            self.transitionProgress = 0
+            self.isTransitionCompletionPending = false
+            completion?()
         }
     }
 
-    private func frameToTexture(_ frame: DecodedFrame) -> MTLTexture? {
+    private func frameToTexture(_ frame: DecodedFrame, commandBuffer: MTLCommandBuffer, frameIndex: Int) -> MTLTexture? {
         if frame.isYUV {
-            // For YUV frames, we need to convert to RGBA
-            // Use compute shader for conversion
-            return convertYUVToRGBA(frame)
+            return convertYUVToRGBA(frame, commandBuffer: commandBuffer, frameIndex: frameIndex)
         } else {
             return textureCache.texture(from: frame.pixelBuffer)
         }
     }
 
-    private func convertYUVToRGBA(_ frame: DecodedFrame) -> MTLTexture? {
-        guard let device = device,
-              let commandQueue = commandQueue,
-              let yuvTextures = textureCache.yuvTextures(from: frame.pixelBuffer) else {
+    private func ensureInFlightTexturesMatch(
+        textures: inout [MTLTexture],
+        width: Int,
+        height: Int,
+        usage: MTLTextureUsage
+    ) {
+        guard let device else { return }
+        guard textures.count == Self.maxInFlightFrames,
+              textures.first?.width == width,
+              textures.first?.height == height else {
+            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                pixelFormat: .bgra8Unorm,
+                width: width,
+                height: height,
+                mipmapped: false
+            )
+            descriptor.usage = usage
+            textures = (0..<Self.maxInFlightFrames).compactMap { _ in
+                device.makeTexture(descriptor: descriptor)
+            }
+            return
+        }
+    }
+
+    private func convertYUVToRGBA(_ frame: DecodedFrame, commandBuffer: MTLCommandBuffer, frameIndex: Int) -> MTLTexture? {
+        guard let yuvTextures = textureCache.yuvTextures(from: frame.pixelBuffer),
+              let pipeline = yuvToRGBAPipelineState else {
             return nil
         }
 
-        // Create output texture
-        let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: .bgra8Unorm,
+        ensureInFlightTexturesMatch(
+            textures: &yuvConvertedTextures,
             width: frame.width,
             height: frame.height,
-            mipmapped: false
+            usage: [.shaderRead, .shaderWrite]
         )
-        descriptor.usage = [.shaderRead, .shaderWrite]
 
-        guard let outputTexture = device.makeTexture(descriptor: descriptor) else {
-            return nil
-        }
+        guard yuvConvertedTextures.count == Self.maxInFlightFrames else { return nil }
+        let outputTexture = yuvConvertedTextures[frameIndex]
 
-        // Load compute shader
-        guard let library = try? device.makeDefaultLibrary(bundle: Bundle(for: PlayerView.self)),
-              let function = library.makeFunction(name: "yuvToRGBA"),
-              let pipeline = try? device.makeComputePipelineState(function: function) else {
-            return nil
-        }
-
-        guard let commandBuffer = commandQueue.makeCommandBuffer(),
-              let encoder = commandBuffer.makeComputeCommandEncoder() else {
+        guard let encoder = commandBuffer.makeComputeCommandEncoder() else {
             return nil
         }
 
@@ -407,9 +472,6 @@ public final class PlayerView: MTKView {
         encoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup: threadgroupSize)
         encoder.endEncoding()
 
-        commandBuffer.commit()
-        commandBuffer.waitUntilCompleted()
-
         return outputTexture
     }
 
@@ -418,28 +480,22 @@ public final class PlayerView: MTKView {
         incoming: MTLTexture,
         type: TransitionRenderer.TransitionType,
         progress: Float,
-        commandBuffer: MTLCommandBuffer
+        commandBuffer: MTLCommandBuffer,
+        frameIndex: Int
     ) -> MTLTexture? {
-        guard let device = device else { return nil }
-
         // Create or reuse output texture
         let width = max(outgoing.width, incoming.width)
         let height = max(outgoing.height, incoming.height)
 
-        if transitionOutputTexture == nil ||
-           transitionOutputTexture!.width != width ||
-           transitionOutputTexture!.height != height {
-            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-                pixelFormat: .bgra8Unorm,
-                width: width,
-                height: height,
-                mipmapped: false
-            )
-            descriptor.usage = [.shaderRead, .shaderWrite]
-            transitionOutputTexture = device.makeTexture(descriptor: descriptor)
-        }
+        ensureInFlightTexturesMatch(
+            textures: &transitionOutputTextures,
+            width: width,
+            height: height,
+            usage: [.shaderRead, .shaderWrite]
+        )
 
-        guard let output = transitionOutputTexture else { return nil }
+        guard transitionOutputTextures.count == Self.maxInFlightFrames else { return nil }
+        let output = transitionOutputTextures[frameIndex]
 
         transitionRenderer?.render(
             outgoing: outgoing,

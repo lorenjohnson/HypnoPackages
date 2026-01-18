@@ -10,6 +10,7 @@
 import CoreMedia
 import CoreVideo
 import CoreGraphics
+import QuartzCore
 
 /// A decoded video frame with metadata
 public struct DecodedFrame {
@@ -84,6 +85,11 @@ public protocol FrameSource: AnyObject {
     /// Get the best available frame for the target presentation time
     func bestFrame(for targetPTS: CMTime) -> DecodedFrame?
 
+    /// Get the best available frame for a host time (typically `CACurrentMediaTime()`).
+    ///
+    /// AVPlayerItemVideoOutput is host-time driven; sources that can should implement this.
+    func bestFrame(forHostTime hostTime: CFTimeInterval) -> DecodedFrame?
+
     /// Request that frames be decoded/buffered around the target time
     func requestFrames(around targetPTS: CMTime)
 
@@ -104,6 +110,11 @@ public protocol FrameSource: AnyObject {
 public extension FrameSource {
     func prepare(at time: CMTime) {
         // Default: no-op
+    }
+
+    func bestFrame(forHostTime hostTime: CFTimeInterval) -> DecodedFrame? {
+        // Default: fall back to the source's current time.
+        bestFrame(for: currentTime)
     }
 
     func requestFrames(around targetPTS: CMTime) {
