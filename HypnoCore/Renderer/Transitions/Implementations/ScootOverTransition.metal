@@ -39,17 +39,19 @@ kernel void transitionScootOver(
     float w = float(params.width);
     float h = float(params.height);
 
-    // Boundary moves left->right. Left side is incoming, right side is outgoing.
-    float cutX = p * w;
-    float softnessPx = max(1.0, params.softness * w * 0.9 + 2.0);
-    float mask = smoothstep(cutX - softnessPx, cutX + softnessPx, px.x); // 0=left(incoming), 1=right(outgoing)
-
-    // Film-strip imperfection: jitter scanline bands + mild flicker.
+    // Film-strip imperfection: jitter scanline bands + mild flicker + stuttery motion.
     float intensity = 0.35 + 0.65 * (1.0 - abs(p - 0.5) * 2.0); // strongest mid-transition
 
+    // Monotonic "stutter": quantize progress a bit so motion holds then jumps forward.
+    // Keep it subtle and mostly mid-transition.
+    float stutterAmount = smoothstep(0.08, 0.28, p) * (1.0 - smoothstep(0.72, 0.92, p));
+    float stepsF = mix(1.0, 26.0, intensity);
+    float pHold = floor(p * stepsF) / max(stepsF, 1.0);
+    float p2 = mix(p, pHold, 0.35 * stutterAmount);
+
     float band = floor(px.y / 7.0);
-    float tA = floor(p * 72.0);
-    float tB = floor(p * 97.0);
+    float tA = floor(p2 * 72.0);
+    float tB = floor(p2 * 97.0);
 
     float bandRandA = hash(float2(band, tA), params.seed);
     float bandRandB = hash(float2(band + 13.0, tB), params.seed);
@@ -57,49 +59,60 @@ kernel void transitionScootOver(
     float bandJitterX = (bandRandA - 0.5) * w * 0.010 * intensity;
     float bandJitterY = (bandRandB - 0.5) * h * 0.003 * intensity;
 
-    // Make incoming feel slightly "late"/mis-registered at the start.
-    float incomingSlide = (1.0 - p) * w * 0.07;
-    float outgoingSlide = p * w * 0.02;
+    // Treat outgoing+incoming as a single connected strip: [outgoing][incoming].
+    // Viewport slides RIGHT across the strip, which reads as the old clip moving LEFT and
+    // the new clip entering from the RIGHT.
+    float stripX = px.x + p2 * w;
+    float stripY = px.y;
 
-    int2 base = int2(int(gid.x), int(gid.y));
+    // Apply jitter to the strip sample location (so both clips move together as one piece).
+    stripX += bandJitterX;
+    stripY += bandJitterY;
 
-    int2 inPosI = int2(
-        int(px.x - incomingSlide + bandJitterX),
-        int(px.y + bandJitterY)
-    );
-    int2 outPosI = int2(
-        int(px.x + outgoingSlide - bandJitterX * 0.6),
-        int(px.y - bandJitterY * 0.4)
-    );
+    float seamX = (1.0 - p2) * w; // where the join between outgoing/incoming appears in viewport
 
-    uint2 inPos = clampCoord(inPosI, params.width, params.height);
-    uint2 outPos = clampCoord(outPosI, params.width, params.height);
-
-    float4 a = outgoing.read(outPos);
-    float4 b = incoming.read(inPos);
-
-    float4 result = mix(b, a, mask);
+    float4 result;
+    if (stripX < w) {
+        uint2 outPos = clampCoord(int2(int(stripX), int(stripY)), params.width, params.height);
+        result = outgoing.read(outPos);
+    } else {
+        uint2 inPos = clampCoord(int2(int(stripX - w), int(stripY)), params.width, params.height);
+        result = incoming.read(inPos);
+    }
 
     // Add "out of sync film strip" feeling near the boundary:
     // - intermittent row swaps
     // - subtle brightness flicker
-    float seam = 1.0 - saturate(abs(px.x - cutX) / (softnessPx * 3.0));
-    float rowGate = hash(float2(band, floor(p * 38.0)), params.seed);
+    float seam = 1.0 - saturate(abs(px.x - seamX) / max(2.0, w * 0.018));
+    float rowGate = hash(float2(band, floor(p2 * 38.0)), params.seed);
     if (seam > 0.05 && rowGate > (0.72 - 0.18 * intensity)) {
-        // Alternate which source leaks per row/band.
-        float alt = step(1.0, fmod(px.y + floor(p * 41.0), 2.0));
-        float4 leaked = mix(a, b, alt);
-        result = mix(result, leaked, seam * 0.45 * intensity);
+        // Alternate which side leaks per row/band.
+        float alt = step(1.0, fmod(px.y + floor(p2 * 41.0), 2.0));
+        float stripLeakX = px.x + p2 * w + bandJitterX + (alt > 0.5 ? w * 0.012 : -w * 0.012);
+        float stripLeakY = px.y + bandJitterY;
+        float4 leaked;
+        if (stripLeakX < w) {
+            leaked = outgoing.read(clampCoord(int2(int(stripLeakX), int(stripLeakY)), params.width, params.height));
+        } else {
+            leaked = incoming.read(clampCoord(int2(int(stripLeakX - w), int(stripLeakY)), params.width, params.height));
+        }
+        result = mix(result, leaked, seam * 0.55 * intensity);
     }
 
-    float flicker = (hash(float2(band, floor(p * 120.0)), params.seed) - 0.5) * 0.10 * intensity;
+    float flicker = (hash(float2(band, floor(p2 * 120.0)), params.seed) - 0.5) * 0.10 * intensity;
     result.rgb = saturate(result.rgb * (1.0 + flicker));
 
     // Occasional vertical scratches (very subtle).
-    float scratchGate = hash(float2(floor(px.x / 3.0), floor(p * 140.0)), params.seed);
+    float scratchGate = hash(float2(floor(px.x / 3.0), floor(p2 * 140.0)), params.seed);
     float scratch = step(0.997, scratchGate) * (0.12 + 0.18 * intensity);
     result.rgb = saturate(result.rgb + scratch);
 
+    // A clearer divide line between frames (slightly dirty, not a perfect vector line).
+    float lineW = 1.2 + 1.2 * intensity;
+    float line = 1.0 - smoothstep(0.0, lineW, abs(px.x - seamX));
+    float lineNoise = hash(float2(band + floor(p2 * 22.0), 91.0), params.seed);
+    float3 lineColor = mix(float3(0.02), float3(0.75), 0.35 + 0.65 * lineNoise);
+    result.rgb = saturate(mix(result.rgb, lineColor, line * (0.35 + 0.25 * intensity)));
+
     output.write(result, gid);
 }
-
