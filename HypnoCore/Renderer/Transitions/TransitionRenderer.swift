@@ -20,7 +20,8 @@ import simd
             case crossfade      // Linear alpha blend
             case blur           // Gaussian blur into next
             case dissolve       // Noise dissolve into next
-            case scootOver      // Both clips on screen; incoming wipes right with film-strip jitter
+            case scootUp = "scootOver"          // Legacy raw value kept for settings compatibility
+            case scootOver = "scootOverRight"   // Both clips on screen; incoming enters from the right
             case destroy        // Moshing/glitch effect
 
             /// Display name for UI
@@ -30,6 +31,7 @@ import simd
                 case .crossfade: return "Crossfade"
                 case .blur: return "Blur"
                 case .dissolve: return "Dissolve"
+                case .scootUp: return "Scoot Up"
                 case .scootOver: return "Scoot Over"
                 case .destroy: return "Destroy"
                 }
@@ -42,6 +44,7 @@ import simd
                 case .crossfade: return "transitionCrossfade"
                 case .blur: return "transitionBlur"
                 case .dissolve: return "transitionDissolve"
+                case .scootUp: return "transitionScootUp"
                 case .scootOver: return "transitionScootOver"
                 case .destroy: return "transitionDestroy"
                 }

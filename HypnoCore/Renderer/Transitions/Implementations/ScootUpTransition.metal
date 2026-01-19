@@ -1,10 +1,10 @@
 //
-//  ScootOverTransition.metal
+//  ScootUpTransition.metal
 //  HypnoCore
 //
 //  Both clips are visible during the transition:
-//  - Outgoing slides left offscreen.
-//  - Incoming enters from the right.
+//  - Outgoing slides up offscreen.
+//  - Incoming enters from the bottom.
 //  Adds light film-strip style jitter/flicker to feel imperfect/out-of-sync.
 //
 
@@ -14,7 +14,7 @@ static inline uint2 clampCoord(int2 p, int width, int height) {
     return uint2(uint(clamp(p.x, 0, width - 1)), uint(clamp(p.y, 0, height - 1)));
 }
 
-kernel void transitionScootOver(
+kernel void transitionScootUp(
     texture2d<float, access::read> outgoing [[texture(0)]],
     texture2d<float, access::read> incoming [[texture(1)]],
     texture2d<float, access::write> output [[texture(2)]],
@@ -64,42 +64,43 @@ kernel void transitionScootOver(
     float bandJitterX = (bandRandA - 0.5) * w * 0.010 * intensity;
     float bandJitterY = (bandRandB - 0.5) * h * 0.003 * intensity;
 
-    // Treat outgoing+incoming as a single connected strip: [outgoing][incoming]
-    // Viewport slides RIGHT across the strip, which reads as the old clip moving LEFT and
-    // the new clip entering from the RIGHT.
-    float stripX = px.x + p2 * w;
-    float stripY = px.y;
+    // Treat outgoing+incoming as a single connected strip: [outgoing]
+    //                                                 [incoming]
+    // Viewport slides DOWN across the strip, which reads as the old clip moving UP and
+    // the new clip entering from the BOTTOM.
+    float stripX = px.x;
+    float stripY = px.y + p2 * h;
 
     // Apply jitter to the strip sample location (so both clips move together as one piece).
     stripX += bandJitterX;
     stripY += bandJitterY;
 
-    float seamX = (1.0 - p2) * w; // where the join between outgoing/incoming appears in viewport
+    float seamY = (1.0 - p2) * h; // where the join between outgoing/incoming appears in viewport
 
     float4 result;
-    if (stripX < w) {
+    if (stripY < h) {
         uint2 outPos = clampCoord(int2(int(stripX), int(stripY)), params.width, params.height);
         result = outgoing.read(outPos);
     } else {
-        uint2 inPos = clampCoord(int2(int(stripX - w), int(stripY)), params.width, params.height);
+        uint2 inPos = clampCoord(int2(int(stripX), int(stripY - h)), params.width, params.height);
         result = incoming.read(inPos);
     }
 
     // Add "out of sync film strip" feeling near the boundary:
     // - intermittent row swaps
     // - subtle brightness flicker
-    float seam = 1.0 - saturate(abs(px.x - seamX) / max(2.0, w * 0.018));
+    float seam = 1.0 - saturate(abs(px.y - seamY) / max(2.0, h * 0.018));
     float rowGate = hash(float2(band, floor(p2 * 38.0)), params.seed);
     if (seam > 0.05 && rowGate > (0.72 - 0.18 * intensity)) {
         // Alternate which side leaks per row/band.
-        float alt = step(1.0, fmod(px.y + floor(p2 * 41.0), 2.0));
-        float stripLeakX = px.x + p2 * w + bandJitterX + (alt > 0.5 ? w * 0.012 : -w * 0.012);
-        float stripLeakY = px.y + bandJitterY;
+        float alt = step(1.0, fmod(px.x + floor(p2 * 41.0), 2.0));
+        float stripLeakX = px.x + bandJitterX;
+        float stripLeakY = px.y + p2 * h + bandJitterY + (alt > 0.5 ? h * 0.012 : -h * 0.012);
         float4 leaked;
-        if (stripLeakX < w) {
+        if (stripLeakY < h) {
             leaked = outgoing.read(clampCoord(int2(int(stripLeakX), int(stripLeakY)), params.width, params.height));
         } else {
-            leaked = incoming.read(clampCoord(int2(int(stripLeakX - w), int(stripLeakY)), params.width, params.height));
+            leaked = incoming.read(clampCoord(int2(int(stripLeakX), int(stripLeakY - h)), params.width, params.height));
         }
         result = mix(result, leaked, seam * 0.55 * intensity);
     }
@@ -114,7 +115,7 @@ kernel void transitionScootOver(
 
     // A clearer divide line between frames (slightly dirty, not a perfect vector line).
     float lineW = 0.9 + 1.0 * intensity;
-    float line = 1.0 - smoothstep(0.0, lineW, abs(px.x - seamX));
+    float line = 1.0 - smoothstep(0.0, lineW, abs(px.y - seamY));
     float lineNoise = hash(float2(band + floor(p2 * 22.0), 91.0), params.seed);
     // Black seam edge, with slight density variation.
     float3 lineColor = float3(0.0);
@@ -123,3 +124,4 @@ kernel void transitionScootOver(
 
     output.write(result, gid);
 }
+
