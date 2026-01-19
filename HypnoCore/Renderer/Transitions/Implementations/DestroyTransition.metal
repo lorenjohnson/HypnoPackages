@@ -34,8 +34,9 @@ kernel void transitionDestroy(
 
     // Intensity peaks mid-transition, but must read immediately.
     float peak = 1.0 - pow(abs(progress - 0.5) * 2.0, 2.0);
-    float intensity = max(0.65, peak);
-    intensity *= (1.0 + 0.45 * smoothstep(0.0, 0.12, progress));
+    float intensity = max(0.75, peak);
+    intensity *= (1.0 + 0.70 * smoothstep(0.0, 0.10, progress));
+    intensity *= (1.0 + 0.35 * peak);
 
     // Fade heavy displacement out by the end to avoid a visible "snap back".
     float settle = 1.0 - smoothstep(0.72, 0.98, progress);
@@ -99,9 +100,9 @@ kernel void transitionDestroy(
     float dust = floor(grain * 6.0) / 6.0;
     float4 debris = float4(dust, dust, dust, 1.0);
 
-    float preBreak = smoothstep(0.0, 0.30, progress);
-    float breakMask = clamp(hole * 0.95 + preBreak * 0.25, 0.0, 1.0);
-    float blackMask = step(0.55, noise) * breakMask * (1.0 - mixT);
+    float preBreak = smoothstep(0.0, 0.24, progress);
+    float breakMask = clamp(hole * 1.15 + preBreak * 0.35, 0.0, 1.0);
+    float blackMask = step(0.45, noise) * breakMask * (1.0 - mixT);
 
     float4 outGlitched = mix(a, debris, breakMask);
     outGlitched.rgb = mix(outGlitched.rgb, float3(0.0), blackMask);
@@ -116,7 +117,9 @@ kernel void transitionDestroy(
     // Key goals:
     // - Not pinned to any edge (avoid clamping artifacts) -> wrap coordinates.
     // - More frequent, but lower displacement -> favors "tearing" over "sliding the whole frame".
-    float tearStrength = smoothstep(0.10, 0.42, progress) * (1.0 - smoothstep(0.70, 0.92, progress));
+    float tearStrength = smoothstep(0.05, 0.28, progress) * (1.0 - smoothstep(0.80, 0.96, progress));
+    float midTear = smoothstep(0.18, 0.40, progress) * (1.0 - smoothstep(0.58, 0.82, progress));
+    tearStrength = saturate(max(tearStrength, midTear) * (0.90 + 0.70 * intensity));
     float tA = floor(progress * 72.0);
     float tB = floor(progress * 49.0);
     float yShiftA = hash(float2(17.0, tA), seed) * h;
@@ -124,54 +127,80 @@ kernel void transitionDestroy(
     float xShiftA = hash(float2(31.0, tA), seed + 7) * w;
     float xShiftB = hash(float2(37.0, tB), seed + 99) * w;
 
-    float band1 = hash(float2(floor((px.y + yShiftA) / 7.0), floor((px.x + xShiftA) / 96.0) + tA), seed);
-    float band2 = hash(float2(floor((px.y + yShiftB) / 13.0), floor((px.x + xShiftB) / 128.0) + tB), seed + 1337);
+    float band1 = hash(float2(floor((px.y + yShiftA) / 6.0), floor((px.x + xShiftA) / 84.0) + tA), seed);
+    float band2 = hash(float2(floor((px.y + yShiftB) / 11.0), floor((px.x + xShiftB) / 112.0) + tB), seed + 1337);
+    float band3 = hash(float2(floor((px.y + yShiftA * 0.63) / 5.0), floor((px.x + xShiftB) / 64.0) + tB), seed + 4242);
 
-    float thresh1 = mix(0.98, 0.62, tearStrength) - 0.05 * intensity;
-    float thresh2 = mix(0.98, 0.66, tearStrength) - 0.05 * intensity;
+    float thresh1 = mix(0.96, 0.48, tearStrength) - 0.10 * intensity;
+    float thresh2 = mix(0.96, 0.52, tearStrength) - 0.10 * intensity;
+    float thresh3 = mix(0.97, 0.54, tearStrength) - 0.08 * intensity;
 
     float tearMask1 = smoothstep(thresh1, 1.0, band1) * tearStrength;
     float tearMask2 = smoothstep(thresh2, 1.0, band2) * tearStrength;
+    float tearMask3 = smoothstep(thresh3, 1.0, band3) * tearStrength;
 
     if (tearMask1 > 0.001) {
-        float tearRand = hash(float2(floor((px.y + yShiftA) / 7.0), tA), seed);
-        int tearShift = int((tearRand - 0.5) * w * (0.02 + 0.05 * intensity) * tearStrength);
-        int yTear = int((hash(float2(floor(tA), floor((px.y + yShiftA) / 19.0)), seed) - 0.5) * h * 0.012 * intensity * tearStrength);
+        float tearRand = hash(float2(floor((px.y + yShiftA) / 6.0), tA), seed);
+        int tearShift = int((tearRand - 0.5) * w * (0.03 + 0.08 * intensity) * tearStrength);
+        int yTear = int((hash(float2(floor(tA), floor((px.y + yShiftA) / 19.0)), seed) - 0.5) * h * 0.016 * intensity * tearStrength);
         uint2 tearPos = wrapCoord(base + int2(tearShift, yTear), params.width, params.height);
         float4 torn = mix(incoming.read(tearPos), outgoing.read(tearPos), mixT);
-        result = mix(result, torn, tearMask1 * (0.55 + 0.30 * intensity));
+        result = mix(result, torn, tearMask1 * (0.75 + 0.35 * intensity));
     }
 
     if (tearMask2 > 0.001) {
-        float tearRand = hash(float2(floor((px.y + yShiftB) / 13.0), tB), seed + 1337);
-        int tearShift = int((tearRand - 0.5) * w * (0.02 + 0.06 * intensity) * tearStrength);
-        int yTear = int((hash(float2(floor(tB), floor((px.y + yShiftB) / 23.0)), seed + 7) - 0.5) * h * 0.015 * intensity * tearStrength);
+        float tearRand = hash(float2(floor((px.y + yShiftB) / 11.0), tB), seed + 1337);
+        int tearShift = int((tearRand - 0.5) * w * (0.03 + 0.09 * intensity) * tearStrength);
+        int yTear = int((hash(float2(floor(tB), floor((px.y + yShiftB) / 23.0)), seed + 7) - 0.5) * h * 0.018 * intensity * tearStrength);
         uint2 tearPos = wrapCoord(base + int2(-tearShift, -yTear), params.width, params.height);
         float4 torn = mix(incoming.read(tearPos), outgoing.read(tearPos), mixT);
-        result = mix(result, torn, tearMask2 * (0.55 + 0.30 * intensity));
+        result = mix(result, torn, tearMask2 * (0.75 + 0.35 * intensity));
+    }
+
+    if (tearMask3 > 0.001) {
+        float tearRand = hash(float2(floor((px.y + yShiftA * 0.63) / 5.0), tB), seed + 4242);
+        int tearShift = int((tearRand - 0.5) * w * (0.02 + 0.07 * intensity) * tearStrength);
+        int yTear = int((hash(float2(floor(tB), floor((px.y + yShiftB) / 17.0)), seed + 99) - 0.5) * h * 0.014 * intensity * tearStrength);
+        uint2 tearPos = wrapCoord(base + int2(tearShift, -yTear), params.width, params.height);
+        float4 torn = mix(incoming.read(tearPos), outgoing.read(tearPos), mixT);
+        result = mix(result, torn, tearMask3 * (0.70 + 0.40 * intensity));
+    }
+
+    // A guaranteed mid-transition "full-frame" tear: many scanline segments shift at once.
+    // This makes Destroy feel meaningfully different from smaller RGB shifts.
+    float globalTear = smoothstep(0.22, 0.40, progress) * (1.0 - smoothstep(0.60, 0.86, progress));
+    if (globalTear > 0.001) {
+        float segH = 3.0 + 9.0 * (1.0 - min(intensity, 1.0));
+        float seg = floor((px.y + yShiftB) / segH);
+        float segRand = hash(float2(seg, floor(progress * 85.0)), seed + 202);
+        int sx = int((segRand - 0.5) * w * (0.02 + 0.08 * intensity) * globalTear);
+        uint2 gPos = wrapCoord(base + int2(sx, 0), params.width, params.height);
+        float4 gSample = mix(incoming.read(gPos), outgoing.read(gPos), mixT);
+        result = mix(result, gSample, globalTear * (0.40 + 0.50 * intensity));
     }
 
     // Visible randomized RGB jitter (small, frequent, time-varying).
-    float rgbBand = hash(float2(floor((px.y + yShiftA) / 9.0), floor(progress * 96.0)), seed + 99);
-    float rgbJitterGate = hash(blockCoord + float2(floor(progress * 41.0), 111.0), seed);
-    if (rgbJitterGate > 0.58 && rgbBand > (0.76 - 0.20 * intensity)) {
+    float rgbBand = hash(float2(floor((px.y + yShiftA) / 8.0), floor(progress * 104.0)), seed + 99);
+    float rgbJitterGate = hash(blockCoord + float2(floor(progress * 49.0), 111.0), seed);
+    if (rgbJitterGate > 0.42 && rgbBand > (0.62 - 0.22 * intensity)) {
         float2 j = float2(
             (hash(px * 0.23 + float2(12.0, 34.0), seed) - 0.5),
             (hash(px * 0.21 + float2(56.0, 78.0), seed) - 0.5)
         );
-        int jx = int(j.x * w * (0.010 + 0.028 * intensity) * tearStrength);
-        int jy = int(j.y * h * (0.008 + 0.020 * intensity) * tearStrength);
+        float jitterStrength = max(tearStrength, 0.35 * peak) * settle;
+        int jx = int(j.x * w * (0.016 + 0.045 * intensity) * jitterStrength);
+        int jy = int(j.y * h * (0.012 + 0.028 * intensity) * jitterStrength);
         uint2 jPos = wrapCoord(base + int2(jx, jy), params.width, params.height);
         float4 jitterSample = mix(outgoing.read(jPos), incoming.read(jPos), mixT);
 
         // Randomly choose which channels to perturb for "glitch" feel.
         float chanGate = hash(blockCoord + float2(9.0, floor(progress * 23.0)), seed);
-        result.r = mix(result.r, jitterSample.r, 0.85 * intensity * tearStrength);
+        result.r = mix(result.r, jitterSample.r, 0.95 * intensity * jitterStrength);
         if (chanGate > 0.33) {
-            result.b = mix(result.b, jitterSample.b, 0.85 * intensity * tearStrength);
+            result.b = mix(result.b, jitterSample.b, 0.95 * intensity * jitterStrength);
         }
         if (chanGate > 0.78) {
-            result.g = mix(result.g, jitterSample.g, 0.55 * intensity * tearStrength);
+            result.g = mix(result.g, jitterSample.g, 0.70 * intensity * jitterStrength);
         }
     }
 
