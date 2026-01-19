@@ -22,7 +22,7 @@ import simd
             case dissolve       // Noise dissolve into next
             case scootUp = "scootOver"          // Legacy raw value kept for settings compatibility
             case scootOver = "scootOverRight"   // Both clips on screen; incoming enters from the right
-            case destroy        // Moshing/glitch effect
+            case shuffle = "destroy"            // Legacy raw value kept for settings compatibility
 
             /// Display name for UI
             public var displayName: String {
@@ -33,7 +33,7 @@ import simd
                 case .dissolve: return "Dissolve"
                 case .scootUp: return "Scoot Up"
                 case .scootOver: return "Scoot Over"
-                case .destroy: return "Destroy"
+                case .shuffle: return "Shuffle"
                 }
             }
 
@@ -46,7 +46,7 @@ import simd
                 case .dissolve: return "transitionDissolve"
                 case .scootUp: return "transitionScootUp"
                 case .scootOver: return "transitionScootOver"
-                case .destroy: return "transitionDestroy"
+                case .shuffle: return "transitionDestroy"
                 }
             }
         }
