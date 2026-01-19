@@ -78,6 +78,7 @@ public final class PlayerView: MTKView {
     public private(set) var transitionSeed: UInt32 = 0
 
     private var isTransitionCompletionPending: Bool = false
+    private var transitionToken: UInt64 = 0
 
     private static let maxInFlightFrames: Int = 3
     private let inFlightSemaphore = DispatchSemaphore(value: maxInFlightFrames)
@@ -254,6 +255,7 @@ public final class PlayerView: MTKView {
         seed: UInt32? = nil,
         startTime: CFTimeInterval? = nil
     ) {
+        transitionToken &+= 1
         secondarySource = newSource
         activeTransition = type
         transitionDuration = duration ?? self.transitionDuration
@@ -275,6 +277,7 @@ public final class PlayerView: MTKView {
         duration: CFTimeInterval,
         seed: UInt32
     ) {
+        transitionToken &+= 1
         self.secondarySource = secondarySource
         self.activeTransition = type
         self.transitionStartTime = startTime
@@ -285,6 +288,7 @@ public final class PlayerView: MTKView {
 
     /// Cancel an in-progress transition
     public func cancelTransition() {
+        transitionToken &+= 1
         secondarySource = nil
         activeTransition = nil
         transitionStartTime = nil
@@ -375,6 +379,7 @@ public final class PlayerView: MTKView {
 
     private func updateTransition(now: CFTimeInterval) -> (() -> Void)? {
         guard activeTransition != nil, let startTime = transitionStartTime else { return nil }
+        let token = transitionToken
 
         let elapsed = now - startTime
         let progress = Float(min(max(elapsed / max(transitionDuration, 0.0001), 0), 1.0))
@@ -402,6 +407,7 @@ public final class PlayerView: MTKView {
         onTransitionComplete = nil
         return { [weak self] in
             guard let self else { return }
+            guard self.transitionToken == token else { return }
             self.primarySource = self.secondarySource
             self.secondarySource = nil
             self.activeTransition = nil
