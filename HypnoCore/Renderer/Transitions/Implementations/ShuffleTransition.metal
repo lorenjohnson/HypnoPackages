@@ -1,5 +1,5 @@
 //
-//  DestroyTransition.metal
+//  ShuffleTransition.metal
 //  HypnoCore
 //
 //  Datamosh/glitch effect that tears between the two sources.
@@ -16,7 +16,7 @@ static inline uint2 wrapCoord(int2 p, int width, int height) {
     return uint2(uint(x), uint(y));
 }
 
-kernel void transitionDestroy(
+kernel void transitionShuffle(
     texture2d<float, access::read> outgoing [[texture(0)]],
     texture2d<float, access::read> incoming [[texture(1)]],
     texture2d<float, access::write> output [[texture(2)]],
@@ -167,7 +167,7 @@ kernel void transitionDestroy(
     }
 
     // A guaranteed mid-transition "full-frame" tear: many scanline segments shift at once.
-    // This makes Destroy feel meaningfully different from smaller RGB shifts.
+    // This makes Shuffle feel meaningfully different from smaller RGB shifts.
     float globalTear = smoothstep(0.22, 0.40, progress) * (1.0 - smoothstep(0.60, 0.86, progress));
     if (globalTear > 0.001) {
         float segH = 3.0 + 9.0 * (1.0 - min(intensity, 1.0));

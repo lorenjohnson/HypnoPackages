@@ -46,7 +46,7 @@ import simd
                 case .dissolve: return "transitionDissolve"
                 case .scootUp: return "transitionScootUp"
                 case .scootOver: return "transitionScootOver"
-                case .shuffle: return "transitionDestroy"
+                case .shuffle: return "transitionShuffle"
                 }
             }
         }
