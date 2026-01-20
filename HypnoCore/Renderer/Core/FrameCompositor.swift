@@ -166,7 +166,11 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             img = RendererImageUtils.applySourceFraming(
                 image: img,
                 to: outputSize,
-                framing: instruction.sourceFraming
+                framing: instruction.sourceFraming,
+                personBoundsNormalized: {
+                    guard index < instruction.layerPersonBounds.count else { return nil }
+                    return instruction.layerPersonBounds[index]
+                }()
             )
 
             // Apply per-source effects from clip

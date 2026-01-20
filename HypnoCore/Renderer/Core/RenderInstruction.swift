@@ -42,6 +42,10 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
     /// Still images for layers that are images (indexed by layer, nil for video layers)
     public let stillImages: [CIImage?]
 
+    /// Optional per-layer detected person bounds (normalized 0...1, origin bottom-left).
+    /// Used to bias SourceFraming.fill so portrait sources can be cropped toward the head without revealing edges.
+    public let layerPersonBounds: [CGRect?]
+
     /// How each source should be mapped into the output frame.
     public let sourceFraming: SourceFraming
 
@@ -61,6 +65,7 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
         sourceIndices: [Int],
         enableEffects: Bool = false,
         stillImages: [CIImage?] = [],
+        layerPersonBounds: [CGRect?] = [],
         sourceFraming: SourceFraming = .fill,
         effectManager: EffectManager? = nil
     ) {
@@ -71,6 +76,7 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
         self.sourceIndices = sourceIndices
         self.enableEffects = enableEffects
         self.stillImages = stillImages
+        self.layerPersonBounds = layerPersonBounds
         self.sourceFraming = sourceFraming
         self.effectManager = effectManager
 

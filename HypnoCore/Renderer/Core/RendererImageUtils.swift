@@ -26,7 +26,9 @@ enum RendererImageUtils {
     }
 
     /// Scale and crop an image to fill the target size while maintaining aspect ratio.
-    static func aspectFill(image: CIImage, to size: CGSize) -> CIImage {
+    /// If `personBoundsNormalized` is provided (normalized 0...1, origin bottom-left),
+    /// the crop is vertically biased toward the top of that bounds (head) while keeping edges opaque.
+    static func aspectFill(image: CIImage, to size: CGSize, personBoundsNormalized: CGRect? = nil) -> CIImage {
         var img = normalizeOrigin(image)
         let imageSize = img.extent.size
         guard imageSize.width > 0, imageSize.height > 0, size.width > 0, size.height > 0 else {
@@ -38,8 +40,24 @@ enum RendererImageUtils {
         let scaledImage = img.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         let scaledSize = scaledImage.extent.size
 
-        let x = (size.width - scaledSize.width) / 2
-        let y = (size.height - scaledSize.height) / 2
+        let slackX = scaledSize.width - size.width
+        let slackY = scaledSize.height - size.height
+
+        // Default: centered crop.
+        var x = -slackX / 2
+        var y = -slackY / 2
+
+        // Bias vertically toward the detected person (typically portrait -> landscape crops).
+        if let b = personBoundsNormalized, slackY > 0 {
+            // Anchor on the top of the bounds (approx head).
+            let headroomY = max(0, min(1, b.maxY + (b.height * 0.06)))
+            let focusY = max(0, min(1, headroomY))
+            // Place the head near the upper portion of the frame (avoid pushing it into the lower half).
+            let targetY: CGFloat = 0.95
+            let desiredY = (targetY * size.height) - (focusY * scaledSize.height)
+            // Clamp so we never reveal empty edges.
+            y = max(-slackY, min(0, desiredY))
+        }
 
         let translated = scaledImage.transformed(by: CGAffineTransform(translationX: x, y: y))
 
@@ -72,10 +90,15 @@ enum RendererImageUtils {
         return composited.cropped(to: CGRect(origin: .zero, size: size))
     }
 
-    static func applySourceFraming(image: CIImage, to size: CGSize, framing: SourceFraming) -> CIImage {
+    static func applySourceFraming(
+        image: CIImage,
+        to size: CGSize,
+        framing: SourceFraming,
+        personBoundsNormalized: CGRect? = nil
+    ) -> CIImage {
         switch framing {
         case .fill:
-            return aspectFill(image: image, to: size)
+            return aspectFill(image: image, to: size, personBoundsNormalized: personBoundsNormalized)
         case .fit:
             return aspectFit(image: image, to: size)
         }

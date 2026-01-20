@@ -25,6 +25,45 @@ public final class PlayerView: MTKView {
     /// Current aspect ratio mode for content display
     public var contentMode: ContentMode = .aspectFit
 
+    /// Optional focus point in the source content to keep positioned at a target point in the view.
+    /// - `anchorNormalized`: normalized source coordinates (0...1), origin at bottom-left.
+    /// - `targetNDC`: view coordinates in NDC space (-1...1), origin at center.
+    public struct ContentFocus: Sendable, Equatable {
+        public enum OverscrollMode: Sendable, Equatable {
+            /// Prevent exposing empty edges (traditional aspect-fill/fit clamping).
+            case clampToEdges
+            /// Allow the content quad to slide past the view edges, revealing the cleared background.
+            case allowBlanking
+        }
+
+        public var anchorNormalized: CGPoint
+        public var targetNDC: CGPoint
+        /// Optional normalized source rect (0...1, origin bottom-left) the view should try to keep fully visible.
+        /// When provided, offsets are chosen to maximize inclusion of this rect without revealing empty edges.
+        public var boundsNormalized: CGRect?
+        /// Padding applied to the view bounds in NDC space (0...1). `0` means allow touching edges.
+        public var paddingNDC: CGFloat
+        public var overscrollMode: OverscrollMode
+
+        public init(
+            anchorNormalized: CGPoint,
+            targetNDC: CGPoint = CGPoint(x: 0, y: 0),
+            boundsNormalized: CGRect? = nil,
+            paddingNDC: CGFloat = 0,
+            overscrollMode: OverscrollMode = .clampToEdges
+        ) {
+            self.anchorNormalized = anchorNormalized
+            self.targetNDC = targetNDC
+            self.boundsNormalized = boundsNormalized
+            self.paddingNDC = paddingNDC
+            self.overscrollMode = overscrollMode
+        }
+    }
+
+    /// When set, adjusts the aspect-fit/fill transform offset so `anchorNormalized` appears at `targetNDC`.
+    /// Offsets are clamped so content stays within the view bounds for the current `contentMode`.
+    public var contentFocus: ContentFocus?
+
     /// Content display modes
     public enum ContentMode {
         case aspectFit   // Letterbox/pillarbox to fit
@@ -597,6 +636,78 @@ public final class PlayerView: MTKView {
             break
         }
 
-        return SIMD4(scaleX, scaleY, 0, 0)
+        func clamp(_ value: Float, _ minValue: Float, _ maxValue: Float) -> Float {
+            max(minValue, min(maxValue, value))
+        }
+
+        var offsetX: Float = 0
+        var offsetY: Float = 0
+
+        if let focus = contentFocus {
+            let anchorX = clamp(Float(focus.anchorNormalized.x), 0, 1)
+            let anchorY = clamp(Float(focus.anchorNormalized.y), 0, 1)
+            let targetX = clamp(Float(focus.targetNDC.x), -1, 1)
+            let targetY = clamp(Float(focus.targetNDC.y), -1, 1)
+
+            // Mapping (normalized content -> view):
+            // contentX = (1 + (viewX - offsetX) / scaleX) / 2
+            // contentY = (1 + (viewY - offsetY) / scaleY) / 2
+            // Solve for offset so the anchor appears at the target.
+            let rawOffsetX = targetX - scaleX * (2 * anchorX - 1)
+            let rawOffsetY = targetY - scaleY * (2 * anchorY - 1)
+
+            // Clamp offsets so content stays in-bounds (fit) or continues to cover the view (fill).
+            let maxOffsetX: Float
+            let maxOffsetY: Float
+            switch focus.overscrollMode {
+            case .clampToEdges:
+                maxOffsetX = abs(scaleX - 1)
+                maxOffsetY = abs(scaleY - 1)
+            case .allowBlanking:
+                // Allow shifting until the quad is just barely still intersecting the view.
+                // Over-shifting reveals the cleared background (black).
+                maxOffsetX = abs(scaleX + 1)
+                maxOffsetY = abs(scaleY + 1)
+            }
+
+            offsetX = clamp(rawOffsetX, -maxOffsetX, maxOffsetX)
+            offsetY = clamp(rawOffsetY, -maxOffsetY, maxOffsetY)
+
+            if let bounds = focus.boundsNormalized {
+                let pad = clamp(Float(focus.paddingNDC), 0, 1)
+
+                // Keep the rect within padded NDC bounds where possible.
+                // For a given normalized content coordinate y, viewY = scaleY*(2y - 1) + offsetY.
+                let minX = clamp(Float(bounds.minX), 0, 1)
+                let maxX = clamp(Float(bounds.maxX), 0, 1)
+                let minY = clamp(Float(bounds.minY), 0, 1)
+                let maxY = clamp(Float(bounds.maxY), 0, 1)
+
+                // Constraints:
+                // viewX(minX) >= -1 + pad  => offsetX >= (-1 + pad) - scaleX*(2*minX - 1)
+                // viewX(maxX) <=  1 - pad  => offsetX <= ( 1 - pad) - scaleX*(2*maxX - 1)
+                // Same for Y.
+                let lowerX = (-1 + pad) - scaleX * (2 * minX - 1)
+                let upperX = ( 1 - pad) - scaleX * (2 * maxX - 1)
+                let lowerY = (-1 + pad) - scaleY * (2 * minY - 1)
+                let upperY = ( 1 - pad) - scaleY * (2 * maxY - 1)
+
+                // Intersect with global clamp range. If empty (rect larger than visible region),
+                // keep current offset (already clamped) which maximizes coverage without overscroll.
+                let finalLowerX = max(-maxOffsetX, lowerX)
+                let finalUpperX = min( maxOffsetX, upperX)
+                if finalLowerX <= finalUpperX {
+                    offsetX = clamp(offsetX, finalLowerX, finalUpperX)
+                }
+
+                let finalLowerY = max(-maxOffsetY, lowerY)
+                let finalUpperY = min( maxOffsetY, upperY)
+                if finalLowerY <= finalUpperY {
+                    offsetY = clamp(offsetY, finalLowerY, finalUpperY)
+                }
+            }
+        }
+
+        return SIMD4(scaleX, scaleY, offsetX, offsetY)
     }
 }
