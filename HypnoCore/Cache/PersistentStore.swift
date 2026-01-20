@@ -35,9 +35,9 @@ open class PersistentStore<T: Codable>: ObservableObject {
     @Published public private(set) var isDirty: Bool = false
 
     // MARK: - Thread-Safe Access
-
+    
     /// Lock for thread-safe access from non-main-actor contexts
-    private nonisolated(unsafe) let _valueLock = NSLock()
+    private nonisolated let _valueLock = NSLock()
 
     /// Thread-safe copy of value
     private nonisolated(unsafe) var _valueCopy: T

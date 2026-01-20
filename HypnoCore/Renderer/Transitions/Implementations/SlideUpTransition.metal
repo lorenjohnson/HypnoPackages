@@ -10,10 +10,6 @@
 
 #include "../TransitionCommon.h"
 
-static inline uint2 clampCoord(int2 p, int width, int height) {
-    return uint2(uint(clamp(p.x, 0, width - 1)), uint(clamp(p.y, 0, height - 1)));
-}
-
 kernel void transitionSlideUp(
     texture2d<float, access::read> outgoing [[texture(0)]],
     texture2d<float, access::read> incoming [[texture(1)]],

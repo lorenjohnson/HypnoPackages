@@ -83,7 +83,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
 
         updateChains({ effects in
-            var chain = effects[chainIndex]
+            let chain = effects[chainIndex]
 
             if let effectIdx = effectIndex {
                 guard effectIdx >= 0 && effectIdx < chain.effects.count else { return }
@@ -105,7 +105,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
 
         updateChains({ effects in
-            var chain = effects[chainIndex]
+            let chain = effects[chainIndex]
             let defaultParams = EffectRegistry.defaults(for: effectType)
             let newEffect = EffectDefinition(type: effectType, params: defaultParams)
             chain.effects.append(newEffect)
@@ -118,7 +118,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
 
         updateChains({ effects in
-            var chain = effects[chainIndex]
+            let chain = effects[chainIndex]
             guard effectIndex >= 0 && effectIndex < chain.effects.count else { return }
             chain.effects.remove(at: effectIndex)
             effects[chainIndex] = chain
@@ -130,7 +130,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
 
         updateChains({ effects in
-            var chain = effects[chainIndex]
+            let chain = effects[chainIndex]
             guard fromIndex >= 0 && fromIndex < chain.effects.count else { return }
             guard toIndex >= 0 && toIndex < chain.effects.count else { return }
 
@@ -150,7 +150,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
 
         updateChains({ effects in
-            var chain = effects[chainIndex]
+            let chain = effects[chainIndex]
             guard effectIndex >= 0 && effectIndex < chain.effects.count else { return }
 
             let effectDef = chain.effects[effectIndex]
@@ -171,7 +171,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
 
         updateChains({ effects in
-            var chain = effects[chainIndex]
+            let chain = effects[chainIndex]
             guard effectIndex >= 0 && effectIndex < chain.effects.count else { return }
 
             let effectDef = chain.effects[effectIndex]
@@ -197,7 +197,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
 
         updateChains({ effects in
-            var chain = effects[chainIndex]
+            let chain = effects[chainIndex]
             chain.name = name
             effects[chainIndex] = chain
         }, notifyIndex: chainIndex)

@@ -226,7 +226,7 @@ public final class EffectManager {
     ///   - key: parameter key
     ///   - value: new parameter value
     public func updateEffectParameter(for layer: Int, effectDefIndex: Int, key: String, value: AnyCodableValue) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         var params = chain.effects[effectDefIndex].params ?? [:]
@@ -242,7 +242,7 @@ public final class EffectManager {
     ///   - key: parameter key
     ///   - value: new parameter value
     public func updateChainParameter(for layer: Int, key: String, value: AnyCodableValue) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
 
         var params = chain.params ?? [:]
         params[key] = value
@@ -256,7 +256,7 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectType: the type of effect to add (e.g. "DatamoshMetalEffect")
     public func addEffectToChain(for layer: Int, effectType: String) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
 
         let defaults = EffectRegistry.defaults(for: effectType)
         let newEffect = EffectDefinition(type: effectType, params: defaults)
@@ -270,7 +270,7 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectDefIndex: index of the effect to remove
     public func removeEffectFromChain(for layer: Int, effectDefIndex: Int) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         chain.effects.remove(at: effectDefIndex)
@@ -283,14 +283,14 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - name: new name for the chain
     public func updateChainName(for layer: Int, name: String) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
         chain.name = name
         setEffect(from: chain, for: layer)
     }
 
     /// Link/unlink the CURRENT chain to a template id (used for Update/Copy-to-Library actions).
     public func updateSourceTemplateId(for layer: Int, sourceTemplateId: UUID?) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
         chain.sourceTemplateId = sourceTemplateId
         setEffect(from: chain, for: layer)
     }
@@ -301,7 +301,7 @@ public final class EffectManager {
     ///   - fromIndex: source index
     ///   - toIndex: destination index
     public func reorderEffectsInChain(for layer: Int, fromIndex: Int, toIndex: Int) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
         guard fromIndex >= 0, fromIndex < chain.effects.count else { return }
         guard toIndex >= 0, toIndex < chain.effects.count else { return }
 
@@ -316,7 +316,7 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectDefIndex: index of the effect to reset
     public func resetEffectToDefaults(for layer: Int, effectDefIndex: Int) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         let effectType = chain.effects[effectDefIndex].type
@@ -339,7 +339,7 @@ public final class EffectManager {
 
     /// Randomize all parameters for an effect in the recipe.
     public func randomizeEffect(for layer: Int, effectDefIndex: Int) {
-        guard var chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone() else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         let effectDef = chain.effects[effectDefIndex]
@@ -543,7 +543,7 @@ public final class EffectManager {
         }
 
         // Apply all effects in the chain
-        var result = clip.effectChain.apply(to: image, context: &context)
+        let result = clip.effectChain.apply(to: image, context: &context)
 
         // Update frame buffer with processed result so temporal effects see prior effects
         frameBuffer.addFrame(result, at: context.time)

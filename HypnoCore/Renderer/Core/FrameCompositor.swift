@@ -43,32 +43,34 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
 
     // MARK: - AVVideoCompositing Protocol
 
-    public var sourcePixelBufferAttributes: [String : Any]? {
+    public var sourcePixelBufferAttributes: [String : any Sendable]? {
         return [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             // Ensure the upstream buffers are IOSurface-backed and Metal-compatible so
             // the display pipeline can create MTLTextures via CVMetalTextureCache
             // without extra copies.
             kCVPixelBufferMetalCompatibilityKey as String: true,
-            kCVPixelBufferIOSurfacePropertiesKey as String: [:]
+            kCVPixelBufferIOSurfacePropertiesKey as String: [String: Int]()
         ]
     }
 
-    public var requiredPixelBufferAttributesForRenderContext: [String : Any] {
+    public var requiredPixelBufferAttributesForRenderContext: [String : any Sendable] {
         return [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             kCVPixelBufferMetalCompatibilityKey as String: true,
-            kCVPixelBufferIOSurfacePropertiesKey as String: [:]
+            kCVPixelBufferIOSurfacePropertiesKey as String: [String: Int]()
         ]
     }
 
     public func renderContextChanged(_ newRenderContext: AVVideoCompositionRenderContext) {
-        // Reset slow-mo state on context change (seek, resize, etc.)
-        prevFrameInfo.removeAll()
-        outputFrameCounter = 0
+        renderQueue.sync {
+            // Reset slow-mo state on context change (seek, resize, etc.)
+            prevFrameInfo.removeAll()
+            outputFrameCounter = 0
 
-        if #available(macOS 15.4, *) {
-            sharedSlowMoPipeline.reset()
+            if #available(macOS 15.4, *) {
+                sharedSlowMoPipeline.reset()
+            }
         }
     }
 

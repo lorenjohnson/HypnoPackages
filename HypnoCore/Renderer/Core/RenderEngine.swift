@@ -74,9 +74,12 @@ public final class RenderEngine {
         // Attach compositor to video composition
         build.videoComposition.customVideoCompositorClass = FrameCompositor.self
 
-        // Create player item
-        let playerItem = AVPlayerItem(asset: build.composition)
-        playerItem.videoComposition = build.videoComposition
+        // AVPlayerItem APIs are main-actor isolated in newer SDKs.
+        let playerItem = await MainActor.run {
+            let item = AVPlayerItem(asset: build.composition)
+            item.videoComposition = build.videoComposition
+            return item
+        }
 
         return .success(playerItem)
     }

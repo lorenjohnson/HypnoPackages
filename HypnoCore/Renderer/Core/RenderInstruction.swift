@@ -12,7 +12,7 @@ import CoreImage
 
 /// Instruction for rendering a time range
 /// Tells the compositor which layers to blend, how to transform them, etc.
-final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol {
+final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol, @unchecked Sendable {
     
     // MARK: - AVVideoCompositionInstructionProtocol
     
