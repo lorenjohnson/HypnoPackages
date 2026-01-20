@@ -20,8 +20,8 @@ import simd
             case crossfade      // Linear alpha blend
             case blur           // Gaussian blur into next
             case dissolve       // Noise dissolve into next
-            case scootUp = "scootOver"          // Legacy raw value kept for settings compatibility
-            case scootOver = "scootOverRight"   // Both clips on screen; incoming enters from the right
+            case slideUp = "scootOver"          // Legacy raw value kept for settings compatibility
+            case slideLeft = "scootOverRight"   // Legacy raw value kept for settings compatibility
             case shuffle = "destroy"            // Legacy raw value kept for settings compatibility
 
             /// Display name for UI
@@ -31,8 +31,8 @@ import simd
                 case .crossfade: return "Crossfade"
                 case .blur: return "Blur"
                 case .dissolve: return "Dissolve"
-                case .scootUp: return "Scoot Up"
-                case .scootOver: return "Scoot Over"
+                case .slideUp: return "Slide Up"
+                case .slideLeft: return "Slide Left"
                 case .shuffle: return "Shuffle"
                 }
             }
@@ -44,8 +44,8 @@ import simd
                 case .crossfade: return "transitionCrossfade"
                 case .blur: return "transitionBlur"
                 case .dissolve: return "transitionDissolve"
-                case .scootUp: return "transitionScootUp"
-                case .scootOver: return "transitionScootOver"
+                case .slideUp: return "transitionSlideUp"
+                case .slideLeft: return "transitionSlideLeft"
                 case .shuffle: return "transitionShuffle"
                 }
             }

@@ -46,14 +46,19 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
     public var sourcePixelBufferAttributes: [String : Any]? {
         return [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-            kCVPixelBufferOpenGLCompatibilityKey as String: true
+            // Ensure the upstream buffers are IOSurface-backed and Metal-compatible so
+            // the display pipeline can create MTLTextures via CVMetalTextureCache
+            // without extra copies.
+            kCVPixelBufferMetalCompatibilityKey as String: true,
+            kCVPixelBufferIOSurfacePropertiesKey as String: [:]
         ]
     }
 
     public var requiredPixelBufferAttributesForRenderContext: [String : Any] {
         return [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-            kCVPixelBufferOpenGLCompatibilityKey as String: true
+            kCVPixelBufferMetalCompatibilityKey as String: true,
+            kCVPixelBufferIOSurfacePropertiesKey as String: [:]
         ]
     }
 

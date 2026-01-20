@@ -1,5 +1,5 @@
 //
-//  ScootOverTransition.metal
+//  SlideLeftTransition.metal
 //  HypnoCore
 //
 //  Both clips are visible during the transition:
@@ -14,7 +14,7 @@ static inline uint2 clampCoord(int2 p, int width, int height) {
     return uint2(uint(clamp(p.x, 0, width - 1)), uint(clamp(p.y, 0, height - 1)));
 }
 
-kernel void transitionScootOver(
+kernel void transitionSlideLeft(
     texture2d<float, access::read> outgoing [[texture(0)]],
     texture2d<float, access::read> incoming [[texture(1)]],
     texture2d<float, access::write> output [[texture(2)]],
@@ -26,12 +26,19 @@ kernel void transitionScootOver(
     }
 
     float p = clamp(params.progress, 0.0, 1.0);
+    int outW = params.width;
+    int outH = params.height;
+    int outSrcW = int(outgoing.get_width());
+    int outSrcH = int(outgoing.get_height());
+    int inSrcW = int(incoming.get_width());
+    int inSrcH = int(incoming.get_height());
+
     if (p <= 0.001) {
-        output.write(outgoing.read(gid), gid);
+        output.write(outgoing.read(mapCoord(gid, outW, outH, outSrcW, outSrcH)), gid);
         return;
     }
     if (p >= 0.999) {
-        output.write(incoming.read(gid), gid);
+        output.write(incoming.read(mapCoord(gid, outW, outH, inSrcW, inSrcH)), gid);
         return;
     }
 
@@ -78,10 +85,10 @@ kernel void transitionScootOver(
 
     float4 result;
     if (stripX < w) {
-        uint2 outPos = clampCoord(int2(int(stripX), int(stripY)), params.width, params.height);
+        uint2 outPos = mapCoord(float2(stripX, stripY), outW, outH, outSrcW, outSrcH);
         result = outgoing.read(outPos);
     } else {
-        uint2 inPos = clampCoord(int2(int(stripX - w), int(stripY)), params.width, params.height);
+        uint2 inPos = mapCoord(float2(stripX - w, stripY), outW, outH, inSrcW, inSrcH);
         result = incoming.read(inPos);
     }
 
@@ -97,9 +104,9 @@ kernel void transitionScootOver(
         float stripLeakY = px.y + bandJitterY;
         float4 leaked;
         if (stripLeakX < w) {
-            leaked = outgoing.read(clampCoord(int2(int(stripLeakX), int(stripLeakY)), params.width, params.height));
+            leaked = outgoing.read(mapCoord(float2(stripLeakX, stripLeakY), outW, outH, outSrcW, outSrcH));
         } else {
-            leaked = incoming.read(clampCoord(int2(int(stripLeakX - w), int(stripLeakY)), params.width, params.height));
+            leaked = incoming.read(mapCoord(float2(stripLeakX - w, stripLeakY), outW, outH, inSrcW, inSrcH));
         }
         result = mix(result, leaked, seam * 0.55 * intensity);
     }

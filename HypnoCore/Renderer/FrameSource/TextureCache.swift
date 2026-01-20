@@ -97,6 +97,7 @@ public final class TextureCache {
         public let y: MTLTexture      // Luma plane (full resolution, R8)
         public let cbcr: MTLTexture   // Chroma plane (half resolution, RG8)
         public let isVideoRange: Bool // true = 16-235 range, false = 0-255 range
+        public let isTenBit: Bool     // true = 10-bit bi-planar (stored in 16-bit lanes)
     }
 
     /// Create Metal textures from a bi-planar YUV pixel buffer
@@ -107,15 +108,20 @@ public final class TextureCache {
 
         // Verify this is a bi-planar YUV format
         let isVideoRange: Bool
+        let isTenBit: Bool
         switch pixelFormat {
         case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:
             isVideoRange = true
+            isTenBit = false
         case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:
             isVideoRange = false
+            isTenBit = false
         case kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange:
             isVideoRange = true
+            isTenBit = true
         case kCVPixelFormatType_420YpCbCr10BiPlanarFullRange:
             isVideoRange = false
+            isTenBit = true
         default:
             print("TextureCache: Unsupported pixel format for YUV: \(pixelFormat)")
             return nil
@@ -124,6 +130,9 @@ public final class TextureCache {
         let width = CVPixelBufferGetWidth(pixelBuffer)
         let height = CVPixelBufferGetHeight(pixelBuffer)
 
+        let yFormat: MTLPixelFormat = isTenBit ? .r16Unorm : .r8Unorm
+        let cbcrFormat: MTLPixelFormat = isTenBit ? .rg16Unorm : .rg8Unorm
+
         // Y plane (full resolution, single channel)
         var yTexture: CVMetalTexture?
         var status = CVMetalTextureCacheCreateTextureFromImage(
@@ -131,7 +140,7 @@ public final class TextureCache {
             cache,
             pixelBuffer,
             nil,
-            .r8Unorm,
+            yFormat,
             width,
             height,
             0,  // plane 0 = Y
@@ -150,7 +159,7 @@ public final class TextureCache {
             cache,
             pixelBuffer,
             nil,
-            .rg8Unorm,
+            cbcrFormat,
             width / 2,
             height / 2,
             1,  // plane 1 = CbCr
@@ -167,7 +176,7 @@ public final class TextureCache {
             return nil
         }
 
-        return YUVTextures(y: yMetal, cbcr: cbcrMetal, isVideoRange: isVideoRange)
+        return YUVTextures(y: yMetal, cbcr: cbcrMetal, isVideoRange: isVideoRange, isTenBit: isTenBit)
     }
 
     // MARK: - Utilities

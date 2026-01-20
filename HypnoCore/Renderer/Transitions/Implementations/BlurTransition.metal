@@ -15,19 +15,28 @@ static inline uint2 clampCoord(int2 p, int width, int height) {
 
 static inline float4 blurSample(
     texture2d<float, access::read> tex,
-    uint2 gid,
-    int width,
-    int height,
+    uint2 outGid,
+    int outW,
+    int outH,
+    int srcW,
+    int srcH,
     float blurPx
 ) {
+    uint2 gid = mapCoord(outGid, outW, outH, srcW, srcH);
+
+    // Scale blur amount into the source texture's pixel space if the output size differs.
+    float outMinDim = float(max(min(outW, outH), 1));
+    float srcMinDim = float(max(min(srcW, srcH), 1));
+    float blurPxSrc = blurPx * (srcMinDim / outMinDim);
+
     // No blur
-    if (blurPx <= 0.5) {
+    if (blurPxSrc <= 0.5) {
         return tex.read(gid);
     }
 
     // Approximate gaussian blur with a small weighted neighborhood.
     // Use 4 rings of offsets scaled by blur amount.
-    float unit = blurPx / 4.0;
+    float unit = blurPxSrc / 4.0;
 
     int o1 = max(1, int(round(unit * 1.0)));
     int o2 = max(1, int(round(unit * 2.0)));
@@ -48,34 +57,34 @@ static inline float4 blurSample(
 
     // Cardinal directions (ring 1)
     float w1 = 0.12;
-    sum += tex.read(clampCoord(p + int2( o1,  0), width, height)) * w1;
-    sum += tex.read(clampCoord(p + int2(-o1,  0), width, height)) * w1;
-    sum += tex.read(clampCoord(p + int2( 0,  o1), width, height)) * w1;
-    sum += tex.read(clampCoord(p + int2( 0, -o1), width, height)) * w1;
+    sum += tex.read(clampCoord(p + int2( o1,  0), srcW, srcH)) * w1;
+    sum += tex.read(clampCoord(p + int2(-o1,  0), srcW, srcH)) * w1;
+    sum += tex.read(clampCoord(p + int2( 0,  o1), srcW, srcH)) * w1;
+    sum += tex.read(clampCoord(p + int2( 0, -o1), srcW, srcH)) * w1;
     w += 4.0 * w1;
 
     // Diagonals (ring 2)
     float w2 = 0.07;
-    sum += tex.read(clampCoord(p + int2( o2,  o2), width, height)) * w2;
-    sum += tex.read(clampCoord(p + int2(-o2,  o2), width, height)) * w2;
-    sum += tex.read(clampCoord(p + int2( o2, -o2), width, height)) * w2;
-    sum += tex.read(clampCoord(p + int2(-o2, -o2), width, height)) * w2;
+    sum += tex.read(clampCoord(p + int2( o2,  o2), srcW, srcH)) * w2;
+    sum += tex.read(clampCoord(p + int2(-o2,  o2), srcW, srcH)) * w2;
+    sum += tex.read(clampCoord(p + int2( o2, -o2), srcW, srcH)) * w2;
+    sum += tex.read(clampCoord(p + int2(-o2, -o2), srcW, srcH)) * w2;
     w += 4.0 * w2;
 
     // Wider cardinals (ring 3)
     float w3 = 0.05;
-    sum += tex.read(clampCoord(p + int2( o3,  0), width, height)) * w3;
-    sum += tex.read(clampCoord(p + int2(-o3,  0), width, height)) * w3;
-    sum += tex.read(clampCoord(p + int2( 0,  o3), width, height)) * w3;
-    sum += tex.read(clampCoord(p + int2( 0, -o3), width, height)) * w3;
+    sum += tex.read(clampCoord(p + int2( o3,  0), srcW, srcH)) * w3;
+    sum += tex.read(clampCoord(p + int2(-o3,  0), srcW, srcH)) * w3;
+    sum += tex.read(clampCoord(p + int2( 0,  o3), srcW, srcH)) * w3;
+    sum += tex.read(clampCoord(p + int2( 0, -o3), srcW, srcH)) * w3;
     w += 4.0 * w3;
 
     // Extra diagonals (ring 4)
     float w4 = 0.03;
-    sum += tex.read(clampCoord(p + int2( o4,  o4), width, height)) * w4;
-    sum += tex.read(clampCoord(p + int2(-o4,  o4), width, height)) * w4;
-    sum += tex.read(clampCoord(p + int2( o4, -o4), width, height)) * w4;
-    sum += tex.read(clampCoord(p + int2(-o4, -o4), width, height)) * w4;
+    sum += tex.read(clampCoord(p + int2( o4,  o4), srcW, srcH)) * w4;
+    sum += tex.read(clampCoord(p + int2(-o4,  o4), srcW, srcH)) * w4;
+    sum += tex.read(clampCoord(p + int2( o4, -o4), srcW, srcH)) * w4;
+    sum += tex.read(clampCoord(p + int2(-o4, -o4), srcW, srcH)) * w4;
     w += 4.0 * w4;
 
     return sum / max(w, 1e-5);
@@ -104,10 +113,16 @@ kernel void transitionBlur(
     // Incoming starts blurred and sharpens as it becomes dominant.
     float blurIn = maxBlur * (1.0 - smoothstep(0.35, 1.0, p));
 
-    float4 a = blurSample(outgoing, gid, params.width, params.height, blurOut);
-    float4 b = blurSample(incoming, gid, params.width, params.height, blurIn);
+    int outW = params.width;
+    int outH = params.height;
+    int outSrcW = int(outgoing.get_width());
+    int outSrcH = int(outgoing.get_height());
+    int inSrcW = int(incoming.get_width());
+    int inSrcH = int(incoming.get_height());
+
+    float4 a = blurSample(outgoing, gid, outW, outH, outSrcW, outSrcH, blurOut);
+    float4 b = blurSample(incoming, gid, outW, outH, inSrcW, inSrcH, blurIn);
 
     float4 result = mix(a, b, p);
     output.write(result, gid);
 }
-

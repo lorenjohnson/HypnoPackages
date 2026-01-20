@@ -32,6 +32,13 @@ kernel void transitionShuffle(
     float w = float(params.width);
     float h = float(params.height);
 
+    int outW = params.width;
+    int outH = params.height;
+    int outSrcW = int(outgoing.get_width());
+    int outSrcH = int(outgoing.get_height());
+    int inSrcW = int(incoming.get_width());
+    int inSrcH = int(incoming.get_height());
+
     // Intensity peaks mid-transition, but must read immediately.
     float peak = 1.0 - pow(abs(progress - 0.5) * 2.0, 2.0);
     float intensity = max(0.75, peak);
@@ -80,8 +87,11 @@ kernel void transitionShuffle(
     inPosI.y = clamp(inPosI.y, 0, params.height - 1);
 
     // Read both sources
-    float4 a = outgoing.read(uint2(outPosI));
-    float4 b = incoming.read(uint2(inPosI));
+    uint2 outPos = mapCoord(float2(float(outPosI.x), float(outPosI.y)), outW, outH, outSrcW, outSrcH);
+    uint2 inPos = mapCoord(float2(float(inPosI.x), float(inPosI.y)), outW, outH, inSrcW, inSrcH);
+
+    float4 a = outgoing.read(outPos);
+    float4 b = incoming.read(inPos);
 
     // Disintegration mask: as progress increases, more pixels "drop out" of outgoing.
     float2 px = float2(float(gid.x), float(gid.y));
@@ -144,7 +154,9 @@ kernel void transitionShuffle(
         int tearShift = int((tearRand - 0.5) * w * (0.03 + 0.08 * intensity) * tearStrength);
         int yTear = int((hash(float2(floor(tA), floor((px.y + yShiftA) / 19.0)), seed) - 0.5) * h * 0.016 * intensity * tearStrength);
         uint2 tearPos = wrapCoord(base + int2(tearShift, yTear), params.width, params.height);
-        float4 torn = mix(incoming.read(tearPos), outgoing.read(tearPos), mixT);
+        uint2 tearOutPos = mapCoord(tearPos, outW, outH, outSrcW, outSrcH);
+        uint2 tearInPos = mapCoord(tearPos, outW, outH, inSrcW, inSrcH);
+        float4 torn = mix(incoming.read(tearInPos), outgoing.read(tearOutPos), mixT);
         result = mix(result, torn, tearMask1 * (0.75 + 0.35 * intensity));
     }
 
@@ -153,7 +165,9 @@ kernel void transitionShuffle(
         int tearShift = int((tearRand - 0.5) * w * (0.03 + 0.09 * intensity) * tearStrength);
         int yTear = int((hash(float2(floor(tB), floor((px.y + yShiftB) / 23.0)), seed + 7) - 0.5) * h * 0.018 * intensity * tearStrength);
         uint2 tearPos = wrapCoord(base + int2(-tearShift, -yTear), params.width, params.height);
-        float4 torn = mix(incoming.read(tearPos), outgoing.read(tearPos), mixT);
+        uint2 tearOutPos = mapCoord(tearPos, outW, outH, outSrcW, outSrcH);
+        uint2 tearInPos = mapCoord(tearPos, outW, outH, inSrcW, inSrcH);
+        float4 torn = mix(incoming.read(tearInPos), outgoing.read(tearOutPos), mixT);
         result = mix(result, torn, tearMask2 * (0.75 + 0.35 * intensity));
     }
 
@@ -162,7 +176,9 @@ kernel void transitionShuffle(
         int tearShift = int((tearRand - 0.5) * w * (0.02 + 0.07 * intensity) * tearStrength);
         int yTear = int((hash(float2(floor(tB), floor((px.y + yShiftB) / 17.0)), seed + 99) - 0.5) * h * 0.014 * intensity * tearStrength);
         uint2 tearPos = wrapCoord(base + int2(tearShift, -yTear), params.width, params.height);
-        float4 torn = mix(incoming.read(tearPos), outgoing.read(tearPos), mixT);
+        uint2 tearOutPos = mapCoord(tearPos, outW, outH, outSrcW, outSrcH);
+        uint2 tearInPos = mapCoord(tearPos, outW, outH, inSrcW, inSrcH);
+        float4 torn = mix(incoming.read(tearInPos), outgoing.read(tearOutPos), mixT);
         result = mix(result, torn, tearMask3 * (0.70 + 0.40 * intensity));
     }
 
@@ -175,7 +191,9 @@ kernel void transitionShuffle(
         float segRand = hash(float2(seg, floor(progress * 85.0)), seed + 202);
         int sx = int((segRand - 0.5) * w * (0.02 + 0.08 * intensity) * globalTear);
         uint2 gPos = wrapCoord(base + int2(sx, 0), params.width, params.height);
-        float4 gSample = mix(incoming.read(gPos), outgoing.read(gPos), mixT);
+        uint2 gOutPos = mapCoord(gPos, outW, outH, outSrcW, outSrcH);
+        uint2 gInPos = mapCoord(gPos, outW, outH, inSrcW, inSrcH);
+        float4 gSample = mix(incoming.read(gInPos), outgoing.read(gOutPos), mixT);
         result = mix(result, gSample, globalTear * (0.40 + 0.50 * intensity));
     }
 
@@ -191,7 +209,9 @@ kernel void transitionShuffle(
         int jx = int(j.x * w * (0.016 + 0.045 * intensity) * jitterStrength);
         int jy = int(j.y * h * (0.012 + 0.028 * intensity) * jitterStrength);
         uint2 jPos = wrapCoord(base + int2(jx, jy), params.width, params.height);
-        float4 jitterSample = mix(outgoing.read(jPos), incoming.read(jPos), mixT);
+        uint2 jOutPos = mapCoord(jPos, outW, outH, outSrcW, outSrcH);
+        uint2 jInPos = mapCoord(jPos, outW, outH, inSrcW, inSrcH);
+        float4 jitterSample = mix(outgoing.read(jOutPos), incoming.read(jInPos), mixT);
 
         // Randomly choose which channels to perturb for "glitch" feel.
         float chanGate = hash(blockCoord + float2(9.0, floor(progress * 23.0)), seed);
@@ -232,8 +252,12 @@ kernel void transitionShuffle(
             uint(clamp(int(gid.y) - sy, 0, params.height - 1))
         );
 
-        float4 rSample = mix(outgoing.read(rPos), incoming.read(rPos), mixT);
-        float4 bSample = mix(outgoing.read(bPos), incoming.read(bPos), mixT);
+        uint2 rOutPos = mapCoord(rPos, outW, outH, outSrcW, outSrcH);
+        uint2 rInPos = mapCoord(rPos, outW, outH, inSrcW, inSrcH);
+        uint2 bOutPos = mapCoord(bPos, outW, outH, outSrcW, outSrcH);
+        uint2 bInPos = mapCoord(bPos, outW, outH, inSrcW, inSrcH);
+        float4 rSample = mix(outgoing.read(rOutPos), incoming.read(rInPos), mixT);
+        float4 bSample = mix(outgoing.read(bOutPos), incoming.read(bInPos), mixT);
 
         // Occasional channel swap (low-fi glitch) instead of pure shift.
         float swapGate = hash(blockCoord + float2(floor(progress * 19.0), 71.0), seed);
@@ -249,7 +273,9 @@ kernel void transitionShuffle(
     if (rowRand > 0.75 && intensity > 0.25) {
         int rowShift = int((blockRand2 - 0.5) * w * (0.18 + 0.25 * intensity));
         uint2 rowPos = uint2(uint(clamp(int(gid.x) + rowShift, 0, params.width - 1)), gid.y);
-        float4 swapped = mix(incoming.read(rowPos), outgoing.read(rowPos), mixT);
+        uint2 rowOutPos = mapCoord(rowPos, outW, outH, outSrcW, outSrcH);
+        uint2 rowInPos = mapCoord(rowPos, outW, outH, inSrcW, inSrcH);
+        float4 swapped = mix(incoming.read(rowInPos), outgoing.read(rowOutPos), mixT);
         result = mix(result, swapped, 0.65 * intensity);
     }
 

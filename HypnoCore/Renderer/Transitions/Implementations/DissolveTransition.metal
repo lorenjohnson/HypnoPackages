@@ -22,12 +22,22 @@ kernel void transitionDissolve(
     float p = clamp(params.progress, 0.0, 1.0);
     float2 px = float2(float(gid.x), float(gid.y));
 
+    int outW = params.width;
+    int outH = params.height;
+    int outSrcW = int(outgoing.get_width());
+    int outSrcH = int(outgoing.get_height());
+    int inSrcW = int(incoming.get_width());
+    int inSrcH = int(incoming.get_height());
+
+    uint2 outPos = mapCoord(gid, outW, outH, outSrcW, outSrcH);
+    uint2 inPos = mapCoord(gid, outW, outH, inSrcW, inSrcH);
+
     if (p <= 0.001) {
-        output.write(outgoing.read(gid), gid);
+        output.write(outgoing.read(outPos), gid);
         return;
     }
     if (p >= 0.999) {
-        output.write(incoming.read(gid), gid);
+        output.write(incoming.read(inPos), gid);
         return;
     }
 
@@ -45,8 +55,8 @@ kernel void transitionDissolve(
     // "Incoming when threshold exceeds noise" so it starts mostly outgoing and ends fully incoming.
     float mask = smoothstep(n - softness, n + softness, t);
 
-    float4 a = outgoing.read(gid);
-    float4 b = incoming.read(gid);
+    float4 a = outgoing.read(outPos);
+    float4 b = incoming.read(inPos);
 
     // Add a touch of low-fi grit near the edge of the dissolve.
     float edge = 1.0 - saturate(abs(n - t) / softness);

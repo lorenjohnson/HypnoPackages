@@ -34,6 +34,7 @@ struct YUVConversionParams {
     int height;
     int useBT709;      // 1 = BT.709, 0 = BT.601
     int isVideoRange;  // 1 = video range (16-235), 0 = full range (0-255)
+    int isTenBit;      // 1 = 10-bit (stored in 16-bit lanes), 0 = 8-bit
 };
 
 // MARK: - YUV to RGBA Compute Kernel
@@ -57,14 +58,32 @@ kernel void yuvToRGBA(
     uint2 chromaCoord = gid / 2;
     float2 cbcr = cbcrTexture.read(chromaCoord).rg;
 
-    // Handle video range vs full range
-    if (params.isVideoRange != 0) {
-        // Video range: Y [16-235] -> [0-1], CbCr [16-240] centered at 128
-        y = (y * 255.0 - 16.0) / 219.0;
-        cbcr = (cbcr * 255.0 - 128.0) / 224.0;
+    // Handle 8-bit vs 10-bit, and video range vs full range.
+    if (params.isTenBit != 0) {
+        // CV 10-bit bi-planar formats are stored in 16-bit lanes (P010-style).
+        // Convert back to 10-bit nominal values by undoing the left-shift (<< 6).
+        float y10 = (y * 65535.0) / 64.0;         // ~0...1023
+        float2 cbcr10 = (cbcr * 65535.0) / 64.0;  // ~0...1023
+
+        if (params.isVideoRange != 0) {
+            // Video range (10-bit): Y [64-940], CbCr [64-960] centered at 512.
+            y = (y10 - 64.0) / 876.0;
+            cbcr = (cbcr10 - 512.0) / 896.0;
+        } else {
+            // Full range (10-bit): Y [0-1023], CbCr centered at 512.
+            y = y10 / 1023.0;
+            cbcr = (cbcr10 - 512.0) / 1023.0;
+        }
     } else {
-        // Full range: Y [0-255] -> [0-1], CbCr centered at 0.5
-        cbcr = cbcr - 0.5;
+        // 8-bit.
+        if (params.isVideoRange != 0) {
+            // Video range: Y [16-235] -> [0-1], CbCr [16-240] centered at 128
+            y = (y * 255.0 - 16.0) / 219.0;
+            cbcr = (cbcr * 255.0 - 128.0) / 224.0;
+        } else {
+            // Full range: Y [0-255] -> [0-1], CbCr centered at 0.5
+            cbcr = cbcr - 0.5;
+        }
     }
 
     // Select color matrix
@@ -121,12 +140,24 @@ fragment float4 yuvDisplayFragment(
     // Sample CbCr (hardware handles interpolation for subsampled chroma)
     float2 cbcr = cbcrTexture.sample(textureSampler, in.texCoord).rg;
 
-    // Handle video range vs full range
-    if (params.isVideoRange != 0) {
-        y = (y * 255.0 - 16.0) / 219.0;
-        cbcr = (cbcr * 255.0 - 128.0) / 224.0;
+    // Handle 8-bit vs 10-bit, and video range vs full range.
+    if (params.isTenBit != 0) {
+        float y10 = (y * 65535.0) / 64.0;
+        float2 cbcr10 = (cbcr * 65535.0) / 64.0;
+        if (params.isVideoRange != 0) {
+            y = (y10 - 64.0) / 876.0;
+            cbcr = (cbcr10 - 512.0) / 896.0;
+        } else {
+            y = y10 / 1023.0;
+            cbcr = (cbcr10 - 512.0) / 1023.0;
+        }
     } else {
-        cbcr = cbcr - 0.5;
+        if (params.isVideoRange != 0) {
+            y = (y * 255.0 - 16.0) / 219.0;
+            cbcr = (cbcr * 255.0 - 128.0) / 224.0;
+        } else {
+            cbcr = cbcr - 0.5;
+        }
     }
 
     // Select color matrix and convert

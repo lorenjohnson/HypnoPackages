@@ -18,8 +18,18 @@ kernel void transitionCrossfade(
         return;
     }
 
-    float4 a = outgoing.read(gid);
-    float4 b = incoming.read(gid);
+    int outW = params.width;
+    int outH = params.height;
+    int outSrcW = int(outgoing.get_width());
+    int outSrcH = int(outgoing.get_height());
+    int inSrcW = int(incoming.get_width());
+    int inSrcH = int(incoming.get_height());
+
+    uint2 outPos = mapCoord(gid, outW, outH, outSrcW, outSrcH);
+    uint2 inPos = mapCoord(gid, outW, outH, inSrcW, inSrcH);
+
+    float4 a = outgoing.read(outPos);
+    float4 b = incoming.read(inPos);
 
     // Simple linear blend
     float4 result = mix(a, b, params.progress);

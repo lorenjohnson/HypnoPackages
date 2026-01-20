@@ -110,6 +110,7 @@ public final class PlayerView: MTKView {
         var height: Int32
         var useBT709: Int32 = 1     // Default to BT.709 (HD content)
         var isVideoRange: Int32 = 1  // Default to video range
+        var isTenBit: Int32 = 0
     }
 
     // MARK: - Initialization
@@ -479,7 +480,8 @@ public final class PlayerView: MTKView {
             width: Int32(frame.width),
             height: Int32(frame.height),
             useBT709: 1,
-            isVideoRange: yuvTextures.isVideoRange ? 1 : 0
+            isVideoRange: yuvTextures.isVideoRange ? 1 : 0,
+            isTenBit: yuvTextures.isTenBit ? 1 : 0
         )
         encoder.setBytes(&params, length: MemoryLayout<YUVParams>.size, index: 0)
 

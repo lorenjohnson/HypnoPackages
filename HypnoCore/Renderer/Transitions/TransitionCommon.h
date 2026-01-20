@@ -22,6 +22,40 @@ struct TransitionParams {
     float _padding;
 };
 
+// MARK: - Coordinate Mapping
+
+// Map an output-space pixel coordinate into the coordinate system of a source texture.
+// This keeps transitions robust if output textures ever differ in size (e.g., a settings
+// change while transitioning). Mapping is "stretch-to-fit" with clamp-to-edge semantics.
+static inline uint2 mapCoord(uint2 outGid, int outW, int outH, int srcW, int srcH) {
+    // Avoid divide-by-zero in weird edge cases.
+    float ow = float(max(outW, 1));
+    float oh = float(max(outH, 1));
+
+    float2 uv = (float2(float(outGid.x), float(outGid.y)) + 0.5) / float2(ow, oh);
+
+    int x = int(floor(uv.x * float(max(srcW, 1))));
+    int y = int(floor(uv.y * float(max(srcH, 1))));
+
+    x = clamp(x, 0, max(srcW - 1, 0));
+    y = clamp(y, 0, max(srcH - 1, 0));
+    return uint2(uint(x), uint(y));
+}
+
+static inline uint2 mapCoord(float2 outPx, int outW, int outH, int srcW, int srcH) {
+    float ow = float(max(outW, 1));
+    float oh = float(max(outH, 1));
+
+    float2 uv = (outPx + 0.5) / float2(ow, oh);
+
+    int x = int(floor(uv.x * float(max(srcW, 1))));
+    int y = int(floor(uv.y * float(max(srcH, 1))));
+
+    x = clamp(x, 0, max(srcW - 1, 0));
+    y = clamp(y, 0, max(srcH - 1, 0));
+    return uint2(uint(x), uint(y));
+}
+
 // MARK: - Noise Helpers
 
 // Fast hash for pseudo-random values

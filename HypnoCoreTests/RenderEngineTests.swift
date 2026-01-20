@@ -28,12 +28,12 @@ struct RenderEngineTests {
         let file = MediaFile(source: .url(imageURL), mediaKind: .image, duration: duration)
         let clip = VideoClip(file: file, startTime: .zero, duration: duration)
         let source = HypnogramSource(clip: clip)
-        let recipe = HypnogramRecipe(sources: [source], targetDuration: duration)
+        let hypnoClip = HypnogramClip(sources: [source], targetDuration: duration)
 
         let engine = RenderEngine()
         let config = RenderEngine.Config(outputSize: CGSize(width: 320, height: 180), frameRate: 30, enableEffects: true)
         let result = await engine.makePlayerItem(
-            recipe: recipe,
+            clip: hypnoClip,
             config: config,
             effectManager: nil
         )
@@ -57,14 +57,14 @@ struct RenderEngineTests {
         let file = MediaFile(source: .url(imageURL), mediaKind: .image, duration: duration)
         let clip = VideoClip(file: file, startTime: .zero, duration: duration)
         let source = HypnogramSource(clip: clip)
-        let recipe = HypnogramRecipe(sources: [source], targetDuration: duration)
+        let hypnoClip = HypnogramClip(sources: [source], targetDuration: duration)
 
         let outputURL = tempDir.appendingPathComponent("export-output.png")
         let config = RenderEngine.Config(outputSize: CGSize(width: 128, height: 72), frameRate: 30, enableEffects: true)
 
         let engine = RenderEngine()
         let result = await engine.export(
-            recipe: recipe,
+            clip: hypnoClip,
             outputURL: outputURL,
             config: config
         )
@@ -91,14 +91,14 @@ struct RenderEngineTests {
         let file = MediaFile(source: .url(videoURL), mediaKind: .video, duration: duration)
         let clip = VideoClip(file: file, startTime: .zero, duration: duration)
         let source = HypnogramSource(clip: clip)
-        let recipe = HypnogramRecipe(sources: [source], targetDuration: duration)
+        let hypnoClip = HypnogramClip(sources: [source], targetDuration: duration)
 
         let outputURL = tempDir.appendingPathComponent("export-output.mov")
         let config = RenderEngine.Config(outputSize: CGSize(width: 128, height: 72), frameRate: frameRate, enableEffects: true)
 
         let engine = RenderEngine()
         let result = await engine.export(
-            recipe: recipe,
+            clip: hypnoClip,
             outputURL: outputURL,
             config: config
         )

@@ -22,10 +22,10 @@ struct EffectsTests {
         let clip = VideoClip(file: file, startTime: .zero, duration: duration)
         let chain = EffectChain(name: "Temporal", effects: [EffectDefinition(type: "FrameDifferenceEffect")])
         let source = HypnogramSource(clip: clip, effectChain: chain)
-        let recipe = HypnogramRecipe(sources: [source], targetDuration: duration)
+        let hypnoClip = HypnogramClip(sources: [source], targetDuration: duration)
 
         let manager = EffectManager()
-        manager.recipeProvider = { recipe }
+        manager.clipProvider = { hypnoClip }
 
         #expect(manager.maxRequiredLookback == 2)
         #expect(manager.usesFrameBuffer)
@@ -43,12 +43,12 @@ struct EffectsTests {
         let data = try JSONEncoder().encode(recipe)
         let decoded = try JSONDecoder().decode(HypnogramRecipe.self, from: data)
 
-        #expect(decoded.sources.count == 1)
-        #expect(decoded.targetDuration.seconds == recipe.targetDuration.seconds)
-        #expect(decoded.playRate == recipe.playRate)
-        // Note: legacy recipe `mode` has been removed; decoding should remain stable.
+        #expect(decoded.clips.count == 1)
+        #expect(decoded.clips[0].sources.count == 1)
+        #expect(decoded.clips[0].targetDuration.seconds == recipe.clips[0].targetDuration.seconds)
+        #expect(decoded.clips[0].playRate == recipe.clips[0].playRate)
 
-        let decodedTransform = decoded.sources[0].transforms[0]
+        let decodedTransform = decoded.clips[0].sources[0].transforms[0]
         #expect(decodedTransform.a == transform.a)
         #expect(decodedTransform.b == transform.b)
         #expect(decodedTransform.c == transform.c)
@@ -72,7 +72,7 @@ struct EffectsTests {
 
         recipe.ensureEffectChainNames()
 
-        #expect(recipe.effectChain.name != nil)
-        #expect(recipe.sources[0].effectChain.name != nil)
+        #expect(recipe.clips[0].effectChain.name != nil)
+        #expect(recipe.clips[0].sources[0].effectChain.name != nil)
     }
 }
