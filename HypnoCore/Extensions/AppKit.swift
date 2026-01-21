@@ -35,39 +35,3 @@ public extension NSColor {
         return String(format: "#%02X%02X%02X", r, g, b)
     }
 }
-
-// MARK: - NSWindow
-
-/// Legacy "borderless fullscreen" window mode.
-/// This creates a fullscreen window that stays on the current desktop/Space rather than
-/// creating a new Space like native macOS fullscreen. We decided to use native fullscreen
-/// for general use, but this is kept in case we want to return to this approach later.
-/// Currently used by Hypnograph for its dedicated display mode.
-public extension NSWindow {
-    /// Configure the window as a borderless fullscreen window.
-    /// This removes all chrome and fills the specified screen while staying on the desktop.
-    func makeBorderlessHypnoWindow(on screen: NSScreen) {
-        let fullFrame = screen.frame
-
-        styleMask.remove(.titled)
-        styleMask.remove(.closable)
-        styleMask.remove(.miniaturizable)
-        styleMask.remove(.resizable)
-
-        collectionBehavior = [.fullScreenNone, .canJoinAllSpaces]
-
-        titleVisibility = .hidden
-        titlebarAppearsTransparent = true
-
-        standardWindowButton(.closeButton)?.isHidden = true
-        standardWindowButton(.miniaturizeButton)?.isHidden = true
-        standardWindowButton(.zoomButton)?.isHidden = true
-
-        isOpaque = true
-        backgroundColor = .black
-        level = .normal
-
-        setFrame(fullFrame, display: true, animate: false)
-        isMovable = false
-    }
-}
