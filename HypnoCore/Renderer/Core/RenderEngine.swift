@@ -21,17 +21,20 @@ public final class RenderEngine {
         public let frameRate: Int
         public let enableEffects: Bool
         public let sourceFraming: SourceFraming
+        public let framingHook: (any FramingHook)?
 
         public init(
             outputSize: CGSize,
             frameRate: Int,
             enableEffects: Bool,
-            sourceFraming: SourceFraming = .fill
+            sourceFraming: SourceFraming = .fill,
+            framingHook: (any FramingHook)? = HumanCenteringFramingHook.shared
         ) {
             self.outputSize = outputSize
             self.frameRate = frameRate
             self.enableEffects = enableEffects
             self.sourceFraming = sourceFraming
+            self.framingHook = framingHook
         }
     }
     
@@ -60,6 +63,7 @@ public final class RenderEngine {
             frameRate: config.frameRate,
             enableEffects: config.enableEffects,
             sourceFraming: config.sourceFraming,
+            framingHook: config.framingHook,
             effectManager: effectManager
         )
 
@@ -108,6 +112,7 @@ public final class RenderEngine {
             frameRate: config.frameRate,
             enableEffects: config.enableEffects,
             sourceFraming: config.sourceFraming,
+            framingHook: config.framingHook,
             effectManager: exportManager
         )
 

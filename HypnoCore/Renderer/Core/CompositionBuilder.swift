@@ -42,6 +42,7 @@ final class CompositionBuilder {
         frameRate: Int = 30,
         enableEffects: Bool = true,
         sourceFraming: SourceFraming = .fill,
+        framingHook: (any FramingHook)? = HumanCenteringFramingHook.shared,
         effectManager: EffectManager? = nil
     ) async -> Result<BuildResult, RenderError> {
 
@@ -61,6 +62,7 @@ final class CompositionBuilder {
             frameRate: frameRate,
             enableEffects: enableEffects,
             sourceFraming: sourceFraming,
+            framingHook: framingHook,
             effectManager: effectManager
         )
     }
@@ -74,6 +76,7 @@ final class CompositionBuilder {
         frameRate: Int,
         enableEffects: Bool,
         sourceFraming: SourceFraming,
+        framingHook: (any FramingHook)?,
         effectManager: EffectManager?
     ) async -> Result<BuildResult, RenderError> {
 
@@ -101,13 +104,13 @@ final class CompositionBuilder {
 
         // Create composition
         let composition = AVMutableComposition()
+        let renderID = UUID()
         var trackIDs: [CMPersistentTrackID] = []
         var audioTrackIDs: [CMPersistentTrackID] = []
         var transforms: [CGAffineTransform] = []
         var blendModes: [String] = []
         var sourceIndices: [Int] = []
         var stillImages: [CIImage?] = []
-        var layerPersonBounds: [CGRect?] = []
 
         for (index, (source, loaded)) in loadedSources.enumerated() {
             guard let track = composition.addMutableTrack(
@@ -127,12 +130,6 @@ final class CompositionBuilder {
                 // AVAssetExportSession fails if tracks have no segments at all.
                 track.insertEmptyTimeRange(CMTimeRange(start: .zero, duration: targetDuration))
                 stillImages.append(loaded.ciImage)
-                if let ciImage = loaded.ciImage, sourceFraming == .fill {
-                    let analysis = HumanRectanglesFraming.analyze(ciImage: ciImage.transformed(by: composedTransform))
-                    layerPersonBounds.append(analysis.bestObservation?.boundingBox)
-                } else {
-                    layerPersonBounds.append(nil)
-                }
             } else {
                 // For videos: insert media, looping if needed
                 guard let videoTrack = loaded.videoTrack else {
@@ -160,11 +157,6 @@ final class CompositionBuilder {
                 }
 
                 stillImages.append(nil as CIImage?)
-                if sourceFraming == .fill {
-                    layerPersonBounds.append(detectPersonBoundsInVideoSource(loaded: loaded, source: source, composedTransform: composedTransform))
-                } else {
-                    layerPersonBounds.append(nil)
-                }
 
                 // Add audio track if available (mirror video looping)
                 if let audioTrack = loaded.audioTrack {
@@ -225,8 +217,9 @@ final class CompositionBuilder {
             sourceIndices: sourceIndices,
             enableEffects: enableEffects,
             stillImages: stillImages,
-            layerPersonBounds: layerPersonBounds,
             sourceFraming: sourceFraming,
+            framingHook: framingHook,
+            renderID: renderID,
             effectManager: effectManager
         )
 
@@ -262,47 +255,4 @@ final class CompositionBuilder {
         return .success(result)
     }
 
-    private func detectPersonBoundsInVideoSource(
-        loaded: LoadedSource,
-        source: HypnogramSource,
-        composedTransform: CGAffineTransform
-    ) -> CGRect? {
-        let generator = AVAssetImageGenerator(asset: loaded.asset)
-        generator.appliesPreferredTrackTransform = false
-        generator.requestedTimeToleranceBefore = .zero
-        generator.requestedTimeToleranceAfter = .zero
-
-        let clipStartSeconds = source.clip.startTime.seconds
-        let clipDurationSeconds = source.clip.duration.seconds
-        guard clipStartSeconds.isFinite, clipDurationSeconds.isFinite else { return nil }
-
-        let offsets: [Double] = [
-            0.0,
-            min(0.25, max(0.0, clipDurationSeconds * 0.05)),
-            min(0.75, max(0.0, clipDurationSeconds * 0.20))
-        ]
-        let times: [CMTime] = offsets
-            .map { clipStartSeconds + $0 }
-            .filter { $0 >= 0 }
-            .map { CMTime(seconds: $0, preferredTimescale: 600) }
-
-        var best: (bbox: CGRect, score: Double)?
-
-        for t in times {
-            guard let cgImage = try? generator.copyCGImage(at: t, actualTime: nil) else { continue }
-            let ciImage = CIImage(cgImage: cgImage).transformed(by: composedTransform)
-            let analysis = HumanRectanglesFraming.analyze(ciImage: ciImage)
-            guard let obs = analysis.bestObservation else { continue }
-
-            let area = Double(obs.boundingBox.width * obs.boundingBox.height)
-            let score = Double(obs.confidence) * area
-            if let current = best {
-                if score > current.score { best = (obs.boundingBox, score) }
-            } else {
-                best = (obs.boundingBox, score)
-            }
-        }
-
-        return best?.bbox
-    }
 }

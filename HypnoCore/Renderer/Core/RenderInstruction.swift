@@ -42,12 +42,14 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
     /// Still images for layers that are images (indexed by layer, nil for video layers)
     public let stillImages: [CIImage?]
 
-    /// Optional per-layer detected person bounds (normalized 0...1, origin bottom-left).
-    /// Used to bias SourceFraming.fill so portrait sources can be cropped toward the head without revealing edges.
-    public let layerPersonBounds: [CGRect?]
-
     /// How each source should be mapped into the output frame.
     public let sourceFraming: SourceFraming
+
+    /// Optional hook for per-source framing decisions (smart framing).
+    public let framingHook: (any FramingHook)?
+
+    /// Identifies the render session for caching (one AVPlayerItem / export run).
+    public let renderID: UUID
 
     /// The EffectManager to use for effects processing.
     /// - Preview: passes state.effectManager (mutable, changes affect playback)
@@ -65,8 +67,9 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
         sourceIndices: [Int],
         enableEffects: Bool = false,
         stillImages: [CIImage?] = [],
-        layerPersonBounds: [CGRect?] = [],
         sourceFraming: SourceFraming = .fill,
+        framingHook: (any FramingHook)? = nil,
+        renderID: UUID = UUID(),
         effectManager: EffectManager? = nil
     ) {
         self.timeRange = timeRange
@@ -76,8 +79,9 @@ final class RenderInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
         self.sourceIndices = sourceIndices
         self.enableEffects = enableEffects
         self.stillImages = stillImages
-        self.layerPersonBounds = layerPersonBounds
         self.sourceFraming = sourceFraming
+        self.framingHook = framingHook
+        self.renderID = renderID
         self.effectManager = effectManager
 
         // Required track IDs for AVFoundation

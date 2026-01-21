@@ -26,9 +26,9 @@ enum RendererImageUtils {
     }
 
     /// Scale and crop an image to fill the target size while maintaining aspect ratio.
-    /// If `personBoundsNormalized` is provided (normalized 0...1, origin bottom-left),
-    /// the crop is vertically biased toward the top of that bounds (head) while keeping edges opaque.
-    static func aspectFill(image: CIImage, to size: CGSize, personBoundsNormalized: CGRect? = nil) -> CIImage {
+    /// If a `FramingBias` is provided, the crop translation is biased toward the focus anchor
+    /// while keeping edges opaque (no blank edges).
+    static func aspectFill(image: CIImage, to size: CGSize, bias: FramingBias? = nil) -> CIImage {
         var img = normalizeOrigin(image)
         let imageSize = img.extent.size
         guard imageSize.width > 0, imageSize.height > 0, size.width > 0, size.height > 0 else {
@@ -47,16 +47,38 @@ enum RendererImageUtils {
         var x = -slackX / 2
         var y = -slackY / 2
 
-        // Bias vertically toward the detected person (typically portrait -> landscape crops).
-        if let b = personBoundsNormalized, slackY > 0 {
-            // Anchor on the top of the bounds (approx head).
-            let headroomY = max(0, min(1, b.maxY + (b.height * 0.06)))
-            let focusY = max(0, min(1, headroomY))
-            // Place the head near the upper portion of the frame (avoid pushing it into the lower half).
-            let targetY: CGFloat = 0.95
-            let desiredY = (targetY * size.height) - (focusY * scaledSize.height)
-            // Clamp so we never reveal empty edges.
-            y = max(-slackY, min(0, desiredY))
+        if let bias {
+            // Convert target from NDC to output pixel coordinates.
+            let targetX = ((bias.targetNDC.x + 1) * 0.5) * size.width
+            let targetY = ((bias.targetNDC.y + 1) * 0.5) * size.height
+
+            // Focus anchor in scaled image pixel coordinates.
+            let anchor = CGPoint(
+                x: max(0, min(1, bias.anchorNormalized.x)) * scaledSize.width,
+                y: max(0, min(1, bias.anchorNormalized.y)) * scaledSize.height
+            )
+
+            // Desired translation so the anchor lands at the target.
+            let desiredX = targetX - anchor.x
+            let desiredY = targetY - anchor.y
+
+            switch bias.axisPolicy {
+            case .verticalOnly:
+                if slackY > 0 {
+                    y = max(-slackY, min(0, desiredY))
+                }
+            case .horizontalOnly:
+                if slackX > 0 {
+                    x = max(-slackX, min(0, desiredX))
+                }
+            case .both:
+                if slackX > 0 {
+                    x = max(-slackX, min(0, desiredX))
+                }
+                if slackY > 0 {
+                    y = max(-slackY, min(0, desiredY))
+                }
+            }
         }
 
         let translated = scaledImage.transformed(by: CGAffineTransform(translationX: x, y: y))
@@ -94,11 +116,11 @@ enum RendererImageUtils {
         image: CIImage,
         to size: CGSize,
         framing: SourceFraming,
-        personBoundsNormalized: CGRect? = nil
+        bias: FramingBias? = nil
     ) -> CIImage {
         switch framing {
         case .fill:
-            return aspectFill(image: image, to: size, personBoundsNormalized: personBoundsNormalized)
+            return aspectFill(image: image, to: size, bias: bias)
         case .fit:
             return aspectFit(image: image, to: size)
         }

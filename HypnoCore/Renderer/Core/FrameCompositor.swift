@@ -162,15 +162,23 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             let transform = instruction.transforms[index]
             img = img.transformed(by: transform)
 
+            // Ask optional framing hook for a per-source bias (smart framing).
+            let bias: FramingBias? = instruction.framingHook?.framingBias(for: FramingRequest(
+                renderID: instruction.renderID,
+                layerIndex: index,
+                sourceIndex: sourceIndex,
+                time: request.compositionTime,
+                sourceFraming: instruction.sourceFraming,
+                outputSize: outputSize,
+                sourceImage: img
+            ))
+
             // Map source into output frame
             img = RendererImageUtils.applySourceFraming(
                 image: img,
                 to: outputSize,
                 framing: instruction.sourceFraming,
-                personBoundsNormalized: {
-                    guard index < instruction.layerPersonBounds.count else { return nil }
-                    return instruction.layerPersonBounds[index]
-                }()
+                bias: bias
             )
 
             // Apply per-source effects from clip
