@@ -15,11 +15,13 @@ public final class HumanCenteringFramingHook: FramingHook {
     public struct Config: Sendable {
         /// Sampling interval in seconds (video-time). The hook computes at most one Vision analysis per bucket.
         public var sampleIntervalSeconds: Double
+        /// Low-pass filter time constant (seconds). Larger values = more damping/lag, fewer jumps.
+        public var dampingTimeConstantSeconds: Double
         /// Smoothly blend between bucket-to-bucket results over this duration (seconds).
         /// This reduces visible "jump cuts" when the detected anchor changes.
         public var transitionSmoothingSeconds: Double
         /// When detection is missing, keep the last-known bias for this many seconds (video-time)
-        /// before releasing back to centered framing.
+        /// before releasing back to centered framing (smoothly; never a hard snap).
         public var missHoldSeconds: Double
         /// Ignore small anchor changes below this threshold (normalized units) to reduce jitter.
         public var deadbandAnchorDelta: CGFloat
@@ -32,6 +34,7 @@ public final class HumanCenteringFramingHook: FramingHook {
 
         public init(
             sampleIntervalSeconds: Double = 0.5,
+            dampingTimeConstantSeconds: Double = 1.0,
             transitionSmoothingSeconds: Double = 0.35,
             missHoldSeconds: Double = 1.0,
             deadbandAnchorDelta: CGFloat = 0.03,
@@ -40,6 +43,7 @@ public final class HumanCenteringFramingHook: FramingHook {
             verticalOnly: Bool = true
         ) {
             self.sampleIntervalSeconds = sampleIntervalSeconds
+            self.dampingTimeConstantSeconds = dampingTimeConstantSeconds
             self.transitionSmoothingSeconds = transitionSmoothingSeconds
             self.missHoldSeconds = missHoldSeconds
             self.deadbandAnchorDelta = deadbandAnchorDelta
@@ -67,9 +71,19 @@ public final class HumanCenteringFramingHook: FramingHook {
     }
 
     private var cache: [CacheKey: CachedValue] = [:]
+    private var smoothedCache: [CacheKey: CachedValue] = [:]
     private var cacheOrder: [CacheKey] = []
     private let cacheLock = NSLock()
     private let maxCacheEntries: Int = 4096
+
+    private struct StreamKey: Hashable {
+        var renderID: UUID
+        var layerIndex: Int
+        var outputW: Int
+        var outputH: Int
+    }
+
+    private var lastDetectedBucketByStream: [StreamKey: Int] = [:]
 
     public init(config: Config = Config()) {
         self.config = config
@@ -123,33 +137,31 @@ public final class HumanCenteringFramingHook: FramingHook {
             return value
         }()
 
-        // Determine the effective bias for this time (apply miss hold).
-        let currentBias = effectiveBias(
-            from: currentCached,
+        noteDetectionIfPresent(currentCached, for: key)
+
+        // Smooth/dampen across buckets (deterministic) and never "snap back to center" after a miss:
+        // if detection fails for a bucket, hold the prior smoothed bias.
+        let currentSmoothed = smoothedBiasForBucket(
+            key: key,
+            raw: currentCached,
+            outputSize: request.outputSize
+        )
+
+        let previousSmoothed = smoothedBiasForPreviousBucket(
             renderID: request.renderID,
             layerIndex: request.layerIndex,
             bucket: bucket,
             outputSize: request.outputSize
         )
 
-        // Blend from previous bucket toward current bucket to reduce visible jumps.
-        let previousBias = effectiveBiasForPreviousBucket(
-            renderID: request.renderID,
-            layerIndex: request.layerIndex,
-            bucket: bucket,
-            outputSize: request.outputSize
-        )
-
-        let smoothed = smoothedBias(
-            previous: previousBias,
-            current: currentBias,
-            at: request.time,
+        return inBucketBlend(
+            previous: previousSmoothed,
+            current: currentSmoothed,
+            time: request.time,
             bucket: bucket,
             intervalSeconds: config.sampleIntervalSeconds,
             smoothingSeconds: config.transitionSmoothingSeconds
         )
-
-        return smoothed
     }
 
     private func cachedValue(for key: CacheKey) -> CachedValue? {
@@ -166,6 +178,7 @@ public final class HumanCenteringFramingHook: FramingHook {
             cacheOrder.append(key)
         }
         cache[key] = value
+        smoothedCache.removeValue(forKey: key)
 
         // Basic FIFO eviction to bound memory.
         if cacheOrder.count > maxCacheEntries {
@@ -174,6 +187,17 @@ public final class HumanCenteringFramingHook: FramingHook {
                 guard let first = cacheOrder.first else { break }
                 cacheOrder.removeFirst()
                 cache.removeValue(forKey: first)
+                smoothedCache.removeValue(forKey: first)
+
+                let streamKey = StreamKey(
+                    renderID: first.renderID,
+                    layerIndex: first.layerIndex,
+                    outputW: first.outputW,
+                    outputH: first.outputH
+                )
+                if lastDetectedBucketByStream[streamKey] == first.bucket {
+                    lastDetectedBucketByStream.removeValue(forKey: streamKey)
+                }
             }
         }
     }
@@ -198,42 +222,41 @@ public final class HumanCenteringFramingHook: FramingHook {
         return slackX > 0.5 || slackY > 0.5
     }
 
-    private func effectiveBias(
-        from value: CachedValue,
-        renderID: UUID,
-        layerIndex: Int,
-        bucket: Int,
-        outputSize: CGSize
-    ) -> FramingBias? {
-        switch value {
-        case .bias(let bias):
-            return bias
-        case .none:
-            // Hold last known bias for a short period before returning to centered framing.
-            guard config.sampleIntervalSeconds > 0 else { return nil }
-            let holdBuckets = max(0, Int(ceil(config.missHoldSeconds / config.sampleIntervalSeconds)))
-            guard holdBuckets > 0 else { return nil }
+    private func noteDetectionIfPresent(_ value: CachedValue, for key: CacheKey) {
+        guard case .bias = value else { return }
 
-            for lookback in 1...holdBuckets {
-                let b = bucket - lookback
-                if b < 0 { break }
-                let key = CacheKey(
-                    renderID: renderID,
-                    layerIndex: layerIndex,
-                    bucket: b,
-                    outputW: Int(outputSize.width.rounded(.toNearestOrEven)),
-                    outputH: Int(outputSize.height.rounded(.toNearestOrEven))
-                )
-                if let cached = cachedValue(for: key),
-                   case .bias(let prior) = cached {
-                    return prior
-                }
-            }
-            return nil
-        }
+        let streamKey = StreamKey(
+            renderID: key.renderID,
+            layerIndex: key.layerIndex,
+            outputW: key.outputW,
+            outputH: key.outputH
+        )
+
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        let existing = lastDetectedBucketByStream[streamKey] ?? Int.min
+        lastDetectedBucketByStream[streamKey] = max(existing, key.bucket)
     }
 
-    private func effectiveBiasForPreviousBucket(
+    private func lastDetectedBucket(for key: CacheKey) -> Int? {
+        let streamKey = StreamKey(
+            renderID: key.renderID,
+            layerIndex: key.layerIndex,
+            outputW: key.outputW,
+            outputH: key.outputH
+        )
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        return lastDetectedBucketByStream[streamKey]
+    }
+
+    private func smoothedCachedValue(for key: CacheKey) -> CachedValue? {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        return smoothedCache[key]
+    }
+
+    private func smoothedBiasForPreviousBucket(
         renderID: UUID,
         layerIndex: Int,
         bucket: Int,
@@ -247,35 +270,98 @@ public final class HumanCenteringFramingHook: FramingHook {
             outputW: Int(outputSize.width.rounded(.toNearestOrEven)),
             outputH: Int(outputSize.height.rounded(.toNearestOrEven))
         )
-        guard let prevCached = cachedValue(for: prevKey) else { return nil }
-        return effectiveBias(
-            from: prevCached,
-            renderID: renderID,
-            layerIndex: layerIndex,
-            bucket: bucket - 1,
-            outputSize: outputSize
-        )
+        guard let cached = smoothedCachedValue(for: prevKey) else { return nil }
+        if case .bias(let bias) = cached { return bias }
+        return nil
     }
 
-    private func smoothedBias(
+    private func smoothedBiasForBucket(
+        key: CacheKey,
+        raw: CachedValue,
+        outputSize: CGSize
+    ) -> FramingBias? {
+        if let existing = smoothedCachedValue(for: key) {
+            if case .bias(let bias) = existing { return bias }
+            return nil
+        }
+
+        // Prev smoothed bias (if available). We only rely on the immediately previous bucket so this is cheap.
+        let prev: FramingBias? = smoothedBiasForPreviousBucket(
+            renderID: key.renderID,
+            layerIndex: key.layerIndex,
+            bucket: key.bucket,
+            outputSize: outputSize
+        )
+
+        let rawBias: FramingBias? = {
+            if case .bias(let bias) = raw { return bias }
+            return nil
+        }()
+
+        // Never jump back to center on a miss: hold the last bias when detection fails.
+        let held: FramingBias? = {
+            if let rawBias { return rawBias }
+            guard let prev else { return nil }
+
+            if config.missHoldSeconds.isFinite, config.missHoldSeconds >= 0,
+               let lastDetected = lastDetectedBucket(for: key)
+            {
+                let bucketsSince = max(0, key.bucket - lastDetected)
+                let secondsSince = Double(bucketsSince) * config.sampleIntervalSeconds
+                if secondsSince > config.missHoldSeconds {
+                    return centeredBias()
+                }
+            }
+
+            return prev
+        }()
+
+        // Deadband against the previous smoothed value to reduce tiny jitter.
+        let debanded: FramingBias? = {
+            guard let held, let prev else { return held }
+            let dy = abs(held.anchorNormalized.y - prev.anchorNormalized.y)
+            let dx = abs(held.anchorNormalized.x - prev.anchorNormalized.x)
+            if max(dx, dy) < config.deadbandAnchorDelta {
+                return prev
+            }
+            return held
+        }()
+
+        let smoothed: FramingBias? = {
+            guard let debanded else { return nil }
+            guard let prev else { return debanded }
+
+            let alpha = smoothingAlpha(intervalSeconds: config.sampleIntervalSeconds, tau: config.dampingTimeConstantSeconds)
+            let anchor = CGPoint(
+                x: lerp(prev.anchorNormalized.x, debanded.anchorNormalized.x, alpha),
+                y: lerp(prev.anchorNormalized.y, debanded.anchorNormalized.y, alpha)
+            )
+            let target = CGPoint(
+                x: lerp(prev.targetNDC.x, debanded.targetNDC.x, alpha),
+                y: lerp(prev.targetNDC.y, debanded.targetNDC.y, alpha)
+            )
+
+            return FramingBias(
+                anchorNormalized: anchor,
+                boundsNormalized: debanded.boundsNormalized ?? prev.boundsNormalized,
+                targetNDC: target,
+                axisPolicy: debanded.axisPolicy
+            )
+        }()
+
+        storeSmoothedBias(smoothed, for: key)
+        return smoothed
+    }
+
+    private func inBucketBlend(
         previous: FramingBias?,
         current: FramingBias?,
-        at time: CMTime,
+        time: CMTime,
         bucket: Int,
         intervalSeconds: Double,
         smoothingSeconds: Double
     ) -> FramingBias? {
-        // If both are nil, remain centered.
         if previous == nil, current == nil { return nil }
-
-        // Apply deadband: if movement is small, keep the previous bias to reduce jitter.
-        if let previous, let current {
-            let dy = abs(current.anchorNormalized.y - previous.anchorNormalized.y)
-            let dx = abs(current.anchorNormalized.x - previous.anchorNormalized.x)
-            if max(dx, dy) < config.deadbandAnchorDelta {
-                return previous
-            }
-        }
 
         guard intervalSeconds > 0, smoothingSeconds > 0 else {
             return current ?? previous
@@ -288,13 +374,13 @@ public final class HumanCenteringFramingHook: FramingHook {
 
         let bucketStart = Double(bucket) * intervalSeconds
         let tInBucket = max(0, seconds - bucketStart)
-        let t = min(1.0, tInBucket / smoothingSeconds)
+        let clampedSmoothing = min(smoothingSeconds, intervalSeconds)
+        let tRaw = min(1.0, tInBucket / clampedSmoothing)
+        let t = smoothstep(tRaw)
 
-        // Treat nil as "centered" for smooth release.
         let prevBias = previous ?? centeredBias()
-        let curBias = current ?? centeredBias()
+        let curBias = current ?? prevBias
 
-        // Interpolate anchor and target. Keep axis policy stable (prefer current's policy).
         let anchor = CGPoint(
             x: lerp(prevBias.anchorNormalized.x, curBias.anchorNormalized.x, t),
             y: lerp(prevBias.anchorNormalized.y, curBias.anchorNormalized.y, t)
@@ -319,6 +405,23 @@ public final class HumanCenteringFramingHook: FramingHook {
             targetNDC: CGPoint(x: 0, y: 0),
             axisPolicy: config.verticalOnly ? .verticalOnly : .both
         )
+    }
+
+    private func storeSmoothedBias(_ bias: FramingBias?, for key: CacheKey) {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        smoothedCache[key] = bias.map { .bias($0) } ?? .none
+    }
+
+    private func smoothingAlpha(intervalSeconds: Double, tau: Double) -> Double {
+        guard intervalSeconds > 0 else { return 1.0 }
+        guard tau.isFinite, tau > 0 else { return 1.0 }
+        return 1.0 - exp(-intervalSeconds / tau)
+    }
+
+    private func smoothstep(_ t: Double) -> Double {
+        let x = max(0, min(1, t))
+        return x * x * (3 - 2 * x)
     }
 
     private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: Double) -> CGFloat {
