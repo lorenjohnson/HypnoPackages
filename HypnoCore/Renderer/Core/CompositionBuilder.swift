@@ -137,14 +137,18 @@ final class CompositionBuilder {
                     continue
                 }
 
-                let clipDuration = source.clip.duration
+                let (effectiveStartTime, effectiveClipDuration) = normalizedClipSlice(
+                    sourceClip: source.clip,
+                    assetDuration: loaded.duration,
+                    targetDuration: targetDuration
+                )
                 var currentTime = CMTime.zero
                 var loopCount = 0
 
                 while currentTime < targetDuration {
                     let remainingDuration = CMTimeSubtract(targetDuration, currentTime)
-                    let insertDuration = CMTimeMinimum(clipDuration, remainingDuration)
-                    let insertRange = CMTimeRange(start: source.clip.startTime, duration: insertDuration)
+                    let insertDuration = CMTimeMinimum(effectiveClipDuration, remainingDuration)
+                    let insertRange = CMTimeRange(start: effectiveStartTime, duration: insertDuration)
 
                     do {
                         try track.insertTimeRange(insertRange, of: videoTrack, at: currentTime)
@@ -173,8 +177,8 @@ final class CompositionBuilder {
 
                     while audioTime < targetDuration {
                         let remainingDuration = CMTimeSubtract(targetDuration, audioTime)
-                        let insertDuration = CMTimeMinimum(clipDuration, remainingDuration)
-                        let insertRange = CMTimeRange(start: source.clip.startTime, duration: insertDuration)
+                        let insertDuration = CMTimeMinimum(effectiveClipDuration, remainingDuration)
+                        let insertRange = CMTimeRange(start: effectiveStartTime, duration: insertDuration)
 
                         do {
                             try compAudioTrack.insertTimeRange(insertRange, of: audioTrack, at: audioTime)
@@ -253,6 +257,46 @@ final class CompositionBuilder {
 
         // Success logging removed to reduce noise
         return .success(result)
+    }
+
+    /// Normalize a video slice so that:
+    /// - If the asset can cover `targetDuration`, we insert one continuous segment of length `targetDuration`.
+    ///   - Preserve the existing `startTime` when it's valid.
+    ///   - If `startTime` is too close to the end, clamp it back so the segment reaches the end.
+    /// - If the asset is shorter than `targetDuration`, start at 0 and loop the full asset duration.
+    private func normalizedClipSlice(
+        sourceClip: VideoClip,
+        assetDuration: CMTime,
+        targetDuration: CMTime
+    ) -> (startTime: CMTime, duration: CMTime) {
+        guard assetDuration.isValid, assetDuration.isNumeric else {
+            return (sourceClip.startTime, sourceClip.duration)
+        }
+        guard targetDuration.isValid, targetDuration.isNumeric else {
+            return (sourceClip.startTime, sourceClip.duration)
+        }
+
+        let assetPositive = CMTimeMaximum(assetDuration, .zero)
+        let targetPositive = CMTimeMaximum(targetDuration, .zero)
+
+        guard CMTimeCompare(assetPositive, .zero) > 0, CMTimeCompare(targetPositive, .zero) > 0 else {
+            return (sourceClip.startTime, sourceClip.duration)
+        }
+
+        if CMTimeCompare(assetPositive, targetPositive) >= 0 {
+            let maxStart = CMTimeSubtract(assetPositive, targetPositive)
+            let clampedStart = clampTime(sourceClip.startTime, min: .zero, max: maxStart)
+            return (clampedStart, targetPositive)
+        } else {
+            return (.zero, assetPositive)
+        }
+    }
+
+    private func clampTime(_ value: CMTime, min: CMTime, max: CMTime) -> CMTime {
+        var result = value
+        if CMTimeCompare(result, min) < 0 { result = min }
+        if CMTimeCompare(result, max) > 0 { result = max }
+        return result
     }
 
 }
