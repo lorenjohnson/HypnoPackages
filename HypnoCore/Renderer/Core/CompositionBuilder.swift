@@ -81,14 +81,14 @@ final class CompositionBuilder {
     ) async -> Result<BuildResult, RenderError> {
 
         // Load all sources
-        var loadedSources: [(source: HypnogramSource, loaded: LoadedSource)] = []
+        var loadedSources: [(sourceIndex: Int, source: HypnogramSource, loaded: LoadedSource)] = []
 
         for (index, source) in clip.sources.enumerated() {
             let result = await sourceLoader.load(source: source)
 
             switch result {
             case .success(let loaded):
-                loadedSources.append((source, loaded))
+                loadedSources.append((sourceIndex: index, source: source, loaded: loaded))
             case .failure(let error):
                 error.log(context: "CompositionBuilder.montage[\(index)]")
                 // Skip failed sources for now (we can replace with fallback later if needed)
@@ -112,7 +112,9 @@ final class CompositionBuilder {
         var sourceIndices: [Int] = []
         var stillImages: [CIImage?] = []
 
-        for (index, (source, loaded)) in loadedSources.enumerated() {
+        for (index, entry) in loadedSources.enumerated() {
+            let source = entry.source
+            let loaded = entry.loaded
             guard let track = composition.addMutableTrack(
                 withMediaType: .video,
                 preferredTrackID: kCMPersistentTrackID_Invalid
@@ -138,7 +140,10 @@ final class CompositionBuilder {
                 }
 
                 let (effectiveStartTime, effectiveClipDuration) = normalizedClipSlice(
+                    clipID: clip.id,
+                    sourceIndex: entry.sourceIndex,
                     sourceClip: source.clip,
+                    fileID: source.clip.file.id,
                     assetDuration: loaded.duration,
                     targetDuration: targetDuration
                 )
@@ -262,10 +267,13 @@ final class CompositionBuilder {
     /// Normalize a video slice so that:
     /// - If the asset can cover `targetDuration`, we insert one continuous segment of length `targetDuration`.
     ///   - Preserve the existing `startTime` when it's valid.
-    ///   - If `startTime` is too close to the end, clamp it back so the segment reaches the end.
+    ///   - If `startTime` is too close to the end, re-pick a deterministic pseudo-random start within bounds.
     /// - If the asset is shorter than `targetDuration`, start at 0 and loop the full asset duration.
     private func normalizedClipSlice(
+        clipID: UUID,
+        sourceIndex: Int,
         sourceClip: VideoClip,
+        fileID: UUID,
         assetDuration: CMTime,
         targetDuration: CMTime
     ) -> (startTime: CMTime, duration: CMTime) {
@@ -285,18 +293,89 @@ final class CompositionBuilder {
 
         if CMTimeCompare(assetPositive, targetPositive) >= 0 {
             let maxStart = CMTimeSubtract(assetPositive, targetPositive)
-            let clampedStart = clampTime(sourceClip.startTime, min: .zero, max: maxStart)
-            return (clampedStart, targetPositive)
+            if CMTimeCompare(sourceClip.startTime, .zero) >= 0, CMTimeCompare(sourceClip.startTime, maxStart) <= 0 {
+                return (sourceClip.startTime, targetPositive)
+            }
+            let start = deterministicRandomStartTime(
+                clipID: clipID,
+                sourceIndex: sourceIndex,
+                fileID: fileID,
+                maxStart: maxStart,
+                preferredTimescale: targetPositive.timescale
+            )
+            return (start, targetPositive)
         } else {
             return (.zero, assetPositive)
         }
     }
 
-    private func clampTime(_ value: CMTime, min: CMTime, max: CMTime) -> CMTime {
-        var result = value
-        if CMTimeCompare(result, min) < 0 { result = min }
-        if CMTimeCompare(result, max) > 0 { result = max }
-        return result
+    private func deterministicRandomStartTime(
+        clipID: UUID,
+        sourceIndex: Int,
+        fileID: UUID,
+        maxStart: CMTime,
+        preferredTimescale: CMTimeScale
+    ) -> CMTime {
+        let maxStartSeconds = maxStart.seconds
+        guard maxStartSeconds.isFinite, maxStartSeconds > 0 else { return .zero }
+
+        let seed = stableSeed(
+            clipID: clipID,
+            sourceIndex: sourceIndex,
+            fileID: fileID,
+            maxStartSeconds: maxStartSeconds,
+            timescale: preferredTimescale
+        )
+        let unit = randomUnitDouble(seed: seed)
+        let startSeconds = max(0.0, min(maxStartSeconds, unit * maxStartSeconds))
+        return CMTime(seconds: startSeconds, preferredTimescale: preferredTimescale)
+    }
+
+    private func stableSeed(
+        clipID: UUID,
+        sourceIndex: Int,
+        fileID: UUID,
+        maxStartSeconds: Double,
+        timescale: CMTimeScale
+    ) -> UInt64 {
+        var h: UInt64 = 14695981039346656037 // FNV-1a offset basis
+        func mixBytes<T>(_ value: inout T) {
+            withUnsafeBytes(of: &value) { bytes in
+                for b in bytes {
+                    h ^= UInt64(b)
+                    h = h &* 1099511628211
+                }
+            }
+        }
+
+        var clip = clipID.uuid
+        var file = fileID.uuid
+        mixBytes(&clip)
+        mixBytes(&file)
+
+        var si = Int64(sourceIndex)
+        mixBytes(&si)
+
+        // Fold timing inputs to avoid floating-point instability.
+        var ms = Int64((maxStartSeconds * 1000.0).rounded(.toNearestOrAwayFromZero))
+        mixBytes(&ms)
+
+        var ts = Int64(timescale)
+        mixBytes(&ts)
+
+        return h
+    }
+
+    private func randomUnitDouble(seed: UInt64) -> Double {
+        // SplitMix64
+        var x = seed &+ 0x9E3779B97F4A7C15
+        x = (x ^ (x >> 30)) &* 0xBF58476D1CE4E5B9
+        x = (x ^ (x >> 27)) &* 0x94D049BB133111EB
+        x = x ^ (x >> 31)
+
+        // Convert top 53 bits to [0, 1)
+        let mantissa = x >> 11
+        return Double(mantissa) / Double(1 << 53)
     }
 
 }
