@@ -93,6 +93,8 @@ public enum MediaSource: Codable, Hashable {
 
     private enum CodingKeys: String, CodingKey {
         case type, path, identifier
+        // Legacy format key (kept for backwards compatibility on decode)
+        case localIdentifier
     }
 
     public init(from decoder: Decoder) throws {
@@ -108,7 +110,7 @@ public enum MediaSource: Codable, Hashable {
                 id = identifier
             } else {
                 // Legacy format used "localIdentifier" key
-                id = try container.decode(String.self, forKey: CodingKeys(stringValue: "localIdentifier")!)
+                id = try container.decode(String.self, forKey: .localIdentifier)
             }
             self = .external(identifier: id)
         default:
