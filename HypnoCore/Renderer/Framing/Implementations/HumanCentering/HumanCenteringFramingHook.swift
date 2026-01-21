@@ -23,7 +23,7 @@ public final class HumanCenteringFramingHook: FramingHook {
         public var verticalOnly: Bool
 
         public init(
-            sampleIntervalSeconds: Double = 0.25,
+            sampleIntervalSeconds: Double = 0.5,
             maxAnalysisDimension: CGFloat = 640,
             targetNDC: CGPoint = CGPoint(x: 0, y: 0.92),
             verticalOnly: Bool = true
