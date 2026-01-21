@@ -16,13 +16,11 @@ import simd
 
         /// Available transition types
         public enum TransitionType: String, CaseIterable, Codable {
-            case none           // Instant cut (no transition)
-            case crossfade      // Linear alpha blend
-            case blur           // Gaussian blur into next
-            case dissolve       // Noise dissolve into next
-            case slideUp = "scootOver"          // Legacy raw value kept for settings compatibility
-            case slideLeft = "scootOverRight"   // Legacy raw value kept for settings compatibility
-            case shuffle = "destroy"            // Legacy raw value kept for settings compatibility
+            case none
+            case crossfade
+            case blur
+            case slideUp
+            case slideLeft
 
             /// Display name for UI
             public var displayName: String {
@@ -30,10 +28,8 @@ import simd
                 case .none: return "None"
                 case .crossfade: return "Crossfade"
                 case .blur: return "Blur"
-                case .dissolve: return "Dissolve"
                 case .slideUp: return "Slide Up"
                 case .slideLeft: return "Slide Left"
-                case .shuffle: return "Shuffle"
                 }
             }
 
@@ -43,10 +39,8 @@ import simd
                 case .none: return nil
                 case .crossfade: return "transitionCrossfade"
                 case .blur: return "transitionBlur"
-                case .dissolve: return "transitionDissolve"
                 case .slideUp: return "transitionSlideUp"
                 case .slideLeft: return "transitionSlideLeft"
-                case .shuffle: return "transitionShuffle"
                 }
             }
         }
@@ -64,19 +58,23 @@ import simd
     // MARK: - Properties
 
     private let device: MTLDevice
-    private let commandQueue: MTLCommandQueue
+    private let commandQueue: MTLCommandQueue?
     private var pipelineStates: [TransitionType: MTLComputePipelineState] = [:]
 
     /// Whether the renderer is properly initialized
     public var isValid: Bool {
-        !pipelineStates.isEmpty
+        commandQueue != nil && !pipelineStates.isEmpty
     }
 
     // MARK: - Initialization
 
     public init(device: MTLDevice = SharedRenderer.device) {
         self.device = device
-        self.commandQueue = device.makeCommandQueue()!
+        self.commandQueue = device.makeCommandQueue()
+
+        if commandQueue == nil {
+            print("TransitionRenderer: Failed to create command queue")
+        }
 
         loadShaders()
     }
@@ -176,7 +174,7 @@ import simd
         seed: UInt32 = 0,
         softness: Float = 0.02
     ) -> Bool {
-        guard let commandBuffer = commandQueue.makeCommandBuffer() else {
+        guard let commandBuffer = commandQueue?.makeCommandBuffer() else {
             return false
         }
 

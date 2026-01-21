@@ -186,19 +186,4 @@ public final class TextureCache {
         guard let cache = cache else { return }
         CVMetalTextureCacheFlush(cache, 0)
     }
-
-    /// Create texture from DecodedFrame, handling both BGRA and YUV formats
-    /// For YUV frames, this returns a single BGRA texture after conversion
-    /// (use yuvTextures(from:) if you need the raw YUV planes)
-    public func texture(from frame: DecodedFrame) -> MTLTexture? {
-        // For BGRA frames, direct conversion
-        if !frame.isYUV {
-            return texture(from: frame.pixelBuffer)
-        }
-
-        // For YUV frames, return the Y plane as a temporary solution
-        // Full YUV->RGB conversion should happen in the shader
-        // This is a fallback for cases where we need a single texture
-        return yuvTextures(from: frame.pixelBuffer)?.y
-    }
 }
