@@ -268,10 +268,10 @@ public struct SourceLibraryInfo: Identifiable, Sendable {
     }
 }
 
-// MARK: - Video Clip
+// MARK: - Media Clip
 
 /// A specific slice (start + length) from a MediaFile.
-public struct VideoClip: Codable {
+public struct MediaClip: Codable {
     public let file: MediaFile
     public let startTime: CMTime
     public let duration: CMTime

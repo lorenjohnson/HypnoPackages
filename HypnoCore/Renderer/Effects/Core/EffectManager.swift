@@ -40,7 +40,7 @@ public final class EffectManager {
 
     /// Create a manager for export with a frozen recipe
     /// Uses same code paths as preview but with isolated state
-    public static func forExport(clip: HypnogramClip) -> EffectManager {
+    public static func forExport(clip: Hypnogram) -> EffectManager {
         let manager = EffectManager()
         manager.clipProvider = { clip }
         // No setters needed - export is read-only
@@ -48,17 +48,17 @@ public final class EffectManager {
         return manager
     }
 
-    /// Get the maximum lookback required by any effect (global or per-source)
+    /// Get the maximum lookback required by any effect (global or per-layer)
     public var maxRequiredLookback: Int {
         guard let clip = clipProvider?() else { return 0 }
 
         // Check global effect chain
         let globalMax = clip.effectChain.maxRequiredLookback
 
-        // Check per-source effect chains
-        let sourceMax = clip.sources.map { $0.effectChain.maxRequiredLookback }.max() ?? 0
+        // Check per-layer effect chains
+        let layerMax = clip.layers.map { $0.effectChain.maxRequiredLookback }.max() ?? 0
 
-        return max(globalMax, sourceMax)
+        return max(globalMax, layerMax)
     }
 
     /// Whether any effect in the recipe uses the frame buffer (has temporal dependencies)
@@ -75,7 +75,7 @@ public final class EffectManager {
     // MARK: - Recipe Integration
 
     /// Closure to get the current clip (injected by the owning feature)
-    public var clipProvider: (() -> HypnogramClip?)?
+    public var clipProvider: (() -> Hypnogram?)?
 
     /// Closure to set global effect chain on the recipe
     public var globalEffectChainSetter: ((EffectChain) -> Void)?
@@ -163,11 +163,11 @@ public final class EffectManager {
     /// Collect all blend modes from current clip
     private func collectBlendModes() -> [String] {
         guard let clip = clipProvider?() else { return [] }
-        return clip.sources.enumerated().map { index, source in
+        return clip.layers.enumerated().map { index, layer in
             if index == 0 {
                 return BlendMode.sourceOver
             }
-            return source.blendMode ?? BlendMode.defaultMontage
+            return layer.blendMode ?? BlendMode.defaultMontage
         }
     }
 
@@ -377,28 +377,28 @@ public final class EffectManager {
             print("🔄 Reapplied global effect: \(currentName ?? "unnamed")")
         }
 
-        // Re-apply per-source effects by name from stored chains
-        for (index, source) in clip.sources.enumerated() {
-            let currentSourceName = source.effectChain.name
-            if let freshChain = availableChains.first(where: { $0.name == currentSourceName }) {
+        // Re-apply per-layer effects by name from stored chains
+        for (index, layer) in clip.layers.enumerated() {
+            let currentLayerName = layer.effectChain.name
+            if let freshChain = availableChains.first(where: { $0.name == currentLayerName }) {
                 sourceEffectChainSetter?(index, freshChain.clone())
-                print("🔄 Reapplied source \(index) effect: \(currentSourceName ?? "unnamed")")
+                print("🔄 Reapplied layer \(index) effect: \(currentLayerName ?? "unnamed")")
             }
         }
 
         onEffectChanged?()
     }
 
-    // MARK: - Per-Source Effects (reads from clip sources)
+    // MARK: - Per-Layer Effects (reads from hypnogram layers)
 
     /// Get the source effect chain name (for UI matching)
     public func sourceEffectName(for sourceIndex: Int) -> String {
         guard let clip = clipProvider?(),
               sourceIndex >= 0,
-              sourceIndex < clip.sources.count else {
+              sourceIndex < clip.layers.count else {
             return "None"
         }
-        return clip.sources[sourceIndex].effectChain.name ?? "None"
+        return clip.layers[sourceIndex].effectChain.name ?? "None"
     }
 
     /// Set source effect from a chain - the chain handles instantiation internally
@@ -438,10 +438,10 @@ public final class EffectManager {
     public func sourceEffectChain(for sourceIndex: Int) -> EffectChain? {
         guard let clip = clipProvider?(),
               sourceIndex >= 0,
-              sourceIndex < clip.sources.count else {
+              sourceIndex < clip.layers.count else {
             return nil
         }
-        return clip.sources[sourceIndex].effectChain
+        return clip.layers[sourceIndex].effectChain
     }
 
     // MARK: - Unified Layer API (layer -1 = global, 0+ = source)
@@ -551,15 +551,15 @@ public final class EffectManager {
         return result
     }
 
-    /// Apply per-source effects to a single source image (before compositing)
+    /// Apply per-layer effects to a single layer image (before compositing)
     public func applyToSource(sourceIndex: Int, context: inout RenderContext, image: CIImage) -> CIImage {
         guard let clip = clipProvider?(),
               sourceIndex >= 0,
-              sourceIndex < clip.sources.count else {
+              sourceIndex < clip.layers.count else {
             return image
         }
 
-        let effectChain = clip.sources[sourceIndex].effectChain
+        let effectChain = clip.layers[sourceIndex].effectChain
         guard effectChain.hasEnabledEffects else { return image }
 
         // Mark which source is being processed so effects can branch if they want.
@@ -577,8 +577,8 @@ public final class EffectManager {
         // Important: Do this BEFORE the recipe clears effects, because effects may be preserved
         if let clip = clipProvider?() {
             clip.effectChain.reset()
-            for source in clip.sources {
-                source.effectChain.reset()
+            for layer in clip.layers {
+                layer.effectChain.reset()
             }
         }
     }
@@ -613,7 +613,7 @@ public final class EffectManager {
         )
     }
 
-    // MARK: - Blend Modes (reads from recipe sources)
+    // MARK: - Blend Modes (reads from hypnogram layers)
 
     public func blendMode(for sourceIndex: Int) -> String {
         // Source 0 is always source-over (base layer)
@@ -623,10 +623,10 @@ public final class EffectManager {
         // Read from the recipe (single source of truth)
         guard let clip = clipProvider?(),
               sourceIndex >= 0,
-              sourceIndex < clip.sources.count else {
+              sourceIndex < clip.layers.count else {
             return BlendMode.defaultMontage
         }
-        return clip.sources[sourceIndex].blendMode ?? BlendMode.defaultMontage
+        return clip.layers[sourceIndex].blendMode ?? BlendMode.defaultMontage
     }
 
     public func setBlendMode(_ mode: String, for sourceIndex: Int, silent: Bool = false) {

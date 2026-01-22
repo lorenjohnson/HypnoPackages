@@ -37,7 +37,7 @@ final class CompositionBuilder {
     ///   - effectManager: The EffectManager to use for this composition.
     ///                  Pass nil only for legacy callers; all new code should provide a manager.
     func build(
-        clip: HypnogramClip,
+        clip: Hypnogram,
         outputSize: CGSize,
         frameRate: Int = 30,
         enableEffects: Bool = true,
@@ -47,7 +47,7 @@ final class CompositionBuilder {
     ) async -> Result<BuildResult, RenderError> {
 
         // Validate
-        guard !clip.sources.isEmpty else {
+        guard !clip.layers.isEmpty else {
             return .failure(.noSources)
         }
 
@@ -70,7 +70,7 @@ final class CompositionBuilder {
     // MARK: - Montage Builder
 
     private func buildMontage(
-        clip: HypnogramClip,
+        clip: Hypnogram,
         targetDuration: CMTime,
         outputSize: CGSize,
         frameRate: Int,
@@ -81,14 +81,14 @@ final class CompositionBuilder {
     ) async -> Result<BuildResult, RenderError> {
 
         // Load all sources
-        var loadedSources: [(sourceIndex: Int, source: HypnogramSource, loaded: LoadedSource)] = []
+        var loadedSources: [(sourceIndex: Int, source: HypnogramLayer, loaded: LoadedSource)] = []
 
-        for (index, source) in clip.sources.enumerated() {
-            let result = await sourceLoader.load(source: source)
+        for (index, layer) in clip.layers.enumerated() {
+            let result = await sourceLoader.load(source: layer)
 
             switch result {
             case .success(let loaded):
-                loadedSources.append((sourceIndex: index, source: source, loaded: loaded))
+                loadedSources.append((sourceIndex: index, source: layer, loaded: loaded))
             case .failure(let error):
                 error.log(context: "CompositionBuilder.montage[\(index)]")
                 // Skip failed sources for now (we can replace with fallback later if needed)
@@ -142,8 +142,8 @@ final class CompositionBuilder {
                 let (effectiveStartTime, effectiveClipDuration) = normalizedClipSlice(
                     clipID: clip.id,
                     sourceIndex: entry.sourceIndex,
-                    sourceClip: source.clip,
-                    fileID: source.clip.file.id,
+                    sourceClip: source.mediaClip,
+                    fileID: source.mediaClip.file.id,
                     assetDuration: loaded.duration,
                     targetDuration: targetDuration
                 )
@@ -272,7 +272,7 @@ final class CompositionBuilder {
     private func normalizedClipSlice(
         clipID: UUID,
         sourceIndex: Int,
-        sourceClip: VideoClip,
+        sourceClip: MediaClip,
         fileID: UUID,
         assetDuration: CMTime,
         targetDuration: CMTime

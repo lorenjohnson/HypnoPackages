@@ -1,5 +1,5 @@
 //
-//  HypnogramSource.swift
+//  HypnogramLayer.swift
 //  Hypnograph
 //
 //  Core, mode-agnostic models for media sources and hypnogram composition.
@@ -12,8 +12,8 @@ import CoreGraphics
 
 /// One source of a hypnogram: clip + transforms + effects + blend mode.
 /// Transforms are user-applied (rotation, scale, etc.) - metadata transforms are computed at runtime.
-public struct HypnogramSource: Codable {
-    public var clip: VideoClip
+public struct HypnogramLayer: Codable {
+    public var mediaClip: MediaClip
     /// User-applied transforms (rotation, scale, translation). Applied after metadata orientation correction.
     public var transforms: [CGAffineTransform]
     public var blendMode: String?
@@ -23,16 +23,19 @@ public struct HypnogramSource: Codable {
     public var effectChain: EffectChain
 
     private enum CodingKeys: String, CodingKey {
-        case clip, transforms, blendMode, effectChain
+        case mediaClip, transforms, blendMode, effectChain
+
+        // Legacy keys (Phase 1–3 schema)
+        case clip
     }
 
     public init(
-        clip: VideoClip,
+        mediaClip: MediaClip,
         transforms: [CGAffineTransform] = [],
         blendMode: String? = nil,
         effectChain: EffectChain? = nil
     ) {
-        self.clip = clip
+        self.mediaClip = mediaClip
         self.transforms = transforms
         self.blendMode = blendMode
         self.effectChain = effectChain ?? EffectChain()
@@ -40,7 +43,13 @@ public struct HypnogramSource: Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        clip = try container.decode(VideoClip.self, forKey: .clip)
+        if let decoded = try container.decodeIfPresent(MediaClip.self, forKey: .mediaClip) {
+            mediaClip = decoded
+        } else {
+            // Temporary migration support (Phase 4, Option A):
+            // Prior schema stored MediaClip under the `clip` key.
+            mediaClip = try container.decode(MediaClip.self, forKey: .clip)
+        }
         let codableTransforms = try container.decodeIfPresent([CodableCGAffineTransform].self, forKey: .transforms) ?? []
         transforms = codableTransforms.map { $0.transform }
         blendMode = try container.decodeIfPresent(String.self, forKey: .blendMode)
@@ -49,7 +58,7 @@ public struct HypnogramSource: Codable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(clip, forKey: .clip)
+        try container.encode(mediaClip, forKey: .mediaClip)
         try container.encode(transforms.map { CodableCGAffineTransform($0) }, forKey: .transforms)
         try container.encodeIfPresent(blendMode, forKey: .blendMode)
         try container.encode(effectChain, forKey: .effectChain)

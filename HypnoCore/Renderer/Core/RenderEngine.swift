@@ -52,7 +52,7 @@ public final class RenderEngine {
     ///   - config: Render configuration
     ///   - effectManager: The EffectManager to use. If nil, uses global effects.
     public func makePlayerItem(
-        clip: HypnogramClip,
+        clip: Hypnogram,
         config: Config,
         effectManager: EffectManager? = nil
     ) async -> Result<AVPlayerItem, RenderError> {
@@ -92,7 +92,7 @@ public final class RenderEngine {
 
     /// Export to file
     public func export(
-        clip: HypnogramClip,
+        clip: Hypnogram,
         outputURL: URL,
         config: Config
     ) async -> Result<URL, RenderError> {
@@ -218,7 +218,7 @@ public final class RenderEngine {
         public init() {}
 
         public func enqueue(
-            clip: HypnogramClip,
+            clip: Hypnogram,
             outputFolder: URL,
             outputSize: CGSize,
             frameRate: Int = 30,

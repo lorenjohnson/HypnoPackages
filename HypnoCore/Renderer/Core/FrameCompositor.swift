@@ -184,14 +184,14 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             // Apply per-source effects from clip
             if instruction.enableEffects, let manager = manager {
                 let clip = manager.clipProvider?()
-                if let clip = clip, sourceIndex < clip.sources.count {
+                if let clip = clip, sourceIndex < clip.layers.count {
                     var sourceContext = manager.createContext(
                         frameIndex: frameIndex,
                         time: request.compositionTime,
                         outputSize: outputSize,
                         sourceIndex: sourceIndex
                     )
-                    img = clip.sources[sourceIndex].effectChain.apply(to: img, context: &sourceContext)
+                    img = clip.layers[sourceIndex].effectChain.apply(to: img, context: &sourceContext)
                 }
             }
 
@@ -201,10 +201,10 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
                 let blendMode: String
                 let clip = manager?.clipProvider?()
 
-                if let clip = clip, sourceIndex < clip.sources.count {
+                if let clip = clip, sourceIndex < clip.layers.count {
                     blendMode = sourceIndex == 0
                         ? BlendMode.sourceOver
-                        : (clip.sources[sourceIndex].blendMode ?? BlendMode.defaultMontage)
+                        : (clip.layers[sourceIndex].blendMode ?? BlendMode.defaultMontage)
                 } else {
                     blendMode = instruction.blendModes[index]
                 }

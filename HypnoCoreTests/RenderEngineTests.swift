@@ -26,14 +26,14 @@ struct RenderEngineTests {
 
         let duration = CMTime(seconds: 2, preferredTimescale: 600)
         let file = MediaFile(source: .url(imageURL), mediaKind: .image, duration: duration)
-        let clip = VideoClip(file: file, startTime: .zero, duration: duration)
-        let source = HypnogramSource(clip: clip)
-        let hypnoClip = HypnogramClip(sources: [source], targetDuration: duration)
+        let mediaClip = MediaClip(file: file, startTime: .zero, duration: duration)
+        let source = HypnogramLayer(mediaClip: mediaClip)
+        let hypnogram = Hypnogram(layers: [source], targetDuration: duration)
 
         let engine = RenderEngine()
         let config = RenderEngine.Config(outputSize: CGSize(width: 320, height: 180), frameRate: 30, enableEffects: true)
         let result = await engine.makePlayerItem(
-            clip: hypnoClip,
+            clip: hypnogram,
             config: config,
             effectManager: nil
         )
@@ -55,16 +55,16 @@ struct RenderEngineTests {
 
         let duration = CMTime(seconds: 1, preferredTimescale: 600)
         let file = MediaFile(source: .url(imageURL), mediaKind: .image, duration: duration)
-        let clip = VideoClip(file: file, startTime: .zero, duration: duration)
-        let source = HypnogramSource(clip: clip)
-        let hypnoClip = HypnogramClip(sources: [source], targetDuration: duration)
+        let mediaClip = MediaClip(file: file, startTime: .zero, duration: duration)
+        let source = HypnogramLayer(mediaClip: mediaClip)
+        let hypnogram = Hypnogram(layers: [source], targetDuration: duration)
 
         let outputURL = tempDir.appendingPathComponent("export-output.png")
         let config = RenderEngine.Config(outputSize: CGSize(width: 128, height: 72), frameRate: 30, enableEffects: true)
 
         let engine = RenderEngine()
         let result = await engine.export(
-            clip: hypnoClip,
+            clip: hypnogram,
             outputURL: outputURL,
             config: config
         )
@@ -89,16 +89,16 @@ struct RenderEngineTests {
 
         let duration = CMTime(value: CMTimeValue(frameCount), timescale: CMTimeScale(frameRate))
         let file = MediaFile(source: .url(videoURL), mediaKind: .video, duration: duration)
-        let clip = VideoClip(file: file, startTime: .zero, duration: duration)
-        let source = HypnogramSource(clip: clip)
-        let hypnoClip = HypnogramClip(sources: [source], targetDuration: duration)
+        let mediaClip = MediaClip(file: file, startTime: .zero, duration: duration)
+        let source = HypnogramLayer(mediaClip: mediaClip)
+        let hypnogram = Hypnogram(layers: [source], targetDuration: duration)
 
         let outputURL = tempDir.appendingPathComponent("export-output.mov")
         let config = RenderEngine.Config(outputSize: CGSize(width: 128, height: 72), frameRate: frameRate, enableEffects: true)
 
         let engine = RenderEngine()
         let result = await engine.export(
-            clip: hypnoClip,
+            clip: hypnogram,
             outputURL: outputURL,
             config: config
         )

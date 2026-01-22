@@ -50,8 +50,8 @@ final class SourceLoader {
 
     /// Load a source, return error if it fails (never crashes)
     /// Uses caching to avoid reloading the same source multiple times
-    func load(source: HypnogramSource) async -> Result<LoadedSource, RenderError> {
-        let file = source.clip.file
+    func load(source: HypnogramLayer) async -> Result<LoadedSource, RenderError> {
+        let file = source.mediaClip.file
         let cacheKey = file.id.uuidString
 
         // Check cache first
@@ -80,8 +80,8 @@ final class SourceLoader {
     
     // MARK: - Video Loading
 
-    private func loadVideoSource(source: HypnogramSource) async -> Result<LoadedSource, RenderError> {
-        let file = source.clip.file
+    private func loadVideoSource(source: HypnogramLayer) async -> Result<LoadedSource, RenderError> {
+        let file = source.mediaClip.file
 
         // Get AVAsset - either from URL or external source via hooks
         let asset: AVAsset
@@ -134,8 +134,8 @@ final class SourceLoader {
 
     // MARK: - Image Loading
 
-    private func loadImageSource(source: HypnogramSource) async -> Result<LoadedSource, RenderError> {
-        let file = source.clip.file
+    private func loadImageSource(source: HypnogramLayer) async -> Result<LoadedSource, RenderError> {
+        let file = source.mediaClip.file
 
         // Get CIImage - either from URL or external source via hooks
         let ciImage: CIImage?
@@ -169,7 +169,7 @@ final class SourceLoader {
             asset: dummyAsset,
             videoTrack: nil,
             audioTrack: nil,
-            duration: source.clip.duration,
+            duration: source.mediaClip.duration,
             naturalSize: CGSize(width: extent.width, height: extent.height),
             transform: .identity,  // CIImage orientation already applied
             isStillImage: true,

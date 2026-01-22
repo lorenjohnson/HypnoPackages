@@ -302,7 +302,7 @@ public final class MediaLibrary {
     // MARK: - Random clip selection (with lazy validation for video + image)
 
     /// If `clipLength` is nil, videos use their full duration and images use `imageDuration`.
-    public func randomClip(clipLength: Double? = nil, imageDuration: Double = 0.1) -> VideoClip? {
+    public func randomClip(clipLength: Double? = nil, imageDuration: Double = 0.1) -> MediaClip? {
         // Consider *all* sources except those already marked bad.
         let candidates = sourceIndex.filter { !badSources.contains(sourceKey($0.source)) }
         guard !candidates.isEmpty else {
@@ -338,7 +338,7 @@ public final class MediaLibrary {
 
     // MARK: - Source Validation
 
-    private func validateVideoSource(_ entry: SourceEntry, clipLength: Double?) -> VideoClip? {
+    private func validateVideoSource(_ entry: SourceEntry, clipLength: Double?) -> MediaClip? {
         switch entry.source {
         case .url(let url):
             let asset = AVURLAsset(url: url)
@@ -354,7 +354,7 @@ public final class MediaLibrary {
             let maxStart = max(0.0, totalSeconds - length)
             let startSeconds = maxStart > 0 ? Double.random(in: 0...maxStart) : 0
 
-            return VideoClip(
+            return MediaClip(
                 file: MediaFile(
                     source: entry.source,
                     mediaKind: .video,
@@ -377,7 +377,7 @@ public final class MediaLibrary {
             let maxStart = max(0.0, totalSeconds - length)
             let startSeconds = maxStart > 0 ? Double.random(in: 0...maxStart) : 0
 
-            return VideoClip(
+            return MediaClip(
                 file: MediaFile(
                     source: entry.source,
                     mediaKind: .video,
@@ -389,7 +389,7 @@ public final class MediaLibrary {
         }
     }
 
-    private func validateImageSource(_ entry: SourceEntry, clipLength: Double) -> VideoClip? {
+    private func validateImageSource(_ entry: SourceEntry, clipLength: Double) -> MediaClip? {
         switch entry.source {
         case .url(let url):
             guard let image = StillImageCache.ciImage(for: url),
@@ -398,7 +398,7 @@ public final class MediaLibrary {
             }
 
             let length = max(clipLength, 0.1)
-            return VideoClip(
+            return MediaClip(
                 file: MediaFile(
                     source: entry.source,
                     mediaKind: .image,
@@ -415,7 +415,7 @@ public final class MediaLibrary {
             }
 
             let length = max(clipLength, 0.1)
-            return VideoClip(
+            return MediaClip(
                 file: MediaFile(
                     source: entry.source,
                     mediaKind: .image,
