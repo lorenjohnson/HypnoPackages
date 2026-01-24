@@ -27,11 +27,15 @@ docs/
 └── README.md           # this file
 ```
 
-## Entrypoints
+## Apps
 
-- [hypnograph/index.md](hypnograph/index.md) — Hypnograph documentation
-- [divine/index.md](divine/index.md) — Divine documentation
-- [shared/index.md](shared/index.md) — Shared documentation
+- [hypnograph/](hypnograph/) — Layered video montage creator
+- [divine/](divine/) — Photo/video library explorer as dynamic card layout
+- [shared/](shared/) — Cross-app documentation and generated artifacts
+
+## Agents
+
+[agents/](agents/) — Canonical agent role definitions for AI-assisted development. Tool-agnostic descriptions used for planning, reasoning, and cross-AI handoff. Claude-specific runtime agents (in `.claude/agents/`) are derived from these.
 
 ## Project Lifecycle
 
