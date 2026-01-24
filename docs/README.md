@@ -52,8 +52,8 @@ roadmap.md  →  projects/backlog/  →  projects/  →  archive/
 ### Naming
 
 - **Directories & files:** kebab-case (`volume-leveling`, `roadmap.md`)
-- **Projects:** date-prefixed (`YYYYMMDD-project-name/` or `YYYYMMDD-project-name.md`)
-- **Completed projects:** same naming, moved to `archive/`
+- **Projects:** kebab-case (`project-name/` or `project-name.md`)
+- **Completed projects:** date-prefixed with completion date (`YYYYMMDD-project-name/`), moved to `archive/`
 
 ### Project docs
 

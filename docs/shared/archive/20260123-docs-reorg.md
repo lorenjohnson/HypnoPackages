@@ -11,7 +11,7 @@ Reorganize the `docs/` directory to mirror the personal vault structure, making 
 
 - Align repo docs structure with personal vault conventions
 - Use lowercase kebab-case folder names
-- Flatten `_archive/projects/` to just `archive/`
+- Flatten `_archive/` to just `archive/`
 - Add `projects/backlog/` for planned-but-not-started work
 - Create clear entry points (`index.md`) for each app
 - Support agent-based documentation traversal
@@ -24,7 +24,7 @@ Before:
 ```text
 docs/
 ├── Hypnograph/           # uppercase
-│   ├── _archive/projects/  # nested
+│   ├── _archive/  # nested
 │   └── projects/
 ├── Divine/
 └── ontology/
@@ -53,7 +53,7 @@ docs/
 - Renamed `docs/Hypnograph/` → `docs/hypnograph/`
 - Renamed `docs/Divine/` → `docs/divine/`
 - Moved `docs/ontology/` → `docs/shared/ontology/`
-- Flattened `_archive/projects/*` → `archive/*`
+- Flattened `_archive/*` → `archive/*`
 - Created `index.md` for hypnograph, divine, and shared
 - Updated `docs/README.md` to reflect new structure
 - Updated internal links to use new paths

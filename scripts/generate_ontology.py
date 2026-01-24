@@ -519,8 +519,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--out-dir",
-        default="docs/ontology",
-        help="Output directory (default: docs/ontology).",
+        default="docs/shared/ontology",
+        help="Output directory (default: docs/shared/ontology).",
     )
     parser.add_argument(
         "--top-per-module",
