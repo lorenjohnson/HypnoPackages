@@ -1,0 +1,4376 @@
+{
+  "by_suffix": {
+    "Source": [
+      {
+        "key": "HypnoCore.AVPlayerFrameSource",
+        "name": "AVPlayerFrameSource",
+        "qualified_name": "AVPlayerFrameSource",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/FrameSource/AVPlayerFrameSource.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreMedia",
+          "CoreVideo",
+          "QuartzCore"
+        ],
+        "conforms_raw": [
+          "FrameSource"
+        ],
+        "conforms_internal": [
+          "HypnoCore.FrameSource"
+        ],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.DecodedFrame"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectConfigLoader.LoadResult.Source",
+        "name": "Source",
+        "qualified_name": "EffectConfigLoader.LoadResult.Source",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Effects/Library/EffectConfigLoader.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.FrameSource",
+        "name": "FrameSource",
+        "qualified_name": "FrameSource",
+        "module": "HypnoCore",
+        "kind": "protocol",
+        "file": "HypnoCore/Renderer/FrameSource/FrameSource.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreMedia",
+          "CoreVideo",
+          "QuartzCore"
+        ],
+        "conforms_raw": [
+          "AnyObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.DecodedFrame"
+        ]
+      },
+      {
+        "key": "HypnoCore.LoadedSource",
+        "name": "LoadedSource",
+        "qualified_name": "LoadedSource",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Core/SourceLoader.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaSource",
+        "name": "MediaSource",
+        "qualified_name": "MediaSource",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Hashable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      }
+    ],
+    "Clip": [
+      {
+        "key": "HypnoCore.MediaClip",
+        "name": "MediaClip",
+        "qualified_name": "MediaClip",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CodableCMTime",
+          "HypnoCore.MediaFile"
+        ]
+      }
+    ],
+    "Recipe": [],
+    "Engine": [
+      {
+        "key": "HypnoCore.RenderEngine",
+        "name": "RenderEngine",
+        "qualified_name": "RenderEngine",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Core/RenderEngine.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.CompositionBuilder",
+          "HypnoCore.EffectManager",
+          "HypnoCore.FrameCompositor",
+          "HypnoCore.FramingHook",
+          "HypnoCore.HumanCenteringFramingHook",
+          "HypnoCore.HypnoCoreHooks",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.Int",
+          "HypnoCore.PhotoMontage",
+          "HypnoCore.RenderEngine.Config",
+          "HypnoCore.RenderEngine.ExportQueue",
+          "HypnoCore.RenderError",
+          "HypnoCore.SourceFraming"
+        ]
+      }
+    ],
+    "Builder": [
+      {
+        "key": "HypnoCore.CompositionBuilder",
+        "name": "CompositionBuilder",
+        "qualified_name": "CompositionBuilder",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Core/CompositionBuilder.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.BlendMode",
+          "HypnoCore.CGSize",
+          "HypnoCore.CompositionBuilder.BuildResult",
+          "HypnoCore.EffectManager",
+          "HypnoCore.FramingHook",
+          "HypnoCore.HumanCenteringFramingHook",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnogramLayer",
+          "HypnoCore.Int",
+          "HypnoCore.LoadedSource",
+          "HypnoCore.MediaClip",
+          "HypnoCore.RenderError",
+          "HypnoCore.RenderInstruction",
+          "HypnoCore.SourceFraming",
+          "HypnoCore.SourceLoader"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaLibraryBuilder",
+        "name": "MediaLibraryBuilder",
+        "qualified_name": "MediaLibraryBuilder",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaLibraryBuilder.swift",
+        "imports": [
+          "Foundation",
+          "Photos"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.ApplePhotos",
+          "HypnoCore.ApplePhotosLibraryKeys",
+          "HypnoCore.ExclusionStore",
+          "HypnoCore.MediaLibrary",
+          "HypnoCore.MediaLibrarySettings",
+          "HypnoCore.SourceLibraryInfo"
+        ]
+      }
+    ],
+    "Loader": [
+      {
+        "key": "HypnoCore.EffectConfigLoader",
+        "name": "EffectConfigLoader",
+        "qualified_name": "EffectConfigLoader",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Effects/Library/EffectConfigLoader.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadError",
+          "HypnoCore.EffectConfigLoader.LoadResult",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectLibraryConfig",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.HypnoEffectsBundle"
+        ]
+      },
+      {
+        "key": "HypnoCore.SourceLoader",
+        "name": "SourceLoader",
+        "qualified_name": "SourceLoader",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Core/SourceLoader.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.HypnoCoreHooks",
+          "HypnoCore.HypnogramLayer",
+          "HypnoCore.LoadedSource",
+          "HypnoCore.RenderError",
+          "HypnoCore.RendererImageUtils",
+          "HypnoCore.StillImageCache"
+        ]
+      },
+      {
+        "key": "HypnoCore.TextFileLoader",
+        "name": "TextFileLoader",
+        "qualified_name": "TextFileLoader",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Utilities/TextFileLoader.swift",
+        "imports": [
+          "AppKit",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.SettingsLoader",
+        "name": "SettingsLoader",
+        "qualified_name": "SettingsLoader",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/Settings.swift",
+        "imports": [
+          "AppKit",
+          "CoreGraphics",
+          "CoreMedia",
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Hypnograph.Settings"
+        ]
+      }
+    ],
+    "Manager": [
+      {
+        "key": "Divine.DivineCardManager",
+        "name": "DivineCardManager",
+        "qualified_name": "DivineCardManager",
+        "module": "Divine",
+        "kind": "class",
+        "file": "Divine/DivineCardManager.swift",
+        "imports": [
+          "AVFoundation",
+          "Combine",
+          "CoreGraphics",
+          "CoreMedia",
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Divine.Divine",
+          "Divine.DivineCard",
+          "Divine.DivinePlayerManager",
+          "Divine.DivineState",
+          "HypnoCore.CGSize",
+          "HypnoCore.Int",
+          "HypnoCore.MediaClip"
+        ]
+      },
+      {
+        "key": "Divine.DivinePlayerManager",
+        "name": "DivinePlayerManager",
+        "qualified_name": "DivinePlayerManager",
+        "module": "Divine",
+        "kind": "class",
+        "file": "Divine/DivinePlayerManager.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Divine.DivineCard"
+        ]
+      },
+      {
+        "key": "HypnoCore.AudioDeviceManager",
+        "name": "AudioDeviceManager",
+        "qualified_name": "AudioDeviceManager",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/AudioDeviceManager.swift",
+        "imports": [
+          "Combine",
+          "CoreAudio",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AudioOutputDevice",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectManager",
+        "name": "EffectManager",
+        "qualified_name": "EffectManager",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectManager.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BlendMode",
+          "HypnoCore.BlendModeAnalysis",
+          "HypnoCore.CGSize",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.FrameBuffer",
+          "HypnoCore.FrameBufferPreloader",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.Int",
+          "HypnoCore.NoNormalization",
+          "HypnoCore.NormalizationStrategy",
+          "HypnoCore.RecentEffectChainsStore",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "Hypnograph.GameControllerManager",
+        "name": "GameControllerManager",
+        "qualified_name": "GameControllerManager",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/GameControllerManager.swift",
+        "imports": [
+          "Foundation",
+          "GameController",
+          "HypnoCore"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int",
+          "Hypnograph.Dream",
+          "Hypnograph.EffectsEditorViewModel",
+          "Hypnograph.HypnographState"
+        ]
+      },
+      {
+        "key": "Hypnograph.TooltipManager",
+        "name": "TooltipManager",
+        "qualified_name": "TooltipManager",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Utilities/TooltipManager.swift",
+        "imports": [
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      }
+    ],
+    "Session": [
+      {
+        "key": "HypnoCore.EffectsSession",
+        "name": "EffectsSession",
+        "qualified_name": "EffectsSession",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Library/EffectsSession.swift",
+        "imports": [
+          "Combine",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "PersistentStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentStore"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BasicEffect",
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectLibraryConfig",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.HypnoEffectsBundle",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.HypnographSession",
+        "name": "HypnographSession",
+        "qualified_name": "HypnographSession",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Recipes/HypnographSession.swift",
+        "imports": [
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CodableCMTime",
+          "HypnoCore.EffectChain",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnogramLayer"
+        ]
+      }
+    ],
+    "Store": [
+      {
+        "key": "Divine.SettingsStore",
+        "name": "SettingsStore",
+        "qualified_name": "SettingsStore",
+        "module": "Divine",
+        "kind": "class",
+        "file": "Divine/SettingsStore.swift",
+        "imports": [
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "PersistentStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentStore"
+        ],
+        "uses_internal": [
+          "Divine.DivineEnvironment",
+          "Divine.Settings"
+        ]
+      },
+      {
+        "key": "HypnoCore.ExclusionStore",
+        "name": "ExclusionStore",
+        "qualified_name": "ExclusionStore",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Cache/PersistentIdentifierStore.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "PersistentIdentifierStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentIdentifierStore"
+        ],
+        "uses_internal": [
+          "HypnoCore.MediaSource"
+        ]
+      },
+      {
+        "key": "HypnoCore.PersistentIdentifierStore",
+        "name": "PersistentIdentifierStore",
+        "qualified_name": "PersistentIdentifierStore",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Cache/PersistentIdentifierStore.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int",
+          "HypnoCore.MediaSource"
+        ]
+      },
+      {
+        "key": "HypnoCore.PersistentStore",
+        "name": "PersistentStore",
+        "qualified_name": "PersistentStore",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Cache/PersistentStore.swift",
+        "imports": [
+          "Combine",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable>: ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.RecentEffectChainsStore",
+        "name": "RecentEffectChainsStore",
+        "qualified_name": "RecentEffectChainsStore",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Library/RecentEffectChainsStore.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "PersistentStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentStore"
+        ],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.Int",
+          "HypnoCore.RecentEffectChainsConfig",
+          "HypnoCore.RecentEntry"
+        ]
+      },
+      {
+        "key": "HypnoCore.SourceFavoritesStore",
+        "name": "SourceFavoritesStore",
+        "qualified_name": "SourceFavoritesStore",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Cache/PersistentIdentifierStore.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "PersistentIdentifierStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentIdentifierStore"
+        ],
+        "uses_internal": [
+          "HypnoCore.MediaSource"
+        ]
+      },
+      {
+        "key": "Hypnograph.HypnogramStore",
+        "name": "HypnogramStore",
+        "qualified_name": "HypnogramStore",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/HypnogramStore.swift",
+        "imports": [
+          "AppKit",
+          "Combine",
+          "CoreImage",
+          "Foundation",
+          "HypnoCore",
+          "UniformTypeIdentifiers"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnographSession",
+          "Hypnograph.DateFormatter",
+          "Hypnograph.Environment",
+          "Hypnograph.HypnogramEntry",
+          "Hypnograph.SessionStore"
+        ]
+      },
+      {
+        "key": "Hypnograph.SessionStore",
+        "name": "SessionStore",
+        "qualified_name": "SessionStore",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/SessionStore.swift",
+        "imports": [
+          "AppKit",
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.HypnographSession",
+          "HypnoCore.Int",
+          "Hypnograph.Environment",
+          "Hypnograph.LegacySessionMigration"
+        ]
+      },
+      {
+        "key": "Hypnograph.SettingsStore",
+        "name": "SettingsStore",
+        "qualified_name": "SettingsStore",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/SettingsStore.swift",
+        "imports": [
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "PersistentStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentStore"
+        ],
+        "uses_internal": [
+          "Hypnograph.Environment",
+          "Hypnograph.Settings"
+        ]
+      }
+    ],
+    "View": [
+      {
+        "key": "Divine.CanvasScrollHandler.CanvasScrollNSView",
+        "name": "CanvasScrollNSView",
+        "qualified_name": "CanvasScrollHandler.CanvasScrollNSView",
+        "module": "Divine",
+        "kind": "class",
+        "file": "Divine/CanvasScrollHandler.swift",
+        "imports": [
+          "AppKit",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "NSView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize"
+        ]
+      },
+      {
+        "key": "Divine.CardPlayerView",
+        "name": "CardPlayerView",
+        "qualified_name": "CardPlayerView",
+        "module": "Divine",
+        "kind": "struct",
+        "file": "Divine/DivineView.swift",
+        "imports": [
+          "AVFoundation",
+          "AVKit",
+          "CoreGraphics",
+          "HypnoCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "NSViewRepresentable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Divine.CardPlayerView.HitTransparentPlayerView"
+        ]
+      },
+      {
+        "key": "Divine.CardPlayerView.HitTransparentPlayerView",
+        "name": "HitTransparentPlayerView",
+        "qualified_name": "CardPlayerView.HitTransparentPlayerView",
+        "module": "Divine",
+        "kind": "class",
+        "file": "Divine/DivineView.swift",
+        "imports": [
+          "AVFoundation",
+          "AVKit",
+          "CoreGraphics",
+          "HypnoCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "AVPlayerView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "Divine.CardView",
+        "name": "CardView",
+        "qualified_name": "CardView",
+        "module": "Divine",
+        "kind": "struct",
+        "file": "Divine/DivineView.swift",
+        "imports": [
+          "AVFoundation",
+          "AVKit",
+          "CoreGraphics",
+          "HypnoCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Divine.BlinkingDot",
+          "Divine.CardBack",
+          "Divine.CardPlayerView",
+          "Divine.DivineCard",
+          "HypnoCore.CGSize"
+        ]
+      },
+      {
+        "key": "Divine.DivineContentView",
+        "name": "DivineContentView",
+        "qualified_name": "DivineContentView",
+        "module": "Divine",
+        "kind": "struct",
+        "file": "Divine/DivineContentView.swift",
+        "imports": [
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Divine.Divine",
+          "Divine.DivineState",
+          "Divine.PhotosPickerSheet",
+          "HypnoCore.ApplePhotosLibraryKeys",
+          "HypnoUI.AppNotifications"
+        ]
+      },
+      {
+        "key": "Divine.DivineView",
+        "name": "DivineView",
+        "qualified_name": "DivineView",
+        "module": "Divine",
+        "kind": "struct",
+        "file": "Divine/DivineView.swift",
+        "imports": [
+          "AVFoundation",
+          "AVKit",
+          "CoreGraphics",
+          "HypnoCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Divine.CardView",
+          "Divine.Divine",
+          "Divine.DivineCard",
+          "Divine.DivineCardManager",
+          "HypnoCore.CGSize",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.PlayerView",
+        "name": "PlayerView",
+        "qualified_name": "PlayerView",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Display/PlayerView.swift",
+        "imports": [
+          "AppKit",
+          "CoreMedia",
+          "CoreVideo",
+          "MetalKit",
+          "QuartzCore"
+        ],
+        "conforms_raw": [
+          "MTKView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.DecodedFrame",
+          "HypnoCore.FrameSource",
+          "HypnoCore.Int",
+          "HypnoCore.PlayerView.ContentFocus",
+          "HypnoCore.PlayerView.ContentFocus.OverscrollMode",
+          "HypnoCore.PlayerView.ContentMode",
+          "HypnoCore.PlayerView.YUVParams",
+          "HypnoCore.SharedRenderer",
+          "HypnoCore.TextureCache",
+          "HypnoCore.TransitionRenderer",
+          "HypnoCore.TransitionRenderer.TransitionType"
+        ]
+      },
+      {
+        "key": "HypnoUI.View",
+        "name": "View",
+        "qualified_name": "View",
+        "module": "HypnoUI",
+        "kind": "extension",
+        "file": "HypnoUI/AppNotifications.swift",
+        "imports": [
+          "AppKit",
+          "Foundation",
+          "SwiftUI",
+          "UIKit",
+          "UserNotifications"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "Hypnograph.ContentView",
+        "name": "ContentView",
+        "qualified_name": "ContentView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/ContentView.swift",
+        "imports": [
+          "AVFoundation",
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "PhotosUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.ApplePhotosLibraryKeys",
+          "HypnoUI.AppNotifications",
+          "Hypnograph.CursorAutoHideView",
+          "Hypnograph.Dream",
+          "Hypnograph.EffectsEditorView",
+          "Hypnograph.EffectsEditorViewModel",
+          "Hypnograph.HUDView",
+          "Hypnograph.HypnogramListView",
+          "Hypnograph.HypnogramStore",
+          "Hypnograph.HypnographState",
+          "Hypnograph.LivePreviewPanel",
+          "Hypnograph.PhotosPickerSheet",
+          "Hypnograph.PlayerSettingsView",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.CursorAutoHideView",
+        "name": "CursorAutoHideView",
+        "qualified_name": "CursorAutoHideView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/Components/CursorAutoHideView.swift",
+        "imports": [
+          "AppKit",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "NSViewRepresentable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Hypnograph.CursorAutoHideView.Coordinator"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorView",
+        "name": "EffectsEditorView",
+        "qualified_name": "EffectsEditorView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.Int",
+          "HypnoCore.RecentEffectChainsStore",
+          "HypnoCore.RecentEntry",
+          "HypnoUI.AppNotifications",
+          "Hypnograph.Dream",
+          "Hypnograph.EditableEffectNameHeader",
+          "Hypnograph.EffectChainLibraryActions",
+          "Hypnograph.EffectDropDelegate",
+          "Hypnograph.EffectsEditorField",
+          "Hypnograph.EffectsEditorView.EffectsListSelection",
+          "Hypnograph.EffectsEditorView.HoverRevealControlsRow",
+          "Hypnograph.EffectsEditorView.SelectedChainContext",
+          "Hypnograph.EffectsEditorViewModel",
+          "Hypnograph.HypnographState",
+          "Hypnograph.ParameterSliderRow",
+          "Hypnograph.Settings.Defaults",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.HUDView",
+        "name": "HUDView",
+        "qualified_name": "HUDView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/HUDView.swift",
+        "imports": [
+          "HypnoCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.HypnogramLayer",
+          "HypnoCore.Int",
+          "Hypnograph.Dream",
+          "Hypnograph.HUDItem",
+          "Hypnograph.HypnographState",
+          "Hypnograph.TooltipManager",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.HypnogramListView",
+        "name": "HypnogramListView",
+        "qualified_name": "HypnogramListView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/Components/HypnogramListView.swift",
+        "imports": [
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "Hypnograph.HypnogramEntry",
+          "Hypnograph.HypnogramListTab",
+          "Hypnograph.HypnogramRowView",
+          "Hypnograph.HypnogramStore",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.HypnogramRowView",
+        "name": "HypnogramRowView",
+        "qualified_name": "HypnogramRowView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/Components/HypnogramListView.swift",
+        "imports": [
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "Hypnograph.HypnogramEntry",
+          "Hypnograph.ThumbnailView",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.LiveContentViewWrapper.HitTransparentView",
+        "name": "HitTransparentView",
+        "qualified_name": "LiveContentViewWrapper.HitTransparentView",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Views/Components/LivePlayerScreen.swift",
+        "imports": [
+          "AppKit",
+          "HypnoCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "NSView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "Hypnograph.PlayerContentMirrorView",
+        "name": "PlayerContentMirrorView",
+        "qualified_name": "PlayerContentMirrorView",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Dream/PlayerContentView.swift",
+        "imports": [
+          "AVFoundation",
+          "AppKit",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "NSView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.FrameSource",
+          "HypnoCore.NSColor",
+          "HypnoCore.PlayerView",
+          "HypnoCore.PlayerView.ContentFocus",
+          "HypnoCore.PlayerView.ContentMode",
+          "HypnoCore.SharedRenderer",
+          "HypnoCore.TransitionRenderer.TransitionType",
+          "Hypnograph.PlayerContentView.PlayerSlot"
+        ]
+      },
+      {
+        "key": "Hypnograph.PlayerContentView",
+        "name": "PlayerContentView",
+        "qualified_name": "PlayerContentView",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Dream/PlayerContentView.swift",
+        "imports": [
+          "AVFoundation",
+          "AppKit",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "NSView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AVPlayerFrameSource",
+          "HypnoCore.NSColor",
+          "HypnoCore.PlayerView",
+          "HypnoCore.PlayerView.ContentFocus",
+          "HypnoCore.PlayerView.ContentMode",
+          "HypnoCore.SharedRenderer",
+          "HypnoCore.TransitionRenderer.TransitionType",
+          "Hypnograph.PlayerContentMirrorView",
+          "Hypnograph.PlayerContentView.PlayerSlot",
+          "Hypnograph.PlayerContentView.WeakMirrorRef"
+        ]
+      },
+      {
+        "key": "Hypnograph.PlayerSettingsView",
+        "name": "PlayerSettingsView",
+        "qualified_name": "PlayerSettingsView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/Components/PlayerSettingsView.swift",
+        "imports": [
+          "CoreMedia",
+          "HypnoCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.AspectRatio",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.Int",
+          "HypnoCore.SourceFraming",
+          "HypnoCore.TransitionRenderer.TransitionType",
+          "Hypnograph.AudioDeviceRow",
+          "Hypnograph.Dream",
+          "Hypnograph.DreamPlayerState",
+          "Hypnograph.PlayRateControl",
+          "Hypnograph.PlayerConfiguration",
+          "Hypnograph.Settings",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.PreviewPlayerView",
+        "name": "PreviewPlayerView",
+        "qualified_name": "PreviewPlayerView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Dream/PreviewPlayerView.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreMedia",
+          "HypnoCore",
+          "QuartzCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "NSViewRepresentable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AspectRatio",
+          "HypnoCore.EffectManager",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.Int",
+          "HypnoCore.NSColor",
+          "HypnoCore.PlayerView.ContentMode",
+          "HypnoCore.RenderEngine",
+          "HypnoCore.SourceFraming",
+          "HypnoCore.TransitionRenderer.TransitionType",
+          "Hypnograph.OutputResolution",
+          "Hypnograph.PlayerContentView",
+          "Hypnograph.PreviewPlayerView.Coordinator"
+        ]
+      },
+      {
+        "key": "Hypnograph.ThumbnailView",
+        "name": "ThumbnailView",
+        "qualified_name": "ThumbnailView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/Components/HypnogramListView.swift",
+        "imports": [
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.View",
+        "name": "View",
+        "qualified_name": "View",
+        "module": "Hypnograph",
+        "kind": "extension",
+        "file": "Hypnograph/Utilities/TooltipManager.swift",
+        "imports": [
+          "SwiftUI"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      }
+    ],
+    "Config": [
+      {
+        "key": "HypnoCore.EffectLibraryConfig",
+        "name": "EffectLibraryConfig",
+        "qualified_name": "EffectLibraryConfig",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectConfigSchema.swift",
+        "imports": [
+          "CoreImage",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.HumanCenteringFramingHook.Config",
+        "name": "Config",
+        "qualified_name": "HumanCenteringFramingHook.Config",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Framing/Implementations/HumanCentering/HumanCenteringFramingHook.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Sendable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.HumanRectanglesFraming.Config",
+        "name": "Config",
+        "qualified_name": "HumanRectanglesFraming.Config",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Analysis/HumanRectanglesFraming.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "ImageIO",
+          "Vision"
+        ],
+        "conforms_raw": [
+          "Sendable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.HypnoCoreConfig",
+        "name": "HypnoCoreConfig",
+        "qualified_name": "HypnoCoreConfig",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/HypnoCoreConfig.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.RecentEffectChainsConfig",
+        "name": "RecentEffectChainsConfig",
+        "qualified_name": "RecentEffectChainsConfig",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Library/RecentEffectChainsStore.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int",
+          "HypnoCore.RecentEntry"
+        ]
+      },
+      {
+        "key": "HypnoCore.RenderEngine.Config",
+        "name": "Config",
+        "qualified_name": "RenderEngine.Config",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Core/RenderEngine.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.FramingHook",
+          "HypnoCore.HumanCenteringFramingHook",
+          "HypnoCore.Int",
+          "HypnoCore.SourceFraming"
+        ]
+      },
+      {
+        "key": "HypnoCore.RendererConfig",
+        "name": "RendererConfig",
+        "qualified_name": "RendererConfig",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Core/RendererConfig.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      }
+    ],
+    "State": [
+      {
+        "key": "Divine.DivineState",
+        "name": "DivineState",
+        "qualified_name": "DivineState",
+        "module": "Divine",
+        "kind": "class",
+        "file": "Divine/DivineState.swift",
+        "imports": [
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "Divine.DivineEnvironment",
+          "Divine.Settings",
+          "Divine.SettingsStore",
+          "HypnoCore.ApplePhotos",
+          "HypnoCore.ApplePhotosCoordinator",
+          "HypnoCore.ApplePhotosLibraryKeys",
+          "HypnoCore.ExclusionStore",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.MediaClip",
+          "HypnoCore.MediaFile",
+          "HypnoCore.MediaLibrary",
+          "HypnoCore.MediaLibraryBuilder",
+          "HypnoCore.MediaType",
+          "HypnoCore.SourceLibraryInfo"
+        ]
+      },
+      {
+        "key": "HypnoUI.WindowState",
+        "name": "WindowState",
+        "qualified_name": "WindowState",
+        "module": "HypnoUI",
+        "kind": "struct",
+        "file": "HypnoUI/WindowState.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "Hypnograph.DreamPlayerState",
+        "name": "DreamPlayerState",
+        "qualified_name": "DreamPlayerState",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Dream/DreamPlayerState.swift",
+        "imports": [
+          "Combine",
+          "CoreMedia",
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectManager",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnogramLayer",
+          "HypnoCore.HypnographSession",
+          "HypnoCore.Int",
+          "HypnoCore.MediaClip",
+          "HypnoCore.PhotoMontage.Layer",
+          "Hypnograph.PlayerConfiguration"
+        ]
+      },
+      {
+        "key": "Hypnograph.HypnographState",
+        "name": "HypnographState",
+        "qualified_name": "HypnographState",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/HypnographState.swift",
+        "imports": [
+          "Combine",
+          "CoreGraphics",
+          "CoreMedia",
+          "Foundation",
+          "HypnoCore",
+          "HypnoUI"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.ApplePhotos",
+          "HypnoCore.ApplePhotosCoordinator",
+          "HypnoCore.ApplePhotosLibraryKeys",
+          "HypnoCore.ExclusionStore",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.MediaLibrary",
+          "HypnoCore.MediaLibraryBuilder",
+          "HypnoCore.MediaType",
+          "HypnoCore.SourceFavoritesStore",
+          "HypnoCore.SourceLibraryInfo",
+          "HypnoUI.AppNotifications",
+          "HypnoUI.TextFieldFocusMonitor",
+          "HypnoUI.WindowState",
+          "Hypnograph.EffectsEditorViewModel",
+          "Hypnograph.Environment",
+          "Hypnograph.Settings",
+          "Hypnograph.SettingsStore"
+        ]
+      }
+    ],
+    "Hook": [
+      {
+        "key": "HypnoCore.FramingHook",
+        "name": "FramingHook",
+        "qualified_name": "FramingHook",
+        "module": "HypnoCore",
+        "kind": "protocol",
+        "file": "HypnoCore/Renderer/Framing/Core/FramingHook.swift",
+        "imports": [],
+        "conforms_raw": [
+          "Sendable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.FramingBias",
+          "HypnoCore.FramingRequest"
+        ]
+      },
+      {
+        "key": "HypnoCore.FramingPipelineHook",
+        "name": "FramingPipelineHook",
+        "qualified_name": "FramingPipelineHook",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Framing/Core/FramingPipelineHook.swift",
+        "imports": [],
+        "conforms_raw": [
+          "FramingHook"
+        ],
+        "conforms_internal": [
+          "HypnoCore.FramingHook"
+        ],
+        "uses_internal": [
+          "HypnoCore.FramingBias",
+          "HypnoCore.FramingHook",
+          "HypnoCore.FramingRequest"
+        ]
+      },
+      {
+        "key": "HypnoCore.HumanCenteringFramingHook",
+        "name": "HumanCenteringFramingHook",
+        "qualified_name": "HumanCenteringFramingHook",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Framing/Implementations/HumanCentering/HumanCenteringFramingHook.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "FramingHook"
+        ],
+        "conforms_internal": [
+          "HypnoCore.FramingHook"
+        ],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.FramingBias",
+          "HypnoCore.FramingRequest",
+          "HypnoCore.HumanCenteringFramingHook.CacheKey",
+          "HypnoCore.HumanCenteringFramingHook.CachedValue",
+          "HypnoCore.HumanCenteringFramingHook.Config",
+          "HypnoCore.HumanCenteringFramingHook.StreamKey",
+          "HypnoCore.HumanRectanglesFraming",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.NoOpFramingHook",
+        "name": "NoOpFramingHook",
+        "qualified_name": "NoOpFramingHook",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Framing/Core/FramingHook.swift",
+        "imports": [],
+        "conforms_raw": [
+          "FramingHook"
+        ],
+        "conforms_internal": [
+          "HypnoCore.FramingHook"
+        ],
+        "uses_internal": [
+          "HypnoCore.FramingBias",
+          "HypnoCore.FramingRequest"
+        ]
+      }
+    ]
+  },
+  "by_prefix": {
+    "Media": [
+      {
+        "key": "HypnoCore.MediaClip",
+        "name": "MediaClip",
+        "qualified_name": "MediaClip",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CodableCMTime",
+          "HypnoCore.MediaFile"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaFile",
+        "name": "MediaFile",
+        "qualified_name": "MediaFile",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Identifiable",
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CodableCMTime",
+          "HypnoCore.HypnoCoreHooks",
+          "HypnoCore.MediaKind",
+          "HypnoCore.MediaSource",
+          "HypnoCore.StillImageCache"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaKind",
+        "name": "MediaKind",
+        "qualified_name": "MediaKind",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "String",
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.MediaLibrary",
+        "name": "MediaLibrary",
+        "qualified_name": "MediaLibrary",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Media/MediaLibrary.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation",
+          "Photos"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.ApplePhotos",
+          "HypnoCore.ExclusionStore",
+          "HypnoCore.Int",
+          "HypnoCore.MediaClip",
+          "HypnoCore.MediaFile",
+          "HypnoCore.MediaKind",
+          "HypnoCore.MediaLibrary.SourceEntry",
+          "HypnoCore.MediaSource",
+          "HypnoCore.MediaType",
+          "HypnoCore.StillImageCache"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaLibraryBuilder",
+        "name": "MediaLibraryBuilder",
+        "qualified_name": "MediaLibraryBuilder",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaLibraryBuilder.swift",
+        "imports": [
+          "Foundation",
+          "Photos"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.ApplePhotos",
+          "HypnoCore.ApplePhotosLibraryKeys",
+          "HypnoCore.ExclusionStore",
+          "HypnoCore.MediaLibrary",
+          "HypnoCore.MediaLibrarySettings",
+          "HypnoCore.SourceLibraryInfo"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaLibrarySettings",
+        "name": "MediaLibrarySettings",
+        "qualified_name": "MediaLibrarySettings",
+        "module": "HypnoCore",
+        "kind": "protocol",
+        "file": "HypnoCore/Media/MediaLibraryBuilder.swift",
+        "imports": [
+          "Foundation",
+          "Photos"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.MediaType"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaSource",
+        "name": "MediaSource",
+        "qualified_name": "MediaSource",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Hashable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.MediaSourcesParam",
+        "name": "MediaSourcesParam",
+        "qualified_name": "MediaSourcesParam",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaSourcesParam.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Sendable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.MediaType",
+        "name": "MediaType",
+        "qualified_name": "MediaType",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "String",
+          "Codable",
+          "CaseIterable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      }
+    ],
+    "Hypnogram": [
+      {
+        "key": "HypnoCore.Hypnogram",
+        "name": "Hypnogram",
+        "qualified_name": "Hypnogram",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Recipes/HypnographSession.swift",
+        "imports": [
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CodableCMTime",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.HypnogramLayer"
+        ]
+      },
+      {
+        "key": "HypnoCore.HypnogramLayer",
+        "name": "HypnogramLayer",
+        "qualified_name": "HypnogramLayer",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Recipes/HypnogramLayer.swift",
+        "imports": [
+          "CoreGraphics",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CodableCGAffineTransform",
+          "HypnoCore.EffectChain",
+          "HypnoCore.MediaClip"
+        ]
+      },
+      {
+        "key": "Hypnograph.HypnogramEntry",
+        "name": "HypnogramEntry",
+        "qualified_name": "HypnogramEntry",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/HypnogramStore.swift",
+        "imports": [
+          "AppKit",
+          "Combine",
+          "CoreImage",
+          "Foundation",
+          "HypnoCore",
+          "UniformTypeIdentifiers"
+        ],
+        "conforms_raw": [
+          "Identifiable",
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "Hypnograph.HypnogramListTab",
+        "name": "HypnogramListTab",
+        "qualified_name": "HypnogramListTab",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/Views/Components/HypnogramListView.swift",
+        "imports": [
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "String",
+          "CaseIterable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "Hypnograph.HypnogramListView",
+        "name": "HypnogramListView",
+        "qualified_name": "HypnogramListView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/Components/HypnogramListView.swift",
+        "imports": [
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "Hypnograph.HypnogramEntry",
+          "Hypnograph.HypnogramListTab",
+          "Hypnograph.HypnogramRowView",
+          "Hypnograph.HypnogramStore",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.HypnogramRowView",
+        "name": "HypnogramRowView",
+        "qualified_name": "HypnogramRowView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/Components/HypnogramListView.swift",
+        "imports": [
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "Hypnograph.HypnogramEntry",
+          "Hypnograph.ThumbnailView",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.HypnogramStore",
+        "name": "HypnogramStore",
+        "qualified_name": "HypnogramStore",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/HypnogramStore.swift",
+        "imports": [
+          "AppKit",
+          "Combine",
+          "CoreImage",
+          "Foundation",
+          "HypnoCore",
+          "UniformTypeIdentifiers"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnographSession",
+          "Hypnograph.DateFormatter",
+          "Hypnograph.Environment",
+          "Hypnograph.HypnogramEntry",
+          "Hypnograph.SessionStore"
+        ]
+      }
+    ],
+    "Render": [
+      {
+        "key": "HypnoCore.RenderContext",
+        "name": "RenderContext",
+        "qualified_name": "RenderContext",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Core/RenderContext.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Metal"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.FrameBuffer",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.RenderEngine",
+        "name": "RenderEngine",
+        "qualified_name": "RenderEngine",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Core/RenderEngine.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.CompositionBuilder",
+          "HypnoCore.EffectManager",
+          "HypnoCore.FrameCompositor",
+          "HypnoCore.FramingHook",
+          "HypnoCore.HumanCenteringFramingHook",
+          "HypnoCore.HypnoCoreHooks",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.Int",
+          "HypnoCore.PhotoMontage",
+          "HypnoCore.RenderEngine.Config",
+          "HypnoCore.RenderEngine.ExportQueue",
+          "HypnoCore.RenderError",
+          "HypnoCore.SourceFraming"
+        ]
+      },
+      {
+        "key": "HypnoCore.RenderError",
+        "name": "RenderError",
+        "qualified_name": "RenderError",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Models/RenderErrors.swift",
+        "imports": [
+          "AVFoundation",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Error",
+          "CustomStringConvertible"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.RenderInstruction",
+        "name": "RenderInstruction",
+        "qualified_name": "RenderInstruction",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Core/RenderInstruction.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "NSObject",
+          "AVVideoCompositionInstructionProtocol",
+          "Sendable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectManager",
+          "HypnoCore.FramingHook",
+          "HypnoCore.Int",
+          "HypnoCore.SourceFraming"
+        ]
+      },
+      {
+        "key": "HypnoCore.RendererConfig",
+        "name": "RendererConfig",
+        "qualified_name": "RendererConfig",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Core/RendererConfig.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.RendererImageUtils",
+        "name": "RendererImageUtils",
+        "qualified_name": "RendererImageUtils",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Core/RendererImageUtils.swift",
+        "imports": [
+          "CoreImage"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.FramingBias",
+          "HypnoCore.SourceFraming"
+        ]
+      }
+    ],
+    "Effect": [
+      {
+        "key": "HypnoCore.Effect",
+        "name": "Effect",
+        "qualified_name": "Effect",
+        "module": "HypnoCore",
+        "kind": "protocol",
+        "file": "HypnoCore/Renderer/Effects/Implementations/Effect.swift",
+        "imports": [
+          "CoreImage"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectChain",
+        "name": "EffectChain",
+        "qualified_name": "EffectChain",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectConfigSchema.swift",
+        "imports": [
+          "CoreImage",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Equatable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain.Payload",
+          "HypnoCore.EffectChain.PayloadEffect",
+          "HypnoCore.EffectConfigLoader",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.Int",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectConfigLoader",
+        "name": "EffectConfigLoader",
+        "qualified_name": "EffectConfigLoader",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Effects/Library/EffectConfigLoader.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadError",
+          "HypnoCore.EffectConfigLoader.LoadResult",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectLibraryConfig",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.HypnoEffectsBundle"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectDefinition",
+        "name": "EffectDefinition",
+        "qualified_name": "EffectDefinition",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectConfigSchema.swift",
+        "imports": [
+          "CoreImage",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Equatable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectLibraryConfig",
+        "name": "EffectLibraryConfig",
+        "qualified_name": "EffectLibraryConfig",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectConfigSchema.swift",
+        "imports": [
+          "CoreImage",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectManager",
+        "name": "EffectManager",
+        "qualified_name": "EffectManager",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectManager.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BlendMode",
+          "HypnoCore.BlendModeAnalysis",
+          "HypnoCore.CGSize",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.FrameBuffer",
+          "HypnoCore.FrameBufferPreloader",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.Int",
+          "HypnoCore.NoNormalization",
+          "HypnoCore.NormalizationStrategy",
+          "HypnoCore.RecentEffectChainsStore",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectRegistry",
+        "name": "EffectRegistry",
+        "qualified_name": "EffectRegistry",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectRegistry.swift",
+        "imports": [
+          "CoreGraphics",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BasicEffect",
+          "HypnoCore.BlockFreezeMetalEffect",
+          "HypnoCore.ColorEchoEffect",
+          "HypnoCore.ColorEchoMetalEffect",
+          "HypnoCore.CompressionMetalEffect",
+          "HypnoCore.DatamoshMetalEffect",
+          "HypnoCore.EdgeDecayEffect",
+          "HypnoCore.Effect",
+          "HypnoCore.FeedbackLoopEffect",
+          "HypnoCore.FrameDifferenceEffect",
+          "HypnoCore.GaussianBlurMetalEffect",
+          "HypnoCore.GhostBlurEffect",
+          "HypnoCore.GlitchBlocksMetalEffect",
+          "HypnoCore.HoldFrameEffect",
+          "HypnoCore.HueWobbleEffect",
+          "HypnoCore.IFrameCompressEffect",
+          "HypnoCore.LUTEffect",
+          "HypnoCore.ParameterRange",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.PixelDriftMetalEffect",
+          "HypnoCore.PixelSortEffect",
+          "HypnoCore.PixelateMetalEffect",
+          "HypnoCore.PosterizeDecayEffect",
+          "HypnoCore.RGBSplitSimpleEffect",
+          "HypnoCore.TemporalSmearEffect",
+          "HypnoCore.TextOverlayEffect",
+          "HypnoCore.TimeShuffleMetalEffect"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectsSession",
+        "name": "EffectsSession",
+        "qualified_name": "EffectsSession",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Library/EffectsSession.swift",
+        "imports": [
+          "Combine",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "PersistentStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentStore"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BasicEffect",
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectLibraryConfig",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.HypnoEffectsBundle",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectChainLibraryActions",
+        "name": "EffectChainLibraryActions",
+        "qualified_name": "EffectChainLibraryActions",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/EffectChainLibraryActions.swift",
+        "imports": [
+          "AppKit",
+          "Foundation",
+          "HypnoCore",
+          "HypnoUI",
+          "UniformTypeIdentifiers"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnographSession",
+          "HypnoCore.PhotoMontage.Layer",
+          "HypnoUI.AppNotifications",
+          "Hypnograph.SessionStore"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectDropDelegate",
+        "name": "EffectDropDelegate",
+        "qualified_name": "EffectDropDelegate",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "DropDelegate"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorField",
+        "name": "EffectsEditorField",
+        "qualified_name": "EffectsEditorField",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "Hashable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorView",
+        "name": "EffectsEditorView",
+        "qualified_name": "EffectsEditorView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.Int",
+          "HypnoCore.RecentEffectChainsStore",
+          "HypnoCore.RecentEntry",
+          "HypnoUI.AppNotifications",
+          "Hypnograph.Dream",
+          "Hypnograph.EditableEffectNameHeader",
+          "Hypnograph.EffectChainLibraryActions",
+          "Hypnograph.EffectDropDelegate",
+          "Hypnograph.EffectsEditorField",
+          "Hypnograph.EffectsEditorView.EffectsListSelection",
+          "Hypnograph.EffectsEditorView.HoverRevealControlsRow",
+          "Hypnograph.EffectsEditorView.SelectedChainContext",
+          "Hypnograph.EffectsEditorViewModel",
+          "Hypnograph.HypnographState",
+          "Hypnograph.ParameterSliderRow",
+          "Hypnograph.Settings.Defaults",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorView.EffectsListSelection",
+        "name": "EffectsListSelection",
+        "qualified_name": "EffectsEditorView.EffectsListSelection",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "Hashable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorViewModel",
+        "name": "EffectsEditorViewModel",
+        "qualified_name": "EffectsEditorViewModel",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.Int",
+          "Hypnograph.EffectsEditorField"
+        ]
+      }
+    ],
+    "Dream": [
+      {
+        "key": "Hypnograph.Dream",
+        "name": "Dream",
+        "qualified_name": "Dream",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Dream/Dream.swift",
+        "imports": [
+          "AVFoundation",
+          "AppKit",
+          "Combine",
+          "CoreGraphics",
+          "CoreMedia",
+          "Foundation",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.ApplePhotos",
+          "HypnoCore.AspectRatio",
+          "HypnoCore.AudioOutputDevice",
+          "HypnoCore.BlendMode",
+          "HypnoCore.CGSize",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectManager",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnogramLayer",
+          "HypnoCore.HypnographSession",
+          "HypnoCore.Int",
+          "HypnoCore.RecentEffectChainsStore",
+          "HypnoCore.RenderEngine.ExportQueue",
+          "HypnoCore.StillImageCache",
+          "HypnoUI.AppNotifications",
+          "Hypnograph.ClipHistoryFile",
+          "Hypnograph.ClipHistoryIO",
+          "Hypnograph.Dream.LiveMode",
+          "Hypnograph.Dream.SourceCurationAction",
+          "Hypnograph.DreamAudioController",
+          "Hypnograph.DreamPlayerState",
+          "Hypnograph.EffectChainLibraryActions",
+          "Hypnograph.Environment",
+          "Hypnograph.HypnogramStore",
+          "Hypnograph.HypnographState",
+          "Hypnograph.LivePlayer",
+          "Hypnograph.LivePlayerScreen",
+          "Hypnograph.OutputResolution",
+          "Hypnograph.PreviewPlayerView",
+          "Hypnograph.SessionFileActions"
+        ]
+      },
+      {
+        "key": "Hypnograph.DreamAudioController",
+        "name": "DreamAudioController",
+        "qualified_name": "DreamAudioController",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Dream/DreamAudioController.swift",
+        "imports": [
+          "Combine",
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AudioDeviceManager",
+          "HypnoCore.AudioOutputDevice",
+          "Hypnograph.LivePlayer",
+          "Hypnograph.Settings",
+          "Hypnograph.SettingsStore"
+        ]
+      },
+      {
+        "key": "Hypnograph.DreamPlayerState",
+        "name": "DreamPlayerState",
+        "qualified_name": "DreamPlayerState",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Dream/DreamPlayerState.swift",
+        "imports": [
+          "Combine",
+          "CoreMedia",
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectManager",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnogramLayer",
+          "HypnoCore.HypnographSession",
+          "HypnoCore.Int",
+          "HypnoCore.MediaClip",
+          "HypnoCore.PhotoMontage.Layer",
+          "Hypnograph.PlayerConfiguration"
+        ]
+      }
+    ],
+    "Player": [
+      {
+        "key": "HypnoCore.PlayerView",
+        "name": "PlayerView",
+        "qualified_name": "PlayerView",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Display/PlayerView.swift",
+        "imports": [
+          "AppKit",
+          "CoreMedia",
+          "CoreVideo",
+          "MetalKit",
+          "QuartzCore"
+        ],
+        "conforms_raw": [
+          "MTKView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.DecodedFrame",
+          "HypnoCore.FrameSource",
+          "HypnoCore.Int",
+          "HypnoCore.PlayerView.ContentFocus",
+          "HypnoCore.PlayerView.ContentFocus.OverscrollMode",
+          "HypnoCore.PlayerView.ContentMode",
+          "HypnoCore.PlayerView.YUVParams",
+          "HypnoCore.SharedRenderer",
+          "HypnoCore.TextureCache",
+          "HypnoCore.TransitionRenderer",
+          "HypnoCore.TransitionRenderer.TransitionType"
+        ]
+      },
+      {
+        "key": "Hypnograph.PlayerConfiguration",
+        "name": "PlayerConfiguration",
+        "qualified_name": "PlayerConfiguration",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/PlayerConfiguration.swift",
+        "imports": [
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AspectRatio",
+          "HypnoCore.Int",
+          "Hypnograph.OutputResolution",
+          "Hypnograph.Settings"
+        ]
+      },
+      {
+        "key": "Hypnograph.PlayerContentMirrorView",
+        "name": "PlayerContentMirrorView",
+        "qualified_name": "PlayerContentMirrorView",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Dream/PlayerContentView.swift",
+        "imports": [
+          "AVFoundation",
+          "AppKit",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "NSView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.FrameSource",
+          "HypnoCore.NSColor",
+          "HypnoCore.PlayerView",
+          "HypnoCore.PlayerView.ContentFocus",
+          "HypnoCore.PlayerView.ContentMode",
+          "HypnoCore.SharedRenderer",
+          "HypnoCore.TransitionRenderer.TransitionType",
+          "Hypnograph.PlayerContentView.PlayerSlot"
+        ]
+      },
+      {
+        "key": "Hypnograph.PlayerContentView",
+        "name": "PlayerContentView",
+        "qualified_name": "PlayerContentView",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Dream/PlayerContentView.swift",
+        "imports": [
+          "AVFoundation",
+          "AppKit",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "NSView"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AVPlayerFrameSource",
+          "HypnoCore.NSColor",
+          "HypnoCore.PlayerView",
+          "HypnoCore.PlayerView.ContentFocus",
+          "HypnoCore.PlayerView.ContentMode",
+          "HypnoCore.SharedRenderer",
+          "HypnoCore.TransitionRenderer.TransitionType",
+          "Hypnograph.PlayerContentMirrorView",
+          "Hypnograph.PlayerContentView.PlayerSlot",
+          "Hypnograph.PlayerContentView.WeakMirrorRef"
+        ]
+      },
+      {
+        "key": "Hypnograph.PlayerContentView.PlayerSlot",
+        "name": "PlayerSlot",
+        "qualified_name": "PlayerContentView.PlayerSlot",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/Dream/PlayerContentView.swift",
+        "imports": [
+          "AVFoundation",
+          "AppKit",
+          "HypnoCore"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "Hypnograph.PlayerSettingsView",
+        "name": "PlayerSettingsView",
+        "qualified_name": "PlayerSettingsView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/Components/PlayerSettingsView.swift",
+        "imports": [
+          "CoreMedia",
+          "HypnoCore",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.AspectRatio",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.Int",
+          "HypnoCore.SourceFraming",
+          "HypnoCore.TransitionRenderer.TransitionType",
+          "Hypnograph.AudioDeviceRow",
+          "Hypnograph.Dream",
+          "Hypnograph.DreamPlayerState",
+          "Hypnograph.PlayRateControl",
+          "Hypnograph.PlayerConfiguration",
+          "Hypnograph.Settings",
+          "Hypnograph.View"
+        ]
+      }
+    ]
+  },
+  "by_contains": {
+    "Source": [
+      {
+        "key": "HypnoCore.AVPlayerFrameSource",
+        "name": "AVPlayerFrameSource",
+        "qualified_name": "AVPlayerFrameSource",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/FrameSource/AVPlayerFrameSource.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreMedia",
+          "CoreVideo",
+          "QuartzCore"
+        ],
+        "conforms_raw": [
+          "FrameSource"
+        ],
+        "conforms_internal": [
+          "HypnoCore.FrameSource"
+        ],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.DecodedFrame"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectConfigLoader.LoadResult.Source",
+        "name": "Source",
+        "qualified_name": "EffectConfigLoader.LoadResult.Source",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Effects/Library/EffectConfigLoader.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.FrameSource",
+        "name": "FrameSource",
+        "qualified_name": "FrameSource",
+        "module": "HypnoCore",
+        "kind": "protocol",
+        "file": "HypnoCore/Renderer/FrameSource/FrameSource.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreMedia",
+          "CoreVideo",
+          "QuartzCore"
+        ],
+        "conforms_raw": [
+          "AnyObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.DecodedFrame"
+        ]
+      },
+      {
+        "key": "HypnoCore.LoadedSource",
+        "name": "LoadedSource",
+        "qualified_name": "LoadedSource",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Core/SourceLoader.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaLibrary.SourceEntry",
+        "name": "SourceEntry",
+        "qualified_name": "MediaLibrary.SourceEntry",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Media/MediaLibrary.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation",
+          "Photos"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.MediaKind",
+          "HypnoCore.MediaSource"
+        ]
+      },
+      {
+        "key": "HypnoCore.MediaSource",
+        "name": "MediaSource",
+        "qualified_name": "MediaSource",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Hashable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.MediaSourcesParam",
+        "name": "MediaSourcesParam",
+        "qualified_name": "MediaSourcesParam",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Media/MediaSourcesParam.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Sendable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.SourceFavoritesStore",
+        "name": "SourceFavoritesStore",
+        "qualified_name": "SourceFavoritesStore",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Cache/PersistentIdentifierStore.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "PersistentIdentifierStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentIdentifierStore"
+        ],
+        "uses_internal": [
+          "HypnoCore.MediaSource"
+        ]
+      },
+      {
+        "key": "HypnoCore.SourceFraming",
+        "name": "SourceFraming",
+        "qualified_name": "SourceFraming",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Models/SourceFraming.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "String",
+          "Codable",
+          "CaseIterable",
+          "Sendable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.SourceLibraryInfo",
+        "name": "SourceLibraryInfo",
+        "qualified_name": "SourceLibraryInfo",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Identifiable",
+          "Sendable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int",
+          "HypnoCore.SourceLibraryInfo.LibraryType"
+        ]
+      },
+      {
+        "key": "HypnoCore.SourceLoader",
+        "name": "SourceLoader",
+        "qualified_name": "SourceLoader",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Core/SourceLoader.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.HypnoCoreHooks",
+          "HypnoCore.HypnogramLayer",
+          "HypnoCore.LoadedSource",
+          "HypnoCore.RenderError",
+          "HypnoCore.RendererImageUtils",
+          "HypnoCore.StillImageCache"
+        ]
+      },
+      {
+        "key": "Hypnograph.Dream.SourceCurationAction",
+        "name": "SourceCurationAction",
+        "qualified_name": "Dream.SourceCurationAction",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/Dream/Dream.swift",
+        "imports": [
+          "AVFoundation",
+          "AppKit",
+          "Combine",
+          "CoreGraphics",
+          "CoreMedia",
+          "Foundation",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectConfigLoader.LoadResult.Source"
+        ]
+      }
+    ],
+    "Clip": [
+      {
+        "key": "HypnoCore.MediaClip",
+        "name": "MediaClip",
+        "qualified_name": "MediaClip",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Media/MediaModels.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CodableCMTime",
+          "HypnoCore.MediaFile"
+        ]
+      },
+      {
+        "key": "Hypnograph.ClipHistoryFile",
+        "name": "ClipHistoryFile",
+        "qualified_name": "ClipHistoryFile",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/ClipHistoryFile.swift",
+        "imports": [
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Hypnogram",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.ClipHistoryIO",
+        "name": "ClipHistoryIO",
+        "qualified_name": "ClipHistoryIO",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/ClipHistoryFile.swift",
+        "imports": [
+          "Foundation",
+          "HypnoCore"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int",
+          "Hypnograph.ClipHistoryFile"
+        ]
+      }
+    ],
+    "Renderer": [
+      {
+        "key": "HypnoCore.RendererConfig",
+        "name": "RendererConfig",
+        "qualified_name": "RendererConfig",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Core/RendererConfig.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.RendererImageUtils",
+        "name": "RendererImageUtils",
+        "qualified_name": "RendererImageUtils",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Core/RendererImageUtils.swift",
+        "imports": [
+          "CoreImage"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.CGSize",
+          "HypnoCore.FramingBias",
+          "HypnoCore.SourceFraming"
+        ]
+      },
+      {
+        "key": "HypnoCore.SharedRenderer",
+        "name": "SharedRenderer",
+        "qualified_name": "SharedRenderer",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Core/SharedRenderer.swift",
+        "imports": [
+          "CoreImage",
+          "Metal"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": []
+      },
+      {
+        "key": "HypnoCore.TransitionRenderer",
+        "name": "TransitionRenderer",
+        "qualified_name": "TransitionRenderer",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Transitions/TransitionRenderer.swift",
+        "imports": [
+          "Metal",
+          "simd"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.SharedRenderer",
+          "HypnoCore.TransitionRenderer.TransitionParams",
+          "HypnoCore.TransitionRenderer.TransitionType"
+        ]
+      }
+    ],
+    "Effect": [
+      {
+        "key": "HypnoCore.BasicEffect",
+        "name": "BasicEffect",
+        "qualified_name": "BasicEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/BasicEffect.swift",
+        "imports": [
+          "CoreImage",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BasicColorSpace",
+          "HypnoCore.BasicParamsGPU",
+          "HypnoCore.Effect",
+          "HypnoCore.HypnoEffectsBundle",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.BlockFreezeMetalEffect",
+        "name": "BlockFreezeMetalEffect",
+        "qualified_name": "BlockFreezeMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/BlockFreezeMetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreVideo",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "MetalEffect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.MetalEffect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BlockFreezeParamsGPU",
+          "HypnoCore.Effect",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.ColorEchoEffect",
+        "name": "ColorEchoEffect",
+        "qualified_name": "ColorEchoEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/ColorEchoEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.ColorEchoMetalEffect",
+        "name": "ColorEchoMetalEffect",
+        "qualified_name": "ColorEchoMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/ColorEchoMetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreVideo",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "MetalEffect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.MetalEffect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.ColorEchoParamsGPU",
+          "HypnoCore.Effect",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.CompressionMetalEffect",
+        "name": "CompressionMetalEffect",
+        "qualified_name": "CompressionMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/CompressionMetalEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation",
+          "ImageIO",
+          "UniformTypeIdentifiers"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.CompressionFormat",
+          "HypnoCore.Effect",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.DatamoshMetalEffect",
+        "name": "DatamoshMetalEffect",
+        "qualified_name": "DatamoshMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/DatamoshMetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreMedia",
+          "CoreVideo",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.DatamoshParams",
+          "HypnoCore.DatamoshParamsGPU",
+          "HypnoCore.Effect",
+          "HypnoCore.FrameBuffer",
+          "HypnoCore.HypnoEffectsBundle",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext",
+          "HypnoCore.SharedRenderer"
+        ]
+      },
+      {
+        "key": "HypnoCore.EdgeDecayEffect",
+        "name": "EdgeDecayEffect",
+        "qualified_name": "EdgeDecayEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/EdgeDecayEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.Effect",
+        "name": "Effect",
+        "qualified_name": "Effect",
+        "module": "HypnoCore",
+        "kind": "protocol",
+        "file": "HypnoCore/Renderer/Effects/Implementations/Effect.swift",
+        "imports": [
+          "CoreImage"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectChain",
+        "name": "EffectChain",
+        "qualified_name": "EffectChain",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectConfigSchema.swift",
+        "imports": [
+          "CoreImage",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Equatable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain.Payload",
+          "HypnoCore.EffectChain.PayloadEffect",
+          "HypnoCore.EffectConfigLoader",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.Int",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectChain.PayloadEffect",
+        "name": "PayloadEffect",
+        "qualified_name": "EffectChain.PayloadEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectConfigSchema.swift",
+        "imports": [
+          "CoreImage",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectConfigLoader",
+        "name": "EffectConfigLoader",
+        "qualified_name": "EffectConfigLoader",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Effects/Library/EffectConfigLoader.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadError",
+          "HypnoCore.EffectConfigLoader.LoadResult",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectLibraryConfig",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.HypnoEffectsBundle"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectDefinition",
+        "name": "EffectDefinition",
+        "qualified_name": "EffectDefinition",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectConfigSchema.swift",
+        "imports": [
+          "CoreImage",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable",
+          "Equatable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectLibraryConfig",
+        "name": "EffectLibraryConfig",
+        "qualified_name": "EffectLibraryConfig",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectConfigSchema.swift",
+        "imports": [
+          "CoreImage",
+          "CryptoKit",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectManager",
+        "name": "EffectManager",
+        "qualified_name": "EffectManager",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectManager.swift",
+        "imports": [
+          "AVFoundation",
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BlendMode",
+          "HypnoCore.BlendModeAnalysis",
+          "HypnoCore.CGSize",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.FrameBuffer",
+          "HypnoCore.FrameBufferPreloader",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.Int",
+          "HypnoCore.NoNormalization",
+          "HypnoCore.NormalizationStrategy",
+          "HypnoCore.RecentEffectChainsStore",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectRegistry",
+        "name": "EffectRegistry",
+        "qualified_name": "EffectRegistry",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Effects/Core/EffectRegistry.swift",
+        "imports": [
+          "CoreGraphics",
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BasicEffect",
+          "HypnoCore.BlockFreezeMetalEffect",
+          "HypnoCore.ColorEchoEffect",
+          "HypnoCore.ColorEchoMetalEffect",
+          "HypnoCore.CompressionMetalEffect",
+          "HypnoCore.DatamoshMetalEffect",
+          "HypnoCore.EdgeDecayEffect",
+          "HypnoCore.Effect",
+          "HypnoCore.FeedbackLoopEffect",
+          "HypnoCore.FrameDifferenceEffect",
+          "HypnoCore.GaussianBlurMetalEffect",
+          "HypnoCore.GhostBlurEffect",
+          "HypnoCore.GlitchBlocksMetalEffect",
+          "HypnoCore.HoldFrameEffect",
+          "HypnoCore.HueWobbleEffect",
+          "HypnoCore.IFrameCompressEffect",
+          "HypnoCore.LUTEffect",
+          "HypnoCore.ParameterRange",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.PixelDriftMetalEffect",
+          "HypnoCore.PixelSortEffect",
+          "HypnoCore.PixelateMetalEffect",
+          "HypnoCore.PosterizeDecayEffect",
+          "HypnoCore.RGBSplitSimpleEffect",
+          "HypnoCore.TemporalSmearEffect",
+          "HypnoCore.TextOverlayEffect",
+          "HypnoCore.TimeShuffleMetalEffect"
+        ]
+      },
+      {
+        "key": "HypnoCore.EffectsSession",
+        "name": "EffectsSession",
+        "qualified_name": "EffectsSession",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Library/EffectsSession.swift",
+        "imports": [
+          "Combine",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "PersistentStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentStore"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.BasicEffect",
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectLibraryConfig",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.HypnoEffectsBundle",
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "HypnoCore.FeedbackLoopEffect",
+        "name": "FeedbackLoopEffect",
+        "qualified_name": "FeedbackLoopEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/FeedbackLoopEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.FrameDifferenceEffect",
+        "name": "FrameDifferenceEffect",
+        "qualified_name": "FrameDifferenceEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/FrameDifferenceEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.GaussianBlurMetalEffect",
+        "name": "GaussianBlurMetalEffect",
+        "qualified_name": "GaussianBlurMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/GaussianBlurMetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreVideo",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "MetalEffect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.MetalEffect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.GaussianBlurParamsGPU",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.GhostBlurEffect",
+        "name": "GhostBlurEffect",
+        "qualified_name": "GhostBlurEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/GhostBlurEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.GlitchBlocksMetalEffect",
+        "name": "GlitchBlocksMetalEffect",
+        "qualified_name": "GlitchBlocksMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/GlitchBlocksMetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreVideo",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "MetalEffect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.MetalEffect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.GlitchBlocksParamsGPU",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.HoldFrameEffect",
+        "name": "HoldFrameEffect",
+        "qualified_name": "HoldFrameEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/HoldFrameEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.HueWobbleEffect",
+        "name": "HueWobbleEffect",
+        "qualified_name": "HueWobbleEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/HueWobbleEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.HypnoEffectsBundle",
+        "name": "HypnoEffectsBundle",
+        "qualified_name": "HypnoEffectsBundle",
+        "module": "HypnoCore",
+        "kind": "enum",
+        "file": "HypnoCore/Renderer/Effects/HypnoEffectsBundle.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.HypnoEffectsBundle.BundleAnchor"
+        ]
+      },
+      {
+        "key": "HypnoCore.IFrameCompressEffect",
+        "name": "IFrameCompressEffect",
+        "qualified_name": "IFrameCompressEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/IFrameCompressEffect.swift",
+        "imports": [
+          "CoreImage",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.HypnoEffectsBundle",
+          "HypnoCore.IFrameParamsGPU",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.LUTEffect",
+        "name": "LUTEffect",
+        "qualified_name": "LUTEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/LUTEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreMedia",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.MetalEffect",
+        "name": "MetalEffect",
+        "qualified_name": "MetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Core/MetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreVideo",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.HypnoEffectsBundle",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.RenderContext",
+          "HypnoCore.SharedRenderer"
+        ]
+      },
+      {
+        "key": "HypnoCore.PixelDriftMetalEffect",
+        "name": "PixelDriftMetalEffect",
+        "qualified_name": "PixelDriftMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/PixelDriftMetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreVideo",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "MetalEffect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.MetalEffect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.PixelDriftParamsGPU",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.PixelSortEffect",
+        "name": "PixelSortEffect",
+        "qualified_name": "PixelSortEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/PixelSortEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.PixelateMetalEffect",
+        "name": "PixelateMetalEffect",
+        "qualified_name": "PixelateMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/PixelateMetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "MetalEffect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.MetalEffect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.PixelateParamsGPU",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.PosterizeDecayEffect",
+        "name": "PosterizeDecayEffect",
+        "qualified_name": "PosterizeDecayEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/PosterizeDecayEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.RGBSplitSimpleEffect",
+        "name": "RGBSplitSimpleEffect",
+        "qualified_name": "RGBSplitSimpleEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/RGBSplitEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.RecentEffectChainsConfig",
+        "name": "RecentEffectChainsConfig",
+        "qualified_name": "RecentEffectChainsConfig",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Library/RecentEffectChainsStore.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Codable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int",
+          "HypnoCore.RecentEntry"
+        ]
+      },
+      {
+        "key": "HypnoCore.RecentEffectChainsStore",
+        "name": "RecentEffectChainsStore",
+        "qualified_name": "RecentEffectChainsStore",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Library/RecentEffectChainsStore.swift",
+        "imports": [
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "PersistentStore"
+        ],
+        "conforms_internal": [
+          "HypnoCore.PersistentStore"
+        ],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.Int",
+          "HypnoCore.RecentEffectChainsConfig",
+          "HypnoCore.RecentEntry"
+        ]
+      },
+      {
+        "key": "HypnoCore.TemporalSmearEffect",
+        "name": "TemporalSmearEffect",
+        "qualified_name": "TemporalSmearEffect",
+        "module": "HypnoCore",
+        "kind": "struct",
+        "file": "HypnoCore/Renderer/Effects/Implementations/TemporalSmearEffect.swift",
+        "imports": [
+          "CoreGraphics",
+          "CoreImage",
+          "CoreMedia"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext"
+        ]
+      },
+      {
+        "key": "HypnoCore.TextOverlayEffect",
+        "name": "TextOverlayEffect",
+        "qualified_name": "TextOverlayEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/TextSourceEffect.swift",
+        "imports": [
+          "AppKit",
+          "CoreGraphics",
+          "CoreImage",
+          "Foundation"
+        ],
+        "conforms_raw": [
+          "Effect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.Effect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.CGSize",
+          "HypnoCore.Effect",
+          "HypnoCore.HypnoCoreConfig",
+          "HypnoCore.Int",
+          "HypnoCore.NSColor",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext",
+          "HypnoCore.SeededRandomNumberGenerator",
+          "HypnoCore.TextFileLoader",
+          "HypnoCore.TextSnippet"
+        ]
+      },
+      {
+        "key": "HypnoCore.TimeShuffleMetalEffect",
+        "name": "TimeShuffleMetalEffect",
+        "qualified_name": "TimeShuffleMetalEffect",
+        "module": "HypnoCore",
+        "kind": "class",
+        "file": "HypnoCore/Renderer/Effects/Implementations/TimeShuffleMetalEffect.swift",
+        "imports": [
+          "CoreImage",
+          "CoreVideo",
+          "Foundation",
+          "Metal"
+        ],
+        "conforms_raw": [
+          "MetalEffect"
+        ],
+        "conforms_internal": [
+          "HypnoCore.MetalEffect"
+        ],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.Effect",
+          "HypnoCore.Int",
+          "HypnoCore.ParameterSpec",
+          "HypnoCore.Params",
+          "HypnoCore.RenderContext",
+          "HypnoCore.TimeShuffleParamsGPU"
+        ]
+      },
+      {
+        "key": "Hypnograph.EditableEffectNameHeader",
+        "name": "EditableEffectNameHeader",
+        "qualified_name": "EditableEffectNameHeader",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.Effect",
+          "Hypnograph.EffectsEditorField",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectChainLibraryActions",
+        "name": "EffectChainLibraryActions",
+        "qualified_name": "EffectChainLibraryActions",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/EffectChainLibraryActions.swift",
+        "imports": [
+          "AppKit",
+          "Foundation",
+          "HypnoCore",
+          "HypnoUI",
+          "UniformTypeIdentifiers"
+        ],
+        "conforms_raw": [],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.Hypnogram",
+          "HypnoCore.HypnographSession",
+          "HypnoCore.PhotoMontage.Layer",
+          "HypnoUI.AppNotifications",
+          "Hypnograph.SessionStore"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectDropDelegate",
+        "name": "EffectDropDelegate",
+        "qualified_name": "EffectDropDelegate",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "DropDelegate"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorField",
+        "name": "EffectsEditorField",
+        "qualified_name": "EffectsEditorField",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "Hashable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorView",
+        "name": "EffectsEditorView",
+        "qualified_name": "EffectsEditorView",
+        "module": "Hypnograph",
+        "kind": "struct",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "View"
+        ],
+        "conforms_internal": [
+          "Hypnograph.View"
+        ],
+        "uses_internal": [
+          "HypnoCore.Effect",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectConfigLoader.LoadResult.Source",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.Int",
+          "HypnoCore.RecentEffectChainsStore",
+          "HypnoCore.RecentEntry",
+          "HypnoUI.AppNotifications",
+          "Hypnograph.Dream",
+          "Hypnograph.EditableEffectNameHeader",
+          "Hypnograph.EffectChainLibraryActions",
+          "Hypnograph.EffectDropDelegate",
+          "Hypnograph.EffectsEditorField",
+          "Hypnograph.EffectsEditorView.EffectsListSelection",
+          "Hypnograph.EffectsEditorView.HoverRevealControlsRow",
+          "Hypnograph.EffectsEditorView.SelectedChainContext",
+          "Hypnograph.EffectsEditorViewModel",
+          "Hypnograph.HypnographState",
+          "Hypnograph.ParameterSliderRow",
+          "Hypnograph.Settings.Defaults",
+          "Hypnograph.View"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorView.EffectsListSelection",
+        "name": "EffectsListSelection",
+        "qualified_name": "EffectsEditorView.EffectsListSelection",
+        "module": "Hypnograph",
+        "kind": "enum",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "Hashable"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.Int"
+        ]
+      },
+      {
+        "key": "Hypnograph.EffectsEditorViewModel",
+        "name": "EffectsEditorViewModel",
+        "qualified_name": "EffectsEditorViewModel",
+        "module": "Hypnograph",
+        "kind": "class",
+        "file": "Hypnograph/Views/EffectsEditorView.swift",
+        "imports": [
+          "Combine",
+          "HypnoCore",
+          "HypnoUI",
+          "SwiftUI"
+        ],
+        "conforms_raw": [
+          "ObservableObject"
+        ],
+        "conforms_internal": [],
+        "uses_internal": [
+          "HypnoCore.AnyCodableValue",
+          "HypnoCore.EffectChain",
+          "HypnoCore.EffectDefinition",
+          "HypnoCore.EffectRegistry",
+          "HypnoCore.EffectsSession",
+          "HypnoCore.Int",
+          "Hypnograph.EffectsEditorField"
+        ]
+      }
+    ]
+  },
+  "duplicates": {
+    "Coordinator": [
+      "Divine.PHPickerRepresentable.Coordinator",
+      "Hypnograph.CursorAutoHideView.Coordinator",
+      "Hypnograph.LiveContentViewWrapper.Coordinator",
+      "Hypnograph.PHPickerRepresentable.Coordinator",
+      "Hypnograph.PreviewPlayerView.Coordinator"
+    ],
+    "Config": [
+      "HypnoCore.HumanCenteringFramingHook.Config",
+      "HypnoCore.HumanRectanglesFraming.Config",
+      "HypnoCore.RenderEngine.Config"
+    ],
+    "PHPickerRepresentable": [
+      "Divine.PHPickerRepresentable",
+      "Hypnograph.PHPickerRepresentable"
+    ],
+    "PhotosPickerSheet": [
+      "Divine.PhotosPickerSheet",
+      "Hypnograph.PhotosPickerSheet"
+    ],
+    "Settings": [
+      "Divine.Settings",
+      "Hypnograph.Settings"
+    ],
+    "SettingsStore": [
+      "Divine.SettingsStore",
+      "Hypnograph.SettingsStore"
+    ],
+    "View": [
+      "HypnoUI.View",
+      "Hypnograph.View"
+    ],
+    "WindowResizer": [
+      "Divine.WindowResizer",
+      "Hypnograph.WindowResizer"
+    ]
+  },
+  "base_variants": {
+    "Divine": [
+      "DivineState",
+      "DivineView"
+    ],
+    "Hypnograph": [
+      "HypnographSession",
+      "HypnographState"
+    ],
+    "Media": [
+      "MediaClip",
+      "MediaSource"
+    ],
+    "RecentEffectChains": [
+      "RecentEffectChainsConfig",
+      "RecentEffectChainsStore"
+    ],
+    "Settings": [
+      "SettingsLoader",
+      "SettingsStore"
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 scripts/__pycache__
-docs/.obsidian
+# Obsidian editor state
+**/.obsidian/
 
 # Xcode build artifacts
 build/
