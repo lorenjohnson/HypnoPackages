@@ -72,7 +72,14 @@ public enum MediaSourcesParam: Codable, Sendable {
         case .array:
             return ["default"]
         case .dictionary(let dict):
-            return Array(dict.keys)
+            return dict.keys.sorted { a, b in
+                let al = a.lowercased()
+                let bl = b.lowercased()
+
+                if al == "default", bl != "default" { return true }
+                if bl == "default", al != "default" { return false }
+                return al < bl
+            }
         }
     }
 
