@@ -121,12 +121,25 @@ public final class AVPlayerFrameSource: FrameSource {
         updateMetadata(from: item)
     }
 
-    /// If the underlying AVFoundation video pipeline stalls (audio continues but no new pixel buffers),
-    /// reattach the video output to nudge it back into producing frames.
+    /// Best-effort recovery for an AVFoundation stall where audio continues but the video pipeline
+    /// stops delivering new pixel buffers through `AVPlayerItemVideoOutput`.
     ///
-    /// This happens rarely but can show up during rapid edits/transitions where AVFoundation
-    /// tears down and rebuilds internal pipelines. We keep it conservative and rate-limited
-    /// to avoid thrashing.
+    /// Symptom in-app:
+    /// - While playing and editing a composition, video may "freeze" on an old frame while audio keeps
+    ///   advancing. It may recover after some time, or immediately after navigating clip history.
+    ///
+    /// Symptom in system logs:
+    /// - Lines like `<<<< VRP >>>> signalled err=-12852`, `<<<< CustomVideoCompositor >>>> ...`,
+    ///   `<<<< FigFilePlayer >>>> ...` around transitions/edits.
+    ///
+    /// Root cause:
+    /// - Likely an AVFoundation internal pipeline issue. We don't have a deterministic repro or
+    ///   a direct API-level fix, so this is a conservative, rate-limited "nudge".
+    ///
+    /// Strategy:
+    /// - If we've previously seen frames, and while actively playing we haven't seen a new pixel
+    ///   buffer for a short threshold, detach + reattach the `AVPlayerItemVideoOutput`.
+    /// - This is intentionally guarded to avoid thrashing during normal decode jitter.
     private func recoverFromVideoOutputStallIfNeeded(hostTime: CFTimeInterval) {
         guard let output = videoOutput else { return }
         guard let item = player.currentItem else { return }
