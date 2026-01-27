@@ -34,6 +34,12 @@ public final class AVPlayerFrameSource: FrameSource {
     private let cacheLock = NSLock()
     private var cachedFrame: DecodedFrame?
 
+    /// Host time when we last successfully pulled a new pixel buffer.
+    private var lastNewBufferHostTime: CFTimeInterval = 0
+
+    /// Host time when we last attempted to reattach the output (stall recovery).
+    private var lastReattachAttemptHostTime: CFTimeInterval = 0
+
     /// Output pixel buffer settings
     /// Using BGRA since FrameCompositor (AVVideoCompositing) outputs BGRA via CIContext.
     /// When no custom compositor is used, AVFoundation will convert to BGRA anyway.
@@ -113,6 +119,37 @@ public final class AVPlayerFrameSource: FrameSource {
 
         // Update cached metadata
         updateMetadata(from: item)
+    }
+
+    /// If the underlying AVFoundation video pipeline stalls (audio continues but no new pixel buffers),
+    /// reattach the video output to nudge it back into producing frames.
+    ///
+    /// This happens rarely but can show up during rapid edits/transitions where AVFoundation
+    /// tears down and rebuilds internal pipelines. We keep it conservative and rate-limited
+    /// to avoid thrashing.
+    private func recoverFromVideoOutputStallIfNeeded(hostTime: CFTimeInterval) {
+        guard let output = videoOutput else { return }
+        guard let item = player.currentItem else { return }
+        guard item.status == .readyToPlay else { return }
+        guard player.rate != 0 else { return } // only when playing
+
+        // If we've *ever* seen a buffer, but now it's been a while, attempt recovery.
+        let stallThreshold: CFTimeInterval = 0.75
+        let minRetryInterval: CFTimeInterval = 1.5
+        guard lastNewBufferHostTime > 0 else { return }
+        guard (hostTime - lastNewBufferHostTime) >= stallThreshold else { return }
+        guard (hostTime - lastReattachAttemptHostTime) >= minRetryInterval else { return }
+
+        // If AVFoundation says there isn't a new buffer at the current host time, and we've
+        // exceeded the stall threshold, reattach.
+        let itemTime = output.itemTime(forHostTime: hostTime)
+        guard itemTime.isValid, itemTime.isNumeric else { return }
+        guard !output.hasNewPixelBuffer(forItemTime: itemTime) else { return }
+
+        lastReattachAttemptHostTime = hostTime
+        detachOutput()
+        attachOutput(to: item)
+        clearCachedFrame()
     }
 
     /// Configure with a new player item (replaces current item)
@@ -214,6 +251,7 @@ public final class AVPlayerFrameSource: FrameSource {
         }
 
         if !output.hasNewPixelBuffer(forItemTime: itemTime) {
+            recoverFromVideoOutputStallIfNeeded(hostTime: hostTime)
             cacheLock.lock()
             let cached = cachedFrame
             cacheLock.unlock()
@@ -227,6 +265,8 @@ public final class AVPlayerFrameSource: FrameSource {
             cacheLock.unlock()
             return cached
         }
+
+        lastNewBufferHostTime = hostTime
 
         let colorSpace: CGColorSpace? = CVImageBufferGetColorSpace(pixelBuffer)?.takeUnretainedValue()
 
