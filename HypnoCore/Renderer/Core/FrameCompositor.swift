@@ -196,10 +196,10 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             }
 
             // Blend with previous layers
+            let clip = manager?.clipProvider?()
             if let base = composited {
                 // Get blend mode from clip
                 let blendMode: String
-                let clip = manager?.clipProvider?()
 
                 if let clip = clip, sourceIndex < clip.layers.count {
                     blendMode = sourceIndex == 0
@@ -210,16 +210,36 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
                 }
 
                 // Get compensated opacity from manager (same for preview and export)
-                let opacity = manager?.compensatedOpacity(
+                let compensatedOpacity = manager?.compensatedOpacity(
                     layerIndex: index,
                     totalLayers: instruction.layerTrackIDs.count,
                     blendMode: blendMode
                 ) ?? 1.0
 
+                let userOpacity: Double
+                if let clip, sourceIndex >= 0, sourceIndex < clip.layers.count {
+                    userOpacity = clip.layers[sourceIndex].opacity
+                } else {
+                    userOpacity = 1.0
+                }
+                let opacity = compensatedOpacity * CGFloat(max(0.0, min(userOpacity, 1.0)))
+
                 img = RendererImageUtils.blend(layer: img, over: base, mode: blendMode, opacity: opacity)
                 composited = img
             } else {
-                composited = img
+                let userOpacity: Double
+                if let clip, sourceIndex >= 0, sourceIndex < clip.layers.count {
+                    userOpacity = clip.layers[sourceIndex].opacity
+                } else {
+                    userOpacity = 1.0
+                }
+                let opacity = CGFloat(max(0.0, min(userOpacity, 1.0)))
+                if opacity < 1.0 {
+                    let background = CIImage(color: .black).cropped(to: CGRect(origin: .zero, size: outputSize))
+                    composited = RendererImageUtils.blend(layer: img, over: background, mode: BlendMode.sourceOver, opacity: opacity)
+                } else {
+                    composited = img
+                }
             }
         }
 

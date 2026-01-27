@@ -17,13 +17,15 @@ public struct HypnogramLayer: Codable {
     /// User-applied transforms (rotation, scale, translation). Applied after metadata orientation correction.
     public var transforms: [CGAffineTransform]
     public var blendMode: String?
+    /// Per-layer opacity multiplier (0.0 - 1.0). Applied in addition to any blend normalization.
+    public var opacity: Double
 
     /// The effect chain for this source - contains definitions and handles instantiation/application.
     /// Use effectChain.apply() to apply effects. Always non-nil (can be empty chain).
     public var effectChain: EffectChain
 
     private enum CodingKeys: String, CodingKey {
-        case mediaClip, transforms, blendMode, effectChain
+        case mediaClip, transforms, blendMode, opacity, effectChain
 
         // Legacy keys (Phase 1–3 schema)
         case clip
@@ -33,11 +35,13 @@ public struct HypnogramLayer: Codable {
         mediaClip: MediaClip,
         transforms: [CGAffineTransform] = [],
         blendMode: String? = nil,
+        opacity: Double = 1.0,
         effectChain: EffectChain? = nil
     ) {
         self.mediaClip = mediaClip
         self.transforms = transforms
         self.blendMode = blendMode
+        self.opacity = opacity
         self.effectChain = effectChain ?? EffectChain()
     }
 
@@ -53,6 +57,7 @@ public struct HypnogramLayer: Codable {
         let codableTransforms = try container.decodeIfPresent([CodableCGAffineTransform].self, forKey: .transforms) ?? []
         transforms = codableTransforms.map { $0.transform }
         blendMode = try container.decodeIfPresent(String.self, forKey: .blendMode)
+        opacity = try container.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
         effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
     }
 
@@ -61,6 +66,7 @@ public struct HypnogramLayer: Codable {
         try container.encode(mediaClip, forKey: .mediaClip)
         try container.encode(transforms.map { CodableCGAffineTransform($0) }, forKey: .transforms)
         try container.encodeIfPresent(blendMode, forKey: .blendMode)
+        try container.encode(opacity, forKey: .opacity)
         try container.encode(effectChain, forKey: .effectChain)
     }
 }
