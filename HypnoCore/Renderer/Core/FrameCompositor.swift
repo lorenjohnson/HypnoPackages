@@ -23,6 +23,26 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
     // Audio runs at .userInteractive, so our video rendering should be slightly lower priority
     private let renderQueue = DispatchQueue(label: "com.hypnograph.framecompositor", qos: .userInitiated)
 
+    // MARK: - Cancellation
+
+    /// AVFoundation can request cancellation when seeking, scrubbing, or if it needs to drop work.
+    /// If we don't honor this, the render queue can build a backlog of stale requests, causing
+    /// video to "freeze" while audio continues until the backlog drains.
+    private let cancellationLock = NSLock()
+    private var cancellationToken: UInt64 = 0
+
+    private func currentCancellationToken() -> UInt64 {
+        cancellationLock.lock()
+        defer { cancellationLock.unlock() }
+        return cancellationToken
+    }
+
+    private func bumpCancellationToken() {
+        cancellationLock.lock()
+        cancellationToken &+= 1
+        cancellationLock.unlock()
+    }
+
     // MARK: - Slow-Mo State
 
     /// Previous frame per track for interpolation (trackID -> buffer, sourceIndex)
@@ -82,21 +102,36 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
         // and can deallocate it at any time. If AVFoundation deallocates us while
         // we have pending work, that's an AVFoundation bug we can't fix with weak self.
         // Using weak self just causes the "self is nil" errors without fixing the root cause.
+        let token = currentCancellationToken()
         renderQueue.async {
-            self.renderFrame(request: request)
+            autoreleasepool {
+                self.renderFrame(request: request, cancellationToken: token)
+            }
         }
     }
     
     public func cancelAllPendingVideoCompositionRequests() {
-        // Nothing to cancel - we process synchronously
+        // Bump the token so queued render work will early-out.
+        bumpCancellationToken()
     }
     
     // MARK: - Core Rendering
     
-    private func renderFrame(request: AVAsynchronousVideoCompositionRequest) {
+    private func renderFrame(request: AVAsynchronousVideoCompositionRequest, cancellationToken token: UInt64) {
+        // Drop work if AVFoundation has requested cancellation since this request was queued.
+        guard token == currentCancellationToken() else {
+            request.finishCancelledRequest()
+            return
+        }
+
         guard let instruction = request.videoCompositionInstruction as? RenderInstruction else {
             print("🔴 FrameCompositor: Invalid instruction type")
             request.finish(with: NSError(domain: "FrameCompositor", code: 2, userInfo: nil))
+            return
+        }
+
+        guard token == currentCancellationToken() else {
+            request.finishCancelledRequest()
             return
         }
 
@@ -120,6 +155,11 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
         var composited: CIImage?
 
         for (index, trackID) in instruction.layerTrackIDs.enumerated() {
+            if token != currentCancellationToken() {
+                request.finishCancelledRequest()
+                return
+            }
+
             let sourceIndex = instruction.sourceIndices[index]
 
             // Check flash solo - skip layers that shouldn't be rendered
@@ -249,6 +289,11 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             return
         }
 
+        guard token == currentCancellationToken() else {
+            request.finishCancelledRequest()
+            return
+        }
+
         // Apply blend normalization (same for preview and export)
         if let manager = manager {
             finalImage = manager.applyNormalization(to: finalImage)
@@ -270,6 +315,11 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
         // Store frame in buffer
         if let manager = manager {
             manager.recordFrame(finalImage, at: request.compositionTime)
+        }
+
+        guard token == currentCancellationToken() else {
+            request.finishCancelledRequest()
+            return
         }
 
         // Render to output buffer
