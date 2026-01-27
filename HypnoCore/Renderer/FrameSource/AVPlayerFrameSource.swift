@@ -121,7 +121,7 @@ public final class AVPlayerFrameSource: FrameSource {
         updateMetadata(from: item)
     }
 
-    /// Best-effort recovery for an AVFoundation stall where audio continues but the video pipeline
+    /// TODO: Best-effort recovery for an AVFoundation stall where audio continues but the video pipeline
     /// stops delivering new pixel buffers through `AVPlayerItemVideoOutput`.
     ///
     /// Symptom in-app:
