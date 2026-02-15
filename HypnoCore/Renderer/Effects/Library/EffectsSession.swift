@@ -234,6 +234,22 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         }
     }
 
+    /// Reorder chains by identity. Used by drag/drop in library UIs.
+    public func moveChain(fromID: UUID, toID: UUID) {
+        guard let fromIndex = chainIndex(id: fromID), let toIndex = chainIndex(id: toID) else { return }
+        guard fromIndex != toIndex else { return }
+
+        updateChains { effects in
+            guard fromIndex >= 0, fromIndex < effects.count, toIndex >= 0, toIndex < effects.count else { return }
+            let moved = effects.remove(at: fromIndex)
+            var destination = toIndex
+            if fromIndex < toIndex {
+                destination -= 1
+            }
+            effects.insert(moved, at: max(0, min(destination, effects.count)))
+        }
+    }
+
     public func chainIndex(id: UUID) -> Int? {
         chains.firstIndex { $0.id == id }
     }
