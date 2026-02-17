@@ -226,14 +226,14 @@ public final class EffectManager {
     ///   - key: parameter key
     ///   - value: new parameter value
     public func updateEffectParameter(for layer: Int, effectDefIndex: Int, key: String, value: AnyCodableValue) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         var params = chain.effects[effectDefIndex].params ?? [:]
         params[key] = value
         chain.effects[effectDefIndex].params = params
 
-        setEffect(from: chain, for: layer)
+        setEffectWorkingCopy(chain, for: layer)
     }
 
     /// Update a chain-level parameter (future: chain params like "strength")
@@ -242,13 +242,13 @@ public final class EffectManager {
     ///   - key: parameter key
     ///   - value: new parameter value
     public func updateChainParameter(for layer: Int, key: String, value: AnyCodableValue) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
 
         var params = chain.params ?? [:]
         params[key] = value
         chain.params = params
 
-        setEffect(from: chain, for: layer)
+        setEffectWorkingCopy(chain, for: layer)
     }
 
     /// Add an effect to the recipe's effect chain for a layer
@@ -256,13 +256,13 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectType: the type of effect to add (e.g. "DatamoshMetalEffect")
     public func addEffectToChain(for layer: Int, effectType: String) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
 
         let defaults = EffectRegistry.defaults(for: effectType)
         let newEffect = EffectDefinition(type: effectType, params: defaults)
         chain.effects.append(newEffect)
 
-        setEffect(from: chain, for: layer)
+        setEffectWorkingCopy(chain, for: layer)
     }
 
     /// Remove an effect from the recipe's effect chain for a layer
@@ -270,12 +270,12 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectDefIndex: index of the effect to remove
     public func removeEffectFromChain(for layer: Int, effectDefIndex: Int) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         chain.effects.remove(at: effectDefIndex)
 
-        setEffect(from: chain, for: layer)
+        setEffectWorkingCopy(chain, for: layer)
     }
 
     /// Update the chain name in the recipe
@@ -301,14 +301,14 @@ public final class EffectManager {
     ///   - fromIndex: source index
     ///   - toIndex: destination index
     public func reorderEffectsInChain(for layer: Int, fromIndex: Int, toIndex: Int) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
         guard fromIndex >= 0, fromIndex < chain.effects.count else { return }
         guard toIndex >= 0, toIndex < chain.effects.count else { return }
 
         let effect = chain.effects.remove(at: fromIndex)
         chain.effects.insert(effect, at: toIndex)
 
-        setEffect(from: chain, for: layer)
+        setEffectWorkingCopy(chain, for: layer)
     }
 
     /// Reset an effect's parameters to defaults in the recipe
@@ -316,7 +316,7 @@ public final class EffectManager {
     ///   - layer: -1 for global, 0+ for source index
     ///   - effectDefIndex: index of the effect to reset
     public func resetEffectToDefaults(for layer: Int, effectDefIndex: Int) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         let effectType = chain.effects[effectDefIndex].type
@@ -329,7 +329,7 @@ public final class EffectManager {
 
         chain.effects[effectDefIndex].params = defaults
 
-        setEffect(from: chain, for: layer)
+        setEffectWorkingCopy(chain, for: layer)
     }
 
     /// Toggle effect enabled state in the recipe.
@@ -339,7 +339,7 @@ public final class EffectManager {
 
     /// Randomize all parameters for an effect in the recipe.
     public func randomizeEffect(for layer: Int, effectDefIndex: Int) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         let effectDef = chain.effects[effectDefIndex]
@@ -354,7 +354,7 @@ public final class EffectManager {
         randomParams["_enabled"] = effectDef.params?["_enabled"] ?? .bool(true)
 
         chain.effects[effectDefIndex].params = randomParams
-        setEffect(from: chain, for: layer)
+        setEffectWorkingCopy(chain, for: layer)
     }
 
     /// Re-apply active effects using fresh instances from the session.
@@ -470,6 +470,16 @@ public final class EffectManager {
         } else {
             setSourceEffect(from: chain ?? EffectChain(), for: layer)
         }
+    }
+
+    /// Apply an already-owned working copy without an additional clone hop.
+    private func setEffectWorkingCopy(_ chain: EffectChain, for layer: Int) {
+        if layer == -1 {
+            globalEffectChainSetter?(chain)
+        } else {
+            sourceEffectChainSetter?(layer, chain)
+        }
+        onEffectChanged?()
     }
 
     /// Replace CURRENT with a snapshot/template, capturing the old chain into RECENT.

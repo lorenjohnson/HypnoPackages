@@ -152,15 +152,16 @@ public final class EffectChain: Codable, Equatable {
         _instantiatedEffects = nil
     }
 
-    /// Create a deep copy with fresh effect instances, preserving identity.
-    /// Use when you need a separate object instance without changing the chain's UUID.
-    public func clone() -> EffectChain {
+    /// Create a copy preserving identity.
+    /// - Parameter preserveRuntimeEffects: when true, copies instantiated runtime effects too.
+    ///   Use `false` for rapid UI edits where params/definitions will immediately change.
+    public func clone(preserveRuntimeEffects: Bool = true) -> EffectChain {
         let newChain = EffectChain(name: name, effects: effects, params: params)
         newChain.id = id
         newChain.sourceTemplateId = sourceTemplateId
         // Preserve runtime effect behavior (e.g., seeded randomness) across clone boundaries.
         // This keeps Preview/Live/Export consistent without requiring seeds to be persisted in params.
-        if let instantiated = _instantiatedEffects {
+        if preserveRuntimeEffects, let instantiated = _instantiatedEffects {
             newChain._instantiatedEffects = instantiated.map { $0.copy() }
         }
         return newChain

@@ -40,6 +40,10 @@ public final class AVPlayerFrameSource: FrameSource {
     /// Host time when we last attempted to reattach the output (stall recovery).
     private var lastReattachAttemptHostTime: CFTimeInterval = 0
 
+    /// Host time before which stall recovery should be suppressed.
+    /// Used after explicit manual refreshes to avoid immediate reattach churn.
+    private var suppressStallRecoveryUntilHostTime: CFTimeInterval = 0
+
     /// Output pixel buffer settings
     /// Using BGRA since FrameCompositor (AVVideoCompositing) outputs BGRA via CIContext.
     /// When no custom compositor is used, AVFoundation will convert to BGRA anyway.
@@ -145,6 +149,7 @@ public final class AVPlayerFrameSource: FrameSource {
         guard let item = player.currentItem else { return }
         guard item.status == .readyToPlay else { return }
         guard player.rate != 0 else { return } // only when playing
+        guard hostTime >= suppressStallRecoveryUntilHostTime else { return }
 
         // If we've *ever* seen a buffer, but now it's been a while, attempt recovery.
         let stallThreshold: CFTimeInterval = 0.75
@@ -162,7 +167,6 @@ public final class AVPlayerFrameSource: FrameSource {
         lastReattachAttemptHostTime = hostTime
         detachOutput()
         attachOutput(to: item)
-        clearCachedFrame()
     }
 
     /// Configure with a new player item (replaces current item)
@@ -316,6 +320,26 @@ public final class AVPlayerFrameSource: FrameSource {
     /// Seek to time
     public func seek(to time: CMTime, completion: ((Bool) -> Void)? = nil) {
         clearCachedFrame()
+        player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero) { finished in
+            completion?(finished)
+        }
+    }
+
+    /// Request a frame refresh at time without clearing the currently displayed cached frame.
+    /// Useful for paused redraws where we want to avoid transient black output.
+    public func refresh(at time: CMTime, completion: ((Bool) -> Void)? = nil) {
+        let now = CACurrentMediaTime()
+        // Give AVFoundation a short grace period before any stall-recovery reattach kicks in.
+        suppressStallRecoveryUntilHostTime = now + 1.0
+        lastNewBufferHostTime = now
+        lastReattachAttemptHostTime = now
+
+        // Reattach output to force AVFoundation to produce a fresh composited frame.
+        // Keep cachedFrame so UI can continue displaying the previous frame until refresh lands.
+        if let item = player.currentItem {
+            detachOutput()
+            attachOutput(to: item)
+        }
         player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero) { finished in
             completion?(finished)
         }
