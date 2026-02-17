@@ -265,10 +265,10 @@ final class CompositionBuilder {
     }
 
     /// Normalize a video slice so that:
-    /// - If the asset can cover `targetDuration`, we insert one continuous segment of length `targetDuration`.
-    ///   - Preserve the existing `startTime` when it's valid.
-    ///   - If `startTime` is too close to the end, re-pick a deterministic pseudo-random start within bounds.
-    /// - If the asset is shorter than `targetDuration`, start at 0 and loop the full asset duration.
+    /// - We respect the layer's selected `sourceClip.duration` as the playable window.
+    /// - We preserve `sourceClip.startTime` when it remains valid for that window.
+    /// - If start is invalid/out-of-bounds, we choose a deterministic pseudo-random valid start.
+    /// - The caller can still loop this window to cover `targetDuration`.
     private func normalizedClipSlice(
         clipID: UUID,
         sourceIndex: Int,
@@ -291,22 +291,36 @@ final class CompositionBuilder {
             return (sourceClip.startTime, sourceClip.duration)
         }
 
-        if CMTimeCompare(assetPositive, targetPositive) >= 0 {
-            let maxStart = CMTimeSubtract(assetPositive, targetPositive)
-            if CMTimeCompare(sourceClip.startTime, .zero) >= 0, CMTimeCompare(sourceClip.startTime, maxStart) <= 0 {
-                return (sourceClip.startTime, targetPositive)
+        // Use the per-layer selected duration window when available.
+        let selectedDuration: CMTime = {
+            if sourceClip.duration.isValid, sourceClip.duration.isNumeric,
+               CMTimeCompare(sourceClip.duration, .zero) > 0 {
+                return sourceClip.duration
             }
-            let start = deterministicRandomStartTime(
-                clipID: clipID,
-                sourceIndex: sourceIndex,
-                fileID: fileID,
-                maxStart: maxStart,
-                preferredTimescale: targetPositive.timescale
-            )
-            return (start, targetPositive)
-        } else {
+            // Legacy fallback for clips without explicit per-layer duration.
+            return targetPositive
+        }()
+
+        // Effective loop window cannot exceed the source asset duration.
+        let loopWindow = CMTimeMinimum(CMTimeMaximum(selectedDuration, .zero), assetPositive)
+        guard CMTimeCompare(loopWindow, .zero) > 0 else {
             return (.zero, assetPositive)
         }
+
+        let maxStart = CMTimeSubtract(assetPositive, loopWindow)
+        if CMTimeCompare(sourceClip.startTime, .zero) >= 0,
+           CMTimeCompare(sourceClip.startTime, maxStart) <= 0 {
+            return (sourceClip.startTime, loopWindow)
+        }
+
+        let start = deterministicRandomStartTime(
+            clipID: clipID,
+            sourceIndex: sourceIndex,
+            fileID: fileID,
+            maxStart: maxStart,
+            preferredTimescale: loopWindow.timescale
+        )
+        return (start, loopWindow)
     }
 
     private func deterministicRandomStartTime(
