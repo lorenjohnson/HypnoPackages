@@ -26,6 +26,7 @@ Within each scope (`hypnograph`, `divine`, `shared`), use:
 - `projects/backlog/` for planned work not started
 - `projects/` root for active work
 - `archive/` for completed work (`YYYYMMDD-project-name.md`)
+- `archive/done.md` for completed roadmap items that never had dedicated project docs (no date prefix in filename)
 
 Do not place new project docs at `docs/` root.
 Do not use `docs/active/` for new work.

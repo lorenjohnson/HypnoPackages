@@ -63,6 +63,9 @@ Each scope (`hypnograph`, `divine`, `shared`) follows the same lifecycle:
   - add `completed: YYYY-MM-DD`
   - move it to `<scope>/archive/`
   - rename with completion-date prefix: `YYYYMMDD-project-name.md`
+- When a roadmap item is completed but never had a dedicated project write-up:
+  - add it to `<scope>/archive/done.md`
+  - use a dated section heading inside the file (for example: `## 2026-02-17`)
 
 ## Project write-ups
 
@@ -75,4 +78,5 @@ Each scope (`hypnograph`, `divine`, `shared`) follows the same lifecycle:
 
 - Use `kebab-case` for file and folder names.
 - Use date prefixes for archived projects (`YYYYMMDD-project-name.md`).
+- Exception: `archive/done.md` is a stable filename and is not date-prefixed.
 - Keep links relative to the current folder, using `../` only when crossing scopes.

@@ -14,6 +14,7 @@ Workflow:
 - active work belongs in `projects/`
 - backlog work belongs in `projects/backlog/`
 - completed work moves to `archive/` and is renamed `YYYYMMDD-project-name.md`
+- completed roadmap items without project docs go into `archive/done.md` (no date in filename; use dated headings inside)
 
 Naming:
 - use kebab-case for file/folder names
