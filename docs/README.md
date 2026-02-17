@@ -1,85 +1,78 @@
-# Documentation
+# Docs (structure + rules)
 
-This `docs/` folder contains product specs, architecture notes, and project planning for this repo.
+Documentation is treated as part of the product and kept intentionally simple.
+
+This repo currently contains two apps plus shared libraries:
+- `docs/hypnograph/` for Hypnograph-only documentation
+- `docs/divine/` for Divine-only documentation
+- `docs/shared/` for cross-app/shared-library documentation
+
+Default routing rule:
+- If a docs request does not explicitly name a target app, assume it is for Hypnograph and place it under `docs/hypnograph/`.
 
 ## Structure
 
 ```text
 docs/
-├── hypnograph/         # Hypnograph app docs
-│   ├── projects/       # active projects
-│   │   └── backlog/    # planned, not started
-│   ├── archive/        # completed projects
-│   ├── architecture/   # system design
-│   ├── product/        # mission, practices
-│   ├── reference/      # user-facing docs
-│   ├── roadmap.md      # open loops
-│   └── index.md        # entry point
-├── divine/             # Divine app docs
+├── README.md
+├── hypnograph/
+│   ├── README.md
+│   ├── roadmap.md
 │   ├── projects/
 │   │   └── backlog/
 │   ├── archive/
+│   ├── architecture/
+│   ├── product/
+│   ├── reference/
+│   └── user-testing/
+├── divine/
+│   ├── README.md
 │   ├── roadmap.md
-│   └── index.md
-├── shared/             # cross-app docs
-│   ├── ontology/       # generated diagrams
-│   └── index.md
-└── README.md           # this file
+│   ├── projects/
+│   │   └── backlog/
+│   └── archive/
+├── shared/
+│   ├── README.md
+│   ├── projects/
+│   │   └── backlog/
+│   ├── archive/
+│   └── ontology/
+└── agents/
 ```
 
-## Apps
+## Routing rules
 
-- [hypnograph/](hypnograph/) — Layered video montage creator
-- [divine/](divine/) — Photo/video library explorer as dynamic card layout
-- [shared/](shared/) — Cross-app documentation and generated artifacts
+Use these rules whenever deciding where docs should go:
 
-## Agents
+1. Put it in `docs/hypnograph/` when the work is app-specific to Hypnograph UI, behavior, architecture, or roadmap.
+2. Put it in `docs/divine/` when it is specific to Divine product behavior or roadmap.
+3. Put it in `docs/shared/` when it affects both apps, shared libraries, shared ontology, or cross-app standards.
+4. If scope is uncertain, default to `docs/hypnograph/` and note assumptions in the doc.
 
-[agents/](agents/) — Canonical agent role definitions for AI-assisted development. Tool-agnostic descriptions used for planning, reasoning, and cross-AI handoff. Claude-specific runtime agents (in `.claude/agents/`) are derived from these.
+## Workflow
 
-## Project Lifecycle
+Each scope (`hypnograph`, `divine`, `shared`) follows the same lifecycle:
 
-Each app follows the same lifecycle pattern:
+`roadmap.md` -> `projects/backlog/` -> `projects/` -> `archive/`
 
-```text
-roadmap.md  →  projects/backlog/  →  projects/  →  archive/
-(idea)         (planned)            (active)      (done)
-```
+- Current work is listed in `<scope>/roadmap.md`; if a project has a write-up, link it there.
+- Do not keep a completed-project list in roadmap files; completed work lives in `<scope>/archive/`.
+- If a project is not currently active, keep it in `<scope>/projects/backlog/`.
+- When a project is completed:
+  - set front matter `status: completed`
+  - add `completed: YYYY-MM-DD`
+  - move it to `<scope>/archive/`
+  - rename with completion-date prefix: `YYYYMMDD-project-name.md`
 
-1. Ideas captured in `roadmap.md`
-2. When ready to plan: create doc in `projects/backlog/`
-3. When starting work: move to `projects/` root
-4. When complete: move to `archive/` with date prefix
+## Project write-ups
 
-## Conventions
+- A project can be a single Markdown file (for example: `<scope>/projects/my-project.md`).
+- Use a folder only when the project needs multiple files (images, notes, mockups).
+- Folder entrypoint must be `<scope>/projects/my-project/index.md`.
+- Roadmap links should point to the single file or the folder entrypoint.
 
-### Naming
+## Naming
 
-- **Directories & files:** kebab-case (`volume-leveling`, `roadmap.md`)
-- **Projects:** kebab-case (`project-name/` or `project-name.md`)
-- **Completed projects:** date-prefixed with completion date (`YYYYMMDD-project-name/`), moved to `archive/`
-
-### Project docs
-
-Each project doc should include:
-
-- `# <Project Name>`
-- `## Overview` (what/why, scope)
-- `## Plan` (phases/steps)
-- `## Open Questions` (unknowns)
-- `## Notes` (links, references)
-
-Optional front matter:
-
-```yaml
----
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-status: active | backlog | archived
----
-```
-
-### Linking
-
-- Use relative links within the same app folder
-- Use `../` paths when linking across app folders
+- Use `kebab-case` for file and folder names.
+- Use date prefixes for archived projects (`YYYYMMDD-project-name.md`).
+- Keep links relative to the current folder, using `../` only when crossing scopes.
