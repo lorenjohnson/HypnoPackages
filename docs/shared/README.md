@@ -5,14 +5,14 @@ Use this folder for cross-app and shared-library documentation.
 Place docs here when work affects both Hypnograph and Divine, shared packages, or shared ontology.
 
 Structure:
-- `projects/` — active cross-app projects
-- `projects/backlog/` — planned cross-app projects not started
+- `active/` — active cross-app projects
 - `archive/` — completed cross-app project write-ups
+- `backlog/` — planned cross-app projects not started
 - `ontology/` — shared model diagrams and ontology references
 
 Workflow:
-- active work belongs in `projects/`
-- backlog work belongs in `projects/backlog/`
+- active work belongs in `active/`
+- backlog work belongs in `backlog/`
 - completed work moves to `archive/` and is renamed `YYYYMMDD-project-name.md`
 - completed roadmap items without project docs go into `archive/done.md` (no date in filename; use dated headings inside)
 

@@ -18,24 +18,24 @@ docs/
 ├── hypnograph/
 │   ├── README.md
 │   ├── roadmap.md
-│   ├── projects/
-│   │   └── backlog/
+│   ├── active/
 │   ├── archive/
 │   ├── architecture/
+│   ├── backlog/
 │   ├── product/
 │   ├── reference/
 │   └── user-testing/
 ├── divine/
 │   ├── README.md
 │   ├── roadmap.md
-│   ├── projects/
-│   │   └── backlog/
+│   ├── active/
 │   └── archive/
+│   ├── backlog/
 ├── shared/
 │   ├── README.md
-│   ├── projects/
-│   │   └── backlog/
+│   ├── active/
 │   ├── archive/
+│   ├── backlog/
 │   └── ontology/
 └── agents/
 ```
@@ -53,11 +53,11 @@ Use these rules whenever deciding where docs should go:
 
 Each scope (`hypnograph`, `divine`, `shared`) follows the same lifecycle:
 
-`roadmap.md` -> `projects/backlog/` -> `projects/` -> `archive/`
+`roadmap.md` -> `backlog/` -> `active/` -> `archive/`
 
 - Current work is listed in `<scope>/roadmap.md`; if a project has a write-up, link it there.
 - Do not keep a completed-project list in roadmap files; completed work lives in `<scope>/archive/`.
-- If a project is not currently active, keep it in `<scope>/projects/backlog/`.
+- If a project is not currently active, keep it in `<scope>/backlog/`.
 - When a project is completed:
   - set front matter `status: completed`
   - add `completed: YYYY-MM-DD`
@@ -69,9 +69,9 @@ Each scope (`hypnograph`, `divine`, `shared`) follows the same lifecycle:
 
 ## Project write-ups
 
-- A project can be a single Markdown file (for example: `<scope>/projects/my-project.md`).
+- A project can be a single Markdown file (for example: `<scope>/active/my-project.md`).
 - Use a folder only when the project needs multiple files (images, notes, mockups).
-- Folder entrypoint must be `<scope>/projects/my-project/index.md`.
+- Folder entrypoint must be `<scope>/active/my-project/index.md`.
 - Roadmap links should point to the single file or the folder entrypoint.
 
 ## Naming
