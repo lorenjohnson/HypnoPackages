@@ -57,3 +57,5 @@ Carthage/Build/
 # Accidental Xcode workspace files
 *.xcworkspace/xcuserdata/
 default.profraw
+
+.obsidian/
