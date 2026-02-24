@@ -198,7 +198,7 @@ public final class PlayerView: MTKView {
 
         let library: MTLLibrary?
         do {
-            library = try device.makeDefaultLibrary(bundle: Bundle(for: PlayerView.self))
+            library = try device.makeDefaultLibrary(bundle: HypnoCoreBundle.bundle)
         } catch {
             print("PlayerView: Failed to load shader library: \(error)")
             return

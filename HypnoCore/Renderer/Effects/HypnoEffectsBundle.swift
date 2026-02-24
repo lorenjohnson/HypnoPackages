@@ -8,7 +8,5 @@
 import Foundation
 
 enum HypnoEffectsBundle {
-    static let bundle = Bundle(for: BundleAnchor.self)
-
-    private final class BundleAnchor {}
+    static let bundle = HypnoCoreBundle.bundle
 }

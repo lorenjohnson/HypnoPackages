@@ -1,38 +1,25 @@
 # Repository Working Rules
 
+This repository hosts shared Swift packages used by multiple apps:
+- `HypnoCore`
+- `HypnoUI`
+
 ## Documentation routing
 
-This repo contains two apps plus shared libraries:
-- `docs/hypnograph/`
-- `docs/divine/`
-- `docs/shared/`
-
-When a documentation task does not explicitly name a target app:
-- default to `docs/hypnograph/`
-
-Place docs by scope:
-- Hypnograph-only behavior, UI, roadmap, or architecture: `docs/hypnograph/`
-- Divine-only behavior, UI, roadmap, or architecture: `docs/divine/`
-- Cross-app behavior, shared libraries, ontology, or standards: `docs/shared/`
-
-If scope is unclear:
-- create/update under `docs/hypnograph/`
-- include a short note about the assumption in the doc
+Use only:
+- `docs/` for package architecture, shared standards, and ontology notes.
 
 ## Documentation lifecycle
 
-Within each scope (`hypnograph`, `divine`, `shared`), use:
-- `roadmap.md` for current work tracking
-- `projects/backlog/` for planned work not started
-- `projects/` root for active work
+Within `docs/`, use:
+- `active/` for active project notes
+- `backlog/` for planned work not started
 - `archive/` for completed work (`YYYYMMDD-project-name.md`)
-- `archive/done.md` for completed roadmap items that never had dedicated project docs (no date prefix in filename)
+- `archive/done.md` for completed roadmap items that never had dedicated project docs
 
 Do not place new project docs at `docs/` root.
-Do not use `docs/active/` for new work.
 
 ## First file to check
 
 Before making documentation updates, read:
 - `docs/README.md`
-- then the scope README (`docs/hypnograph/README.md`, `docs/divine/README.md`, or `docs/shared/README.md`)

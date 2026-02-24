@@ -80,7 +80,7 @@ import simd
     }
 
     private func loadShaders() {
-        guard let library = try? device.makeDefaultLibrary(bundle: Bundle(for: TransitionRenderer.self)) else {
+        guard let library = try? device.makeDefaultLibrary(bundle: HypnoCoreBundle.bundle) else {
             print("TransitionRenderer: Failed to load shader library")
             return
         }

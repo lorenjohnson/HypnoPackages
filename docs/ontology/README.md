@@ -1,6 +1,6 @@
-# Hypnograph Ontology (Generated)
+# Shared Ontology (Generated)
 
-This folder contains a best-effort ontology of the Swift types in this repo, plus Mermaid diagrams.
+This folder contains a best-effort ontology of Swift types in `HypnoCore` and `HypnoUI`, plus Mermaid diagrams.
 
 ## Generate / refresh
 
@@ -16,8 +16,6 @@ Outputs:
 - `docs/shared/ontology/naming.json`: Quick naming-oriented slices (e.g., `*Source`, `*Loader`).
 - `docs/shared/ontology/hypnograph-ontology.mmd`: Filtered Mermaid graph for readability.
 - `docs/shared/ontology/hypnograph-ontology-full.mmd`: Full Mermaid graph (can be very large).
-- `docs/shared/ontology/HypnographDomainDiagram.md`: Curated domain diagram for naming/consistency checks.
-- `docs/hypnograph/archive/20260121-more-clear-naming/overview.md`: Naming cleanup planning notes.
 
 ## Viewing diagrams
 

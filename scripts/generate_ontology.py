@@ -500,7 +500,7 @@ def _naming_report(ontology: dict) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate a best-effort type ontology for Hypnograph.")
+    parser = argparse.ArgumentParser(description="Generate a best-effort type ontology for HypnoPackages.")
     parser.add_argument(
         "--repo-root",
         default=".",
@@ -509,7 +509,7 @@ def main() -> int:
     parser.add_argument(
         "--roots",
         nargs="*",
-        default=["HypnoCore", "HypnoUI", "HypnogramQuickLook", "Hypnograph", "Divine"],
+        default=["HypnoCore", "HypnoUI"],
         help="Top-level directories to scan.",
     )
     parser.add_argument(
