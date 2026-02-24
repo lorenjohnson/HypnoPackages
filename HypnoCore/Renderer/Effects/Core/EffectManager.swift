@@ -20,7 +20,7 @@ public final class EffectManager {
 
     /// Shared frame buffer that persists across frames
     /// 120 frames at 30fps = 4 seconds of history for advanced datamosh/AI effects
-    let frameBuffer = FrameBuffer(maxFrames: 120)
+    let frameBuffer: FrameBuffer
 
     /// Global frame counter - increments each frame, persists across video loops
     /// Used by temporal effects that need consistent timing
@@ -45,6 +45,32 @@ public final class EffectManager {
         manager.clipProvider = { clip }
         // No setters needed - export is read-only
         // flashSoloIndex stays nil - export renders all layers
+        return manager
+    }
+
+    /// Create an isolated manager for transition playback with a frozen clip snapshot.
+    /// Optionally preserves temporal render state from this manager so the outgoing clip
+    /// continues smoothly during overlap.
+    public func makeTransitionSnapshotManager(
+        frozenClip: Hypnogram,
+        preserveTemporalState: Bool = true
+    ) -> EffectManager {
+        let clonedBuffer: FrameBuffer
+        if preserveTemporalState {
+            clonedBuffer = frameBuffer.cloneState()
+        } else {
+            clonedBuffer = FrameBuffer(maxFrames: frameBuffer.maxFrames)
+        }
+
+        let manager = EffectManager(frameBuffer: clonedBuffer)
+        manager.globalFrameIndex = globalFrameIndex
+        manager.session = session
+        manager.recentStore = recentStore
+        manager.flashSoloIndex = flashSoloIndex
+        manager.isGlobalEffectSuspended = isGlobalEffectSuspended
+        manager.isNormalizationEnabled = isNormalizationEnabled
+        manager._normalizationStrategy = _normalizationStrategy
+        manager.clipProvider = { frozenClip }
         return manager
     }
 
@@ -173,7 +199,13 @@ public final class EffectManager {
 
     // MARK: - Init
 
-    public init() {}
+    public init() {
+        self.frameBuffer = FrameBuffer(maxFrames: 120)
+    }
+
+    init(frameBuffer: FrameBuffer) {
+        self.frameBuffer = frameBuffer
+    }
 
     // MARK: - Context Creation
 

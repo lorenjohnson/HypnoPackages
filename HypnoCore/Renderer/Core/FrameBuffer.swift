@@ -436,6 +436,25 @@ final class FrameBuffer {
     var currentWidth: Int { queue.sync { bufferWidth } }
     var currentHeight: Int { queue.sync { bufferHeight } }
 
+    /// Create a snapshot clone preserving current ring-buffer state.
+    /// Used to freeze temporal history for transition playback isolation.
+    func cloneState() -> FrameBuffer {
+        let clone = FrameBuffer(maxFrames: maxFrames)
+        queue.sync {
+            clone.activeCapacity = activeCapacity
+            clone.buffers = buffers
+            clone.writeIndex = writeIndex
+            clone.validCount = validCount
+            clone.lastTime = lastTime
+            clone.bufferWidth = bufferWidth
+            clone.bufferHeight = bufferHeight
+            if bufferWidth > 0, bufferHeight > 0 {
+                clone.ensurePool(width: bufferWidth, height: bufferHeight)
+            }
+        }
+        return clone
+    }
+
     /// Convert CVPixelBuffer to MTLTexture (zero-copy via IOSurface)
     private func textureFromPixelBuffer(_ pixelBuffer: CVPixelBuffer) -> MTLTexture? {
         guard let cache = Self.textureCache else { return nil }

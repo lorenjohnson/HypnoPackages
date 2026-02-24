@@ -43,6 +43,40 @@ public final class RenderEngine {
     private let compositionBuilder = CompositionBuilder()
 
     public init() {}
+
+    // MARK: - Runtime Rebinding
+
+    /// Rebind all render instructions in an existing player item to a new effect manager.
+    /// Useful when overlapping transitions need independent effect state for outgoing/incoming clips.
+    @MainActor
+    @discardableResult
+    public static func rebindEffectManager(
+        _ effectManager: EffectManager,
+        on playerItem: AVPlayerItem
+    ) -> Bool {
+        guard let composition = playerItem.videoComposition else { return false }
+
+        let mutableComposition: AVMutableVideoComposition
+        if let direct = composition as? AVMutableVideoComposition {
+            mutableComposition = direct
+        } else if let copied = composition.mutableCopy() as? AVMutableVideoComposition {
+            mutableComposition = copied
+        } else {
+            return false
+        }
+
+        var didUpdate = false
+        for instruction in mutableComposition.instructions {
+            guard let renderInstruction = instruction as? RenderInstruction else { continue }
+            renderInstruction.effectManager = effectManager
+            didUpdate = true
+        }
+
+        if didUpdate {
+            playerItem.videoComposition = mutableComposition
+        }
+        return didUpdate
+    }
     
     // MARK: - Preview
 
