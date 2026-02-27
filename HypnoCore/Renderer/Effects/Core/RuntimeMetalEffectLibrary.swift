@@ -560,7 +560,7 @@ public final class RuntimeMetalEffectLibrary {
 
         let requiredLookback = max(manifest.requiredLookback ?? 0, historyLookback)
         let usesPersistentState = manifest.usesPersistentState ?? false
-        let runtimeKind = manifest.runtimeKind ?? (requiredLookback > 0 || usesPersistentState ? .metalTemporal : .metal)
+        let runtimeKind = manifest.runtimeKind ?? .metal
 
         return RuntimeMetalEffectDefinition(
             typeName: typeName(forUUID: manifest.uuid),

@@ -10,10 +10,8 @@ import Foundation
 
 /// High-level runtime family for an effect implementation.
 public enum EffectRuntimeKind: String, Codable, Equatable {
-    /// Per-frame Metal shader stage with no temporal dependency by default.
+    /// Unified Metal shader stage (supports optional temporal bindings/state via manifest).
     case metal
-    /// Metal shader stage that requires frame history and/or persistent GPU state.
-    case metalTemporal
     /// Core Image stage (possibly temporal via frameBuffer CIImage access).
     case coreImage
     /// Mixed pipeline (Metal + CI + CPU encode/decode or custom glue).
@@ -74,4 +72,3 @@ public struct EffectChainRuntimeDescriptor: Codable, Equatable {
         }
     }
 }
-

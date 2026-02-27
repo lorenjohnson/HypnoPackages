@@ -3,7 +3,7 @@
   "name": "Ghost Blur",
   "version": "1.0.0",
   "legacyTypes": ["GhostBlurEffect"],
-  "runtimeKind": "metalTemporal",
+  "runtimeKind": "metal",
   "requiredLookback": 60,
   "usesPersistentState": false,
   "parameters": {

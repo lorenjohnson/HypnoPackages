@@ -3,7 +3,7 @@
   "name": "Frame Difference",
   "version": "1.0.0",
   "legacyTypes": ["FrameDifferenceEffect"],
-  "runtimeKind": "metalTemporal",
+  "runtimeKind": "metal",
   "requiredLookback": 2,
   "usesPersistentState": false,
   "parameters": {

@@ -3,7 +3,7 @@
   "name": "Color Echo",
   "version": "1.0.0",
   "legacyTypes": ["ColorEchoEffect"],
-  "runtimeKind": "metalTemporal",
+  "runtimeKind": "metal",
   "requiredLookback": 60,
   "usesPersistentState": false,
   "parameters": {

@@ -3,7 +3,7 @@
   "name": "Posterize Decay",
   "version": "1.0.0",
   "legacyTypes": ["PosterizeDecayEffect"],
-  "runtimeKind": "metalTemporal",
+  "runtimeKind": "metal",
   "requiredLookback": 2,
   "usesPersistentState": false,
   "parameters": {

@@ -3,7 +3,7 @@
   "name": "I-Frame Compress",
   "version": "1.0.0",
   "legacyTypes": ["IFrameCompressEffect"],
-  "runtimeKind": "metalTemporal",
+  "runtimeKind": "metal",
   "requiredLookback": 1,
   "usesPersistentState": false,
   "parameters": {
