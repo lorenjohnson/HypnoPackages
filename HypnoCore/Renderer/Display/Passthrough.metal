@@ -3,7 +3,7 @@
 //  HypnoCore
 //
 //  Simple vertex/fragment shaders for rendering a texture to screen.
-//  Used by PlayerView for basic texture display.
+//  Used by RendererView for basic texture display.
 //
 
 #include <metal_stdlib>

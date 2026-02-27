@@ -55,9 +55,9 @@ public enum HumanRectanglesFraming {
     public struct Analysis: Sendable, Equatable {
         public var hasPerson: Bool
         public var bestObservation: Observation?
-        public var contentFocus: PlayerView.ContentFocus?
+        public var contentFocus: RendererView.ContentFocus?
 
-        public init(hasPerson: Bool, bestObservation: Observation?, contentFocus: PlayerView.ContentFocus?) {
+        public init(hasPerson: Bool, bestObservation: Observation?, contentFocus: RendererView.ContentFocus?) {
             self.hasPerson = hasPerson
             self.bestObservation = bestObservation
             self.contentFocus = contentFocus
@@ -99,7 +99,7 @@ public enum HumanRectanglesFraming {
             return Analysis(hasPerson: false, bestObservation: nil, contentFocus: nil)
         }
 
-        let focus = PlayerView.ContentFocus(
+        let focus = RendererView.ContentFocus(
             anchorNormalized: CGPoint(x: bestObs.boundingBox.midX, y: bestObs.boundingBox.maxY),
             targetNDC: config.targetNDC,
             boundsNormalized: bestObs.boundingBox,
@@ -131,7 +131,7 @@ public enum HumanRectanglesFraming {
         let anchorSource = faceObs ?? humanObs!
         let boundsSource = humanObs ?? faceObs!
 
-        let focus = PlayerView.ContentFocus(
+        let focus = RendererView.ContentFocus(
             anchorNormalized: CGPoint(x: anchorSource.boundingBox.midX, y: anchorSource.boundingBox.maxY),
             targetNDC: config.targetNDC,
             boundsNormalized: boundsSource.boundingBox,
@@ -190,7 +190,7 @@ public enum HumanRectanglesFraming {
         let anchorSource = faceObs ?? humanObs!
         let boundsSource = humanObs ?? faceObs!
 
-        let focus = PlayerView.ContentFocus(
+        let focus = RendererView.ContentFocus(
             anchorNormalized: CGPoint(x: anchorSource.boundingBox.midX, y: anchorSource.boundingBox.maxY),
             targetNDC: config.targetNDC,
             boundsNormalized: boundsSource.boundingBox,

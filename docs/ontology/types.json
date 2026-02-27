@@ -1725,7 +1725,7 @@
         "HypnoCore.HumanRectanglesFraming.Analysis",
         "HypnoCore.HumanRectanglesFraming.Config",
         "HypnoCore.HumanRectanglesFraming.Observation",
-        "HypnoCore.PlayerView.ContentFocus",
+        "HypnoCore.RendererView.ContentFocus",
         "HypnoCore.SharedRenderer"
       ]
     },
@@ -1751,7 +1751,7 @@
       "conforms_internal": [],
       "uses_internal": [
         "HypnoCore.HumanRectanglesFraming.Observation",
-        "HypnoCore.PlayerView.ContentFocus"
+        "HypnoCore.RendererView.ContentFocus"
       ]
     },
     {
@@ -2626,12 +2626,12 @@
       "uses_internal": []
     },
     {
-      "key": "HypnoCore.PlayerView",
-      "name": "PlayerView",
-      "qualified_name": "PlayerView",
+      "key": "HypnoCore.RendererView",
+      "name": "RendererView",
+      "qualified_name": "RendererView",
       "module": "HypnoCore",
       "kind": "class",
-      "file": "HypnoCore/Renderer/Display/PlayerView.swift",
+      "file": "HypnoCore/Renderer/Display/RendererView.swift",
       "imports": [
         "AppKit",
         "CoreMedia",
@@ -2649,10 +2649,10 @@
         "HypnoCore.FrameSource",
         "HypnoCore.HypnoCoreBundle",
         "HypnoCore.Int",
-        "HypnoCore.PlayerView.ContentFocus",
-        "HypnoCore.PlayerView.ContentFocus.OverscrollMode",
-        "HypnoCore.PlayerView.ContentMode",
-        "HypnoCore.PlayerView.YUVParams",
+        "HypnoCore.RendererView.ContentFocus",
+        "HypnoCore.RendererView.ContentFocus.OverscrollMode",
+        "HypnoCore.RendererView.ContentMode",
+        "HypnoCore.RendererView.YUVParams",
         "HypnoCore.SharedRenderer",
         "HypnoCore.TextureCache",
         "HypnoCore.TransitionRenderer",
@@ -2660,12 +2660,12 @@
       ]
     },
     {
-      "key": "HypnoCore.PlayerView.ContentFocus",
+      "key": "HypnoCore.RendererView.ContentFocus",
       "name": "ContentFocus",
-      "qualified_name": "PlayerView.ContentFocus",
+      "qualified_name": "RendererView.ContentFocus",
       "module": "HypnoCore",
       "kind": "struct",
-      "file": "HypnoCore/Renderer/Display/PlayerView.swift",
+      "file": "HypnoCore/Renderer/Display/RendererView.swift",
       "imports": [
         "AppKit",
         "CoreMedia",
@@ -2679,16 +2679,16 @@
       ],
       "conforms_internal": [],
       "uses_internal": [
-        "HypnoCore.PlayerView.ContentFocus.OverscrollMode"
+        "HypnoCore.RendererView.ContentFocus.OverscrollMode"
       ]
     },
     {
-      "key": "HypnoCore.PlayerView.ContentFocus.OverscrollMode",
+      "key": "HypnoCore.RendererView.ContentFocus.OverscrollMode",
       "name": "OverscrollMode",
-      "qualified_name": "PlayerView.ContentFocus.OverscrollMode",
+      "qualified_name": "RendererView.ContentFocus.OverscrollMode",
       "module": "HypnoCore",
       "kind": "enum",
-      "file": "HypnoCore/Renderer/Display/PlayerView.swift",
+      "file": "HypnoCore/Renderer/Display/RendererView.swift",
       "imports": [
         "AppKit",
         "CoreMedia",
@@ -2704,12 +2704,12 @@
       "uses_internal": []
     },
     {
-      "key": "HypnoCore.PlayerView.ContentMode",
+      "key": "HypnoCore.RendererView.ContentMode",
       "name": "ContentMode",
-      "qualified_name": "PlayerView.ContentMode",
+      "qualified_name": "RendererView.ContentMode",
       "module": "HypnoCore",
       "kind": "enum",
-      "file": "HypnoCore/Renderer/Display/PlayerView.swift",
+      "file": "HypnoCore/Renderer/Display/RendererView.swift",
       "imports": [
         "AppKit",
         "CoreMedia",
@@ -2722,12 +2722,12 @@
       "uses_internal": []
     },
     {
-      "key": "HypnoCore.PlayerView.YUVParams",
+      "key": "HypnoCore.RendererView.YUVParams",
       "name": "YUVParams",
-      "qualified_name": "PlayerView.YUVParams",
+      "qualified_name": "RendererView.YUVParams",
       "module": "HypnoCore",
       "kind": "struct",
-      "file": "HypnoCore/Renderer/Display/PlayerView.swift",
+      "file": "HypnoCore/Renderer/Display/RendererView.swift",
       "imports": [
         "AppKit",
         "CoreMedia",
@@ -3744,7 +3744,7 @@
       "HypnoCore.HumanCenteringFramingHook",
       "HypnoCore.LoadedSource",
       "HypnoCore.PhotoMontage",
-      "HypnoCore.PlayerView",
+      "HypnoCore.RendererView",
       "HypnoCore.RenderContext",
       "HypnoCore.RenderEngine",
       "HypnoCore.RenderEngine.Config",
@@ -3799,7 +3799,7 @@
       "HypnoCore.PersistentIdentifierStore",
       "HypnoCore.PixelDriftMetalEffect",
       "HypnoCore.PixelateMetalEffect",
-      "HypnoCore.PlayerView",
+      "HypnoCore.RendererView",
       "HypnoCore.RecentEffectChainsConfig",
       "HypnoCore.RecentEffectChainsStore",
       "HypnoCore.RenderContext",
@@ -3823,7 +3823,7 @@
     ],
     "HypnoCore.HypnoCoreBundle": [
       "HypnoCore.HypnoEffectsBundle",
-      "HypnoCore.PlayerView",
+      "HypnoCore.RendererView",
       "HypnoCore.TransitionRenderer"
     ],
     "HypnoCore.HypnoCoreBundle.BundleAnchor": [
@@ -4049,7 +4049,7 @@
       "HypnoCore.FrameCompositor",
       "HypnoCore.HumanRectanglesFraming",
       "HypnoCore.MetalEffect",
-      "HypnoCore.PlayerView",
+      "HypnoCore.RendererView",
       "HypnoCore.TextureCache",
       "HypnoCore.TransitionRenderer"
     ],
@@ -4060,20 +4060,20 @@
     "HypnoCore.SourceLoader": [
       "HypnoCore.CompositionBuilder"
     ],
-    "HypnoCore.PlayerView.ContentFocus": [
+    "HypnoCore.RendererView.ContentFocus": [
       "HypnoCore.HumanRectanglesFraming",
       "HypnoCore.HumanRectanglesFraming.Analysis",
-      "HypnoCore.PlayerView"
+      "HypnoCore.RendererView"
     ],
-    "HypnoCore.PlayerView.ContentFocus.OverscrollMode": [
-      "HypnoCore.PlayerView",
-      "HypnoCore.PlayerView.ContentFocus"
+    "HypnoCore.RendererView.ContentFocus.OverscrollMode": [
+      "HypnoCore.RendererView",
+      "HypnoCore.RendererView.ContentFocus"
     ],
-    "HypnoCore.PlayerView.ContentMode": [
-      "HypnoCore.PlayerView"
+    "HypnoCore.RendererView.ContentMode": [
+      "HypnoCore.RendererView"
     ],
-    "HypnoCore.PlayerView.YUVParams": [
-      "HypnoCore.PlayerView"
+    "HypnoCore.RendererView.YUVParams": [
+      "HypnoCore.RendererView"
     ],
     "HypnoCore.EffectChain": [
       "HypnoCore.EffectConfigLoader",
@@ -4397,13 +4397,13 @@
     "HypnoCore.DecodedFrame": [
       "HypnoCore.AVPlayerFrameSource",
       "HypnoCore.FrameSource",
-      "HypnoCore.PlayerView"
+      "HypnoCore.RendererView"
     ],
     "HypnoCore.FrameSource": [
-      "HypnoCore.PlayerView"
+      "HypnoCore.RendererView"
     ],
     "HypnoCore.TextureCache": [
-      "HypnoCore.PlayerView"
+      "HypnoCore.RendererView"
     ],
     "HypnoCore.TextureCache.YUVTextures": [
       "HypnoCore.TextureCache"
@@ -4468,10 +4468,10 @@
       "HypnoCore.RendererImageUtils"
     ],
     "HypnoCore.TransitionRenderer": [
-      "HypnoCore.PlayerView"
+      "HypnoCore.RendererView"
     ],
     "HypnoCore.TransitionRenderer.TransitionType": [
-      "HypnoCore.PlayerView",
+      "HypnoCore.RendererView",
       "HypnoCore.TransitionRenderer"
     ],
     "HypnoCore.TransitionRenderer.TransitionParams": [

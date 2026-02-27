@@ -19,7 +19,7 @@ subgraph HypnoCore
   HypnoCore_DatamoshMetalEffect["DatamoshMetalEffect (class)"]
   HypnoCore_EffectsSession["EffectsSession (class)"]
   HypnoCore_HumanCenteringFramingHook["HumanCenteringFramingHook (class)"]
-  HypnoCore_PlayerView["PlayerView (class)"]
+  HypnoCore_RendererView["RendererView (class)"]
   HypnoCore_BasicEffect["BasicEffect (class)"]
   HypnoCore_EffectConfigLoader["EffectConfigLoader (enum)"]
   HypnoCore_MediaLibrary["MediaLibrary (class)"]
@@ -86,7 +86,7 @@ subgraph HypnoCore
   HypnoCore_HypnoCoreBundle["HypnoCoreBundle (enum)"]
   HypnoCore_HypnographSession["HypnographSession (struct)"]
   HypnoCore_PersistentIdentifierStore["PersistentIdentifierStore (class)"]
-  HypnoCore_PlayerView_ContentFocus["PlayerView.ContentFocus (struct)"]
+  HypnoCore_RendererView_ContentFocus["RendererView.ContentFocus (struct)"]
   HypnoCore_SqrtOpacityStrategy["SqrtOpacityStrategy (struct)"]
   HypnoCore_SqrtPlusGammaStrategy["SqrtPlusGammaStrategy (struct)"]
   HypnoCore_StillImageCache["StillImageCache (enum)"]
@@ -125,7 +125,7 @@ subgraph HypnoCore
   HypnoCore_ParameterRange["ParameterRange (struct)"]
   HypnoCore_PersistentStore["PersistentStore (class)"]
   HypnoCore_PhotoMontage_Layer["PhotoMontage.Layer (struct)"]
-  HypnoCore_PlayerView_ContentFocus_OverscrollMode["PlayerView.ContentFocus.OverscrollMode (enum)"]
+  HypnoCore_RendererView_ContentFocus_OverscrollMode["RendererView.ContentFocus.OverscrollMode (enum)"]
   HypnoCore_SourceFavoritesStore["SourceFavoritesStore (class)"]
   HypnoCore_TextFileLoader["TextFileLoader (class)"]
   HypnoCore_TextSnippet["TextSnippet (struct)"]
@@ -153,8 +153,8 @@ subgraph HypnoCore
   HypnoCore_NSColor["NSColor (extension)"]
   HypnoCore_PixelDriftParamsGPU["PixelDriftParamsGPU (struct)"]
   HypnoCore_PixelateParamsGPU["PixelateParamsGPU (struct)"]
-  HypnoCore_PlayerView_ContentMode["PlayerView.ContentMode (enum)"]
-  HypnoCore_PlayerView_YUVParams["PlayerView.YUVParams (struct)"]
+  HypnoCore_RendererView_ContentMode["RendererView.ContentMode (enum)"]
+  HypnoCore_RendererView_YUVParams["RendererView.YUVParams (struct)"]
   HypnoCore_RendererConfig["RendererConfig (enum)"]
   HypnoCore_SeededRandomNumberGenerator["SeededRandomNumberGenerator (struct)"]
   HypnoCore_SlowMoPipeline["SlowMoPipeline (class)"]
@@ -436,10 +436,10 @@ end
   HypnoCore_HumanRectanglesFraming --> HypnoCore_HumanRectanglesFraming_Analysis
   HypnoCore_HumanRectanglesFraming --> HypnoCore_HumanRectanglesFraming_Config
   HypnoCore_HumanRectanglesFraming --> HypnoCore_HumanRectanglesFraming_Observation
-  HypnoCore_HumanRectanglesFraming --> HypnoCore_PlayerView_ContentFocus
+  HypnoCore_HumanRectanglesFraming --> HypnoCore_RendererView_ContentFocus
   HypnoCore_HumanRectanglesFraming --> HypnoCore_SharedRenderer
   HypnoCore_HumanRectanglesFraming_Analysis --> HypnoCore_HumanRectanglesFraming_Observation
-  HypnoCore_HumanRectanglesFraming_Analysis --> HypnoCore_PlayerView_ContentFocus
+  HypnoCore_HumanRectanglesFraming_Analysis --> HypnoCore_RendererView_ContentFocus
   HypnoCore_HypnoCoreBundle --> HypnoCore_HypnoCoreBundle_BundleAnchor
   HypnoCore_HypnoEffectsBundle --> HypnoCore_HypnoCoreBundle
   HypnoCore_Hypnogram --> HypnoCore_CodableCMTime
@@ -539,20 +539,20 @@ end
   HypnoCore_PixelateMetalEffect --> HypnoCore_Params
   HypnoCore_PixelateMetalEffect --> HypnoCore_PixelateParamsGPU
   HypnoCore_PixelateMetalEffect --> HypnoCore_RenderContext
-  HypnoCore_PlayerView --> HypnoCore_CGSize
-  HypnoCore_PlayerView --> HypnoCore_DecodedFrame
-  HypnoCore_PlayerView --> HypnoCore_FrameSource
-  HypnoCore_PlayerView --> HypnoCore_HypnoCoreBundle
-  HypnoCore_PlayerView --> HypnoCore_Int
-  HypnoCore_PlayerView --> HypnoCore_PlayerView_ContentFocus
-  HypnoCore_PlayerView --> HypnoCore_PlayerView_ContentFocus_OverscrollMode
-  HypnoCore_PlayerView --> HypnoCore_PlayerView_ContentMode
-  HypnoCore_PlayerView --> HypnoCore_PlayerView_YUVParams
-  HypnoCore_PlayerView --> HypnoCore_SharedRenderer
-  HypnoCore_PlayerView --> HypnoCore_TextureCache
-  HypnoCore_PlayerView --> HypnoCore_TransitionRenderer
-  HypnoCore_PlayerView --> HypnoCore_TransitionRenderer_TransitionType
-  HypnoCore_PlayerView_ContentFocus --> HypnoCore_PlayerView_ContentFocus_OverscrollMode
+  HypnoCore_RendererView --> HypnoCore_CGSize
+  HypnoCore_RendererView --> HypnoCore_DecodedFrame
+  HypnoCore_RendererView --> HypnoCore_FrameSource
+  HypnoCore_RendererView --> HypnoCore_HypnoCoreBundle
+  HypnoCore_RendererView --> HypnoCore_Int
+  HypnoCore_RendererView --> HypnoCore_RendererView_ContentFocus
+  HypnoCore_RendererView --> HypnoCore_RendererView_ContentFocus_OverscrollMode
+  HypnoCore_RendererView --> HypnoCore_RendererView_ContentMode
+  HypnoCore_RendererView --> HypnoCore_RendererView_YUVParams
+  HypnoCore_RendererView --> HypnoCore_SharedRenderer
+  HypnoCore_RendererView --> HypnoCore_TextureCache
+  HypnoCore_RendererView --> HypnoCore_TransitionRenderer
+  HypnoCore_RendererView --> HypnoCore_TransitionRenderer_TransitionType
+  HypnoCore_RendererView_ContentFocus --> HypnoCore_RendererView_ContentFocus_OverscrollMode
   HypnoCore_PosterizeDecayEffect --> HypnoCore_AnyCodableValue
   HypnoCore_PosterizeDecayEffect --> HypnoCore_ParameterSpec
   HypnoCore_PosterizeDecayEffect --> HypnoCore_Params

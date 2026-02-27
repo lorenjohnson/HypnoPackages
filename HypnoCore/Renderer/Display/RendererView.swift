@@ -1,5 +1,5 @@
 //
-//  PlayerView.swift
+//  RendererView.swift
 //  HypnoCore
 //
 //  MTKView-based display surface for the Metal playback pipeline.
@@ -15,7 +15,7 @@ import QuartzCore
 
 /// MTKView subclass that displays video frames as Metal textures.
 /// Designed for use with AVPlayerFrameSource to pull frames from AVPlayer.
-public final class PlayerView: MTKView {
+public final class RendererView: MTKView {
 
     // MARK: - Public Properties
 
@@ -167,7 +167,7 @@ public final class PlayerView: MTKView {
 
     private func configure() {
         guard let device = self.device else {
-            print("PlayerView: No Metal device available")
+            print("RendererView: No Metal device available")
             return
         }
 
@@ -200,12 +200,12 @@ public final class PlayerView: MTKView {
         do {
             library = try device.makeDefaultLibrary(bundle: HypnoCoreBundle.bundle)
         } catch {
-            print("PlayerView: Failed to load shader library: \(error)")
+            print("RendererView: Failed to load shader library: \(error)")
             return
         }
 
         guard let lib = library else {
-            print("PlayerView: No shader library found")
+            print("RendererView: No shader library found")
             return
         }
         shaderLibrary = lib
@@ -224,7 +224,7 @@ public final class PlayerView: MTKView {
 
         guard let vertexFunction = library.makeFunction(name: "passthroughVertex"),
               let fragmentFunction = library.makeFunction(name: "passthroughFragment") else {
-            print("PlayerView: Passthrough shader functions not found")
+            print("RendererView: Passthrough shader functions not found")
             return
         }
 
@@ -242,7 +242,7 @@ public final class PlayerView: MTKView {
         do {
             renderPipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
         } catch {
-            print("PlayerView: Failed to create passthrough pipeline: \(error)")
+            print("RendererView: Failed to create passthrough pipeline: \(error)")
         }
     }
 
