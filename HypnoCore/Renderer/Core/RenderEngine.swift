@@ -258,32 +258,79 @@ public final class RenderEngine {
             frameRate: Int = 30,
             enableEffects: Bool = true,
             sourceFraming: SourceFraming = .fill,
+            notifyExternalDestinationHooks: Bool = true,
             completion: ((Result<URL, RenderError>) -> Void)? = nil
         ) {
             activeJobs += 1
             onStatusMessage?("Rendering started")
 
             Task {
-                let timestamp = ISO8601DateFormatter().string(from: Date())
-                    .replacingOccurrences(of: ":", with: "-")
-                let filename = "hypnograph-\(timestamp).mov"
-                let outputURL = outputFolder.appendingPathComponent(filename)
+                let fm = FileManager.default
 
-                try? FileManager.default.removeItem(at: outputURL)
+                let result: Result<URL, RenderError> = await {
+                    if !outputFolder.isFileURL {
+                        return .failure(.exportFailed(
+                            underlying: NSError(
+                                domain: "RenderEngine",
+                                code: 11,
+                                userInfo: [NSLocalizedDescriptionKey: "Output folder is not a file URL"]
+                            )
+                        ))
+                    }
 
-                let config = RenderEngine.Config(
-                    outputSize: outputSize,
-                    frameRate: frameRate,
-                    enableEffects: enableEffects,
-                    sourceFraming: sourceFraming
-                )
+                    do {
+                        try fm.createDirectory(at: outputFolder, withIntermediateDirectories: true)
+                    } catch {
+                        return .failure(.exportFailed(
+                            underlying: NSError(
+                                domain: "RenderEngine",
+                                code: 12,
+                                userInfo: [
+                                    NSLocalizedDescriptionKey: "Failed to create output directory",
+                                    NSUnderlyingErrorKey: error
+                                ]
+                            )
+                        ))
+                    }
 
-                let engine = RenderEngine()
-                let result = await engine.export(
-                    clip: clip,
-                    outputURL: outputURL,
-                    config: config
-                )
+                    let formatter = ISO8601DateFormatter()
+                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    let timestamp = formatter.string(from: Date())
+                        .replacingOccurrences(of: ":", with: "-")
+                    let filename = "hypnograph-\(timestamp).mov"
+                    let outputURL = outputFolder.appendingPathComponent(filename)
+
+                    if fm.fileExists(atPath: outputURL.path) {
+                        do {
+                            try fm.removeItem(at: outputURL)
+                        } catch {
+                            return .failure(.exportFailed(
+                                underlying: NSError(
+                                    domain: "RenderEngine",
+                                    code: 13,
+                                    userInfo: [
+                                        NSLocalizedDescriptionKey: "Failed to remove existing output file",
+                                        NSUnderlyingErrorKey: error
+                                    ]
+                                )
+                            ))
+                        }
+                    }
+
+                    let config = RenderEngine.Config(
+                        outputSize: outputSize,
+                        frameRate: frameRate,
+                        enableEffects: enableEffects,
+                        sourceFraming: sourceFraming
+                    )
+
+                    let engine = RenderEngine()
+                    return await engine.export(
+                        clip: clip,
+                        outputURL: outputURL,
+                        config: config
+                    )
+                }()
 
                 await MainActor.run {
                     self.activeJobs -= 1
@@ -294,7 +341,8 @@ public final class RenderEngine {
                         self.onStatusMessage?("Saved: \(url.lastPathComponent)")
 
                         // Notify via hook for external destinations (e.g., Apple Photos)
-                        if let hook = HypnoCoreHooks.shared.onVideoExportCompleted {
+                        if notifyExternalDestinationHooks,
+                           let hook = HypnoCoreHooks.shared.onVideoExportCompleted {
                             Task {
                                 await hook(url)
                             }
