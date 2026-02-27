@@ -75,4 +75,61 @@ struct EffectsTests {
         #expect(session.hypnograms[0].effectChain.name != nil)
         #expect(session.hypnograms[0].layers[0].effectChain.name != nil)
     }
+
+    @Test func instantiateChainWrapsAsSinglePassChainRuntimeUnit() {
+        let chain = EffectChain(
+            name: "Mixed Chain",
+            effects: [
+                EffectDefinition(type: "BasicEffect"),
+                EffectDefinition(type: "LUTEffect")
+            ]
+        )
+
+        let instantiated = EffectConfigLoader.instantiateChain(chain)
+        #expect(instantiated.count == 1)
+        #expect(instantiated[0] is PassChainEffect)
+
+        let passChain = instantiated[0] as? PassChainEffect
+        #expect(passChain?.runtimeDescriptors().count == 2)
+    }
+
+    @Test func effectChainRuntimeDescriptorClassifiesKinds() {
+        let chain = EffectChain(
+            name: "Runtime Descriptor",
+            effects: [
+                EffectDefinition(type: "BasicEffect"),
+                EffectDefinition(type: "FrameDifferenceEffect"),
+                EffectDefinition(type: "TextOverlayEffect")
+            ]
+        )
+
+        let descriptor = chain.runtimeDescriptor
+        #expect(descriptor.stages.count == 3)
+        #expect(descriptor.maxRequiredLookback > 0)
+        #expect(descriptor.usesPersistentState)
+        #expect(descriptor.containsLegacyOrHybridStage)
+    }
+
+    @Test func runtimeMetalAssetEffectLoadsFromApplicationSupport() {
+        let type = RuntimeMetalEffectLibrary.typeName(forUUID: RuntimeMetalEffectLibrary.fallbackEffectUUID)
+        let legacyType = "RuntimeMetal:rgb_split"
+        let legacyStaticType = "BasicEffect"
+
+        let available = EffectRegistry.availableEffectTypes.map(\.type)
+        #expect(available.contains(type))
+
+        let specs = EffectRegistry.parameterSpecs(for: type)
+        #expect(specs["offsetAmount"] != nil)
+        #expect(specs["animated"] != nil)
+
+        let runtimeEffect = EffectRegistry.create(type: type, params: nil)
+        #expect(runtimeEffect != nil)
+
+        let descriptor = EffectRegistry.runtimeDescriptor(for: type)
+        #expect(descriptor?.runtimeKind == .metal)
+
+        // Transitional alias support during UUID cutover.
+        #expect(EffectRegistry.create(type: legacyType, params: nil) != nil)
+        #expect(EffectRegistry.create(type: legacyStaticType, params: nil) != nil)
+    }
 }

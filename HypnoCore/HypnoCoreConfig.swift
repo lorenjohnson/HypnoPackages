@@ -38,6 +38,12 @@ public struct HypnoCoreConfig {
         ensureDirectory(appSupportDirectory.appendingPathComponent("text", isDirectory: true))
     }
 
+    /// User-editable runtime Metal effect assets.
+    /// Each effect lives in runtime-effects/<uuid>/ with effect.json + shader.metal.
+    public var runtimeEffectsDirectory: URL {
+        ensureDirectory(appSupportDirectory.appendingPathComponent("runtime-effects", isDirectory: true))
+    }
+
     private static var defaultAppSupportDirectory: URL {
         let fm = FileManager.default
         let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!

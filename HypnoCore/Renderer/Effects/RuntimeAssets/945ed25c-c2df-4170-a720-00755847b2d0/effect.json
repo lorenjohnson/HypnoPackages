@@ -1,0 +1,37 @@
+{
+  "uuid": "945ed25c-c2df-4170-a720-00755847b2d0",
+  "name": "Basic",
+  "version": "1.0.0",
+  "legacyTypes": ["BasicEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 0,
+  "usesPersistentState": false,
+  "parameters": {
+    "contrast": { "type": "float", "default": 0.0, "min": -1.0, "max": 1.0 },
+    "brightness": { "type": "float", "default": 0.0, "min": -1.0, "max": 1.0 },
+    "saturation": { "type": "float", "default": 0.0, "min": -1.0, "max": 1.0 },
+    "hueShift": { "type": "float", "default": 0.0, "min": -1.0, "max": 1.0 },
+    "colorSpace": {
+      "type": "choice",
+      "default": "rgb",
+      "options": [
+        { "key": "rgb", "label": "RGB" },
+        { "key": "yuv", "label": "YUV" },
+        { "key": "hsv", "label": "HSV" },
+        { "key": "lab", "label": "LAB" }
+      ]
+    },
+    "invert": { "type": "bool", "default": false },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["contrast", "brightness", "saturation", "hueShift", "colorSpace", "invert", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" }
+    ],
+    "outputTextureIndex": 1
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "uuid": "60fee609-9204-42ad-bd04-71b00d6676d8",
+  "name": "Hue Wobble",
+  "version": "1.0.0",
+  "legacyTypes": ["HueWobbleEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 0,
+  "usesPersistentState": false,
+  "parameters": {
+    "wobbleFrequency": { "type": "float", "default": 0.5, "min": 0.01, "max": 5.0 },
+    "wobbleAmplitude": { "type": "float", "default": 3.1415927, "min": 0.0, "max": 6.2831855 },
+    "timeSeconds": { "type": "float", "default": 0.0, "min": 0.0, "max": 100000.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["wobbleFrequency", "wobbleAmplitude", "timeSeconds", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["timeSeconds", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" }
+    ],
+    "outputTextureIndex": 1
+  }
+}

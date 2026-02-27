@@ -1,0 +1,33 @@
+{
+  "uuid": "478863b3-72a1-443c-b341-dcd13dfa51c3",
+  "name": "Ghost Blur",
+  "version": "1.0.0",
+  "legacyTypes": ["GhostBlurEffect"],
+  "runtimeKind": "metalTemporal",
+  "requiredLookback": 60,
+  "usesPersistentState": false,
+  "parameters": {
+    "intensity": { "type": "float", "default": 0.5, "min": 0.0, "max": 2.0 },
+    "trailLength": { "type": "int", "default": 6, "min": 1.0, "max": 60.0 },
+    "blurAmount": { "type": "float", "default": 8.0, "min": 0.0, "max": 100.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["intensity", "trailLength", "blurAmount", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" },
+      { "argumentIndex": 1, "source": "historyFrame", "historyOffsetParameter": "trailLength", "historyOffsetScale": 1.0 },
+      { "argumentIndex": 2, "source": "historyFrame", "historyOffsetParameter": "trailLength", "historyOffsetScale": 0.875 },
+      { "argumentIndex": 3, "source": "historyFrame", "historyOffsetParameter": "trailLength", "historyOffsetScale": 0.75 },
+      { "argumentIndex": 4, "source": "historyFrame", "historyOffsetParameter": "trailLength", "historyOffsetScale": 0.625 },
+      { "argumentIndex": 5, "source": "historyFrame", "historyOffsetParameter": "trailLength", "historyOffsetScale": 0.5 },
+      { "argumentIndex": 6, "source": "historyFrame", "historyOffsetParameter": "trailLength", "historyOffsetScale": 0.375 },
+      { "argumentIndex": 7, "source": "historyFrame", "historyOffsetParameter": "trailLength", "historyOffsetScale": 0.25 },
+      { "argumentIndex": 8, "source": "historyFrame", "historyOffsetParameter": "trailLength", "historyOffsetScale": 0.125 }
+    ],
+    "outputTextureIndex": 9
+  }
+}

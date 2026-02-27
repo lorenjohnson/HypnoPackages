@@ -1,0 +1,25 @@
+{
+  "uuid": "b3d67013-560d-498e-9cb8-c99714ed8b4a",
+  "name": "RGB Split",
+  "version": "1.0.0",
+  "legacyTypes": ["rgb_split", "RGBSplitSimpleEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 0,
+  "usesPersistentState": false,
+  "parameters": {
+    "offsetAmount": { "type": "float", "default": 10.0, "min": 0.0, "max": 500.0 },
+    "animated": { "type": "bool", "default": true },
+    "timeSeconds": { "type": "float", "default": 0.0, "min": 0.0, "max": 100000.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["offsetAmount", "animated", "timeSeconds", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["timeSeconds", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" }
+    ],
+    "outputTextureIndex": 1
+  }
+}

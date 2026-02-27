@@ -43,6 +43,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
     private var pendingInstantiations: Set<Int> = []
     private var instantiationTimer: Timer?
     private let instantiationDebounceInterval: TimeInterval = 0.3
+    private nonisolated static let defaultBaseEffectType = RuntimeMetalEffectLibrary.typeName(forUUID: "945ed25c-c2df-4170-a720-00755847b2d0")
 
     // MARK: - Init
 
@@ -203,7 +204,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         }, notifyIndex: chainIndex)
     }
 
-    /// Create a new chain with BasicEffect as default
+    /// Create a new chain with the default runtime base effect.
     @discardableResult
     public func createNewChain() -> Int {
         let baseName = "Effect"
@@ -215,8 +216,8 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
             uniqueName = "\(baseName) \(counter)"
         }
 
-        let basicDefaults = EffectRegistry.defaults(for: "BasicEffect")
-        let basicEffect = EffectDefinition(type: "BasicEffect", params: basicDefaults)
+        let basicDefaults = EffectRegistry.defaults(for: Self.defaultBaseEffectType)
+        let basicEffect = EffectDefinition(type: Self.defaultBaseEffectType, params: basicDefaults)
         let newChain = EffectChain(name: uniqueName, effects: [basicEffect])
 
         updateChains { effects in
@@ -380,7 +381,7 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
     /// Minimal fallback if bundled JSON is missing or corrupt
     private nonisolated static let minimalFallbackDefaults: [EffectChain] = [
         EffectChain(name: "Basic", effects: [
-            EffectDefinition(type: "BasicEffect", params: nil)
+            EffectDefinition(type: defaultBaseEffectType, params: nil)
         ])
     ]
 }

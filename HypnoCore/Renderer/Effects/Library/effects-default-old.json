@@ -5,36 +5,10 @@
       "name": "RGB Split",
       "effects": [
         {
-          "type": "RGBSplitSimpleEffect",
+          "type": "RuntimeMetal:b3d67013-560d-498e-9cb8-c99714ed8b4a",
           "params": {
             "animated": true,
-            "offsetAmount": 25.0
-          }
-        }
-      ]
-    },
-    {
-      "name": "Datamosh: Subtle",
-      "effects": [
-        {
-          "type": "DatamoshMetalEffect",
-          "params": {
-            "blockMoshProbability": 1,
-            "blockSize": 55,
-            "blockiness": 1,
-            "burstChance": 0.076,
-            "cleanFrameChance": 0,
-            "feedbackAmount": 0.73,
-            "freezeReference": true,
-            "intensityVariation": 0.37,
-            "jitterAmount": 0.47,
-            "maxBurstDuration": 472,
-            "maxHistoryOffset": 94,
-            "minBurstDuration": 187,
-            "minHistoryOffset": 23,
-            "motionSensitivity": 0.95,
-            "smearStrength": 0.78,
-            "updateProbability": 1
+            "offsetAmount": 25
           }
         }
       ]
@@ -43,26 +17,7 @@
       "name": "Datamosh: Subtle + RGB",
       "effects": [
         {
-          "type": "DatamoshMetalEffect",
-          "params": {
-            "blockMoshProbability": 0.15,
-            "blockSize": 19,
-            "blockiness": 0,
-            "burstChance": 0.008,
-            "feedbackAmount": 0.25,
-            "intensityVariation": 0.5,
-            "jitterAmount": 0.15,
-            "maxBurstDuration": 240,
-            "maxHistoryOffset": 45,
-            "minBurstDuration": 60,
-            "minHistoryOffset": 10,
-            "motionSensitivity": 0.95,
-            "smearStrength": 0.6,
-            "updateProbability": 0
-          }
-        },
-        {
-          "type": "RGBSplitSimpleEffect",
+          "type": "RuntimeMetal:b3d67013-560d-498e-9cb8-c99714ed8b4a",
           "params": {
             "animated": true,
             "offsetAmount": 12
@@ -71,66 +26,10 @@
       ]
     },
     {
-      "name": "Datamosh: Mash",
-      "effects": [
-        {
-          "type": "DatamoshMetalEffect",
-          "params": {
-            "blockMoshProbability": 0.66,
-            "blockSize": 12,
-            "blockiness": 0.30,
-            "burstChance": 1,
-            "feedbackAmount": 0.85,
-            "intensityVariation": 0.5,
-            "jitterAmount": 0.5,
-            "maxBurstDuration": 434,
-            "maxHistoryOffset": 79,
-            "minBurstDuration": 223,
-            "minHistoryOffset": 5,
-            "motionSensitivity": 0.26,
-            "smearStrength": 0.74
-          }
-        }
-      ]
-    },
-    {
-      "name": "Datamosh: Frozen",
-      "effects": [
-        {
-          "type": "DatamoshMetalEffect",
-          "params": {
-            "blockMoshProbability": 0.5,
-            "blockSize": 12,
-            "blockiness": 0,
-            "burstChance": 0.008,
-            "feedbackAmount": 0.8,
-            "freezeReference": true,
-            "frozenHistoryOffset": 60,
-            "intensityVariation": 0.5,
-            "jitterAmount": 0.25,
-            "maxBurstDuration": 240,
-            "maxHistoryOffset": 60,
-            "minBurstDuration": 60,
-            "minHistoryOffset": 60,
-            "motionSensitivity": 0.8,
-            "smearStrength": 0.15
-          }
-        }
-      ]
-    },
-    {
       "name": "Hold + Ghost",
       "effects": [
         {
-          "type": "HoldFrameEffect",
-          "params": {
-            "freezeInterval": 1,
-            "holdDuration": 0.39,
-            "trailBoost": 0.5
-          }
-        },
-        {
-          "type": "GhostBlurEffect",
+          "type": "RuntimeMetal:478863b3-72a1-443c-b341-dcd13dfa51c3",
           "params": {
             "blurAmount": 0.92,
             "intensity": 0.64,
@@ -143,25 +42,7 @@
       "name": "Mosh + Ghost",
       "effects": [
         {
-          "type": "DatamoshMetalEffect",
-          "params": {
-            "blockMoshProbability": 0.61,
-            "blockSize": 37,
-            "blockiness": 0,
-            "burstChance": 0.008,
-            "feedbackAmount": 1,
-            "intensityVariation": 0.5,
-            "jitterAmount": 0.25,
-            "maxBurstDuration": 240,
-            "maxHistoryOffset": 112,
-            "minBurstDuration": 60,
-            "minHistoryOffset": 37,
-            "motionSensitivity": 0.10,
-            "smearStrength": 0.13
-          }
-        },
-        {
-          "type": "GhostBlurEffect",
+          "type": "RuntimeMetal:478863b3-72a1-443c-b341-dcd13dfa51c3",
           "params": {
             "blurAmount": 42,
             "intensity": 0.15,

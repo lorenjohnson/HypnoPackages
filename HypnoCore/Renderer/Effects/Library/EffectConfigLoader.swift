@@ -181,7 +181,35 @@ public enum EffectConfigLoader {
         let enabledEffects = chain.effects.filter { $0.isEnabled }
 
         // Instantiate each effect
-        return enabledEffects.compactMap { instantiateEffectDef($0) }
+        let instantiated = enabledEffects.compactMap { instantiateEffectDef($0) }
+
+        guard !instantiated.isEmpty else { return [] }
+
+        // Transitional migration: represent the whole chain as one PassChainEffect runtime unit.
+        // Each element may already be a single-stage PassChainEffect from the registry;
+        // flattening keeps execution and lookback semantics intact while standardizing the model.
+        let chainName = chain.name ?? "Effect Chain"
+        return [PassChainEffect.flatten(name: chainName, effects: instantiated)]
+    }
+
+    /// Build runtime metadata for a chain without instantiating heavy effect state.
+    public static func runtimeDescriptor(for chain: EffectChain) -> EffectChainRuntimeDescriptor {
+        let chainName = chain.name ?? "Effect Chain"
+        let enabledEffects = chain.effects.filter { $0.isEnabled }
+        let descriptors = enabledEffects.map { effectDef -> EffectRuntimeDescriptor in
+            if let descriptor = EffectRegistry.runtimeDescriptor(for: effectDef.type) {
+                return descriptor
+            }
+            return EffectRuntimeDescriptor(
+                effectType: effectDef.type,
+                displayName: EffectRegistry.formatEffectTypeName(effectDef.type),
+                runtimeKind: .hybrid,
+                requiredLookback: 0,
+                usesPersistentState: false,
+                notes: "Unknown effect type; fallback descriptor."
+            )
+        }
+        return EffectChainRuntimeDescriptor(chainName: chainName, stages: descriptors)
     }
 
     /// Instantiate an Effect from an EffectDefinition

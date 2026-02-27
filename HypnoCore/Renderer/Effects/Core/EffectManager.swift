@@ -286,7 +286,7 @@ public final class EffectManager {
     /// Add an effect to the recipe's effect chain for a layer
     /// - Parameters:
     ///   - layer: -1 for global, 0+ for source index
-    ///   - effectType: the type of effect to add (e.g. "DatamoshMetalEffect")
+    ///   - effectType: the type of effect to add (e.g. "IFrameCompressEffect")
     public func addEffectToChain(for layer: Int, effectType: String) {
         guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
 
@@ -615,7 +615,7 @@ public final class EffectManager {
         frameBuffer.clear()
         resetFrameIndex()
 
-        // Reset all effects that have internal state (HoldFrameEffect, DatamoshEffect, etc.)
+        // Reset all effects that have internal state (e.g. IFrameCompressEffect, text overlays)
         // Important: Do this BEFORE the recipe clears effects, because effects may be preserved
         if let clip = clipProvider?() {
             clip.effectChain.reset()

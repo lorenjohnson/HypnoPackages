@@ -1,0 +1,29 @@
+{
+  "uuid": "aa57afa6-fe19-4d60-9ced-322ad47c6a60",
+  "name": "I-Frame Compress",
+  "version": "1.0.0",
+  "legacyTypes": ["IFrameCompressEffect"],
+  "runtimeKind": "metalTemporal",
+  "requiredLookback": 1,
+  "usesPersistentState": false,
+  "parameters": {
+    "quality": { "type": "float", "default": 0.5, "min": 0.01, "max": 1.0 },
+    "iframeInterval": { "type": "int", "default": 300, "min": 30.0, "max": 1000.0 },
+    "stickiness": { "type": "float", "default": 0.92, "min": 0.5, "max": 0.999 },
+    "glitch": { "type": "float", "default": 0.0, "min": 0.0, "max": 1.0 },
+    "diffThreshold": { "type": "float", "default": 0.3, "min": 0.05, "max": 0.95 },
+    "frameIndex": { "type": "int", "default": 0, "min": 0.0, "max": 2147483647.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["quality", "iframeInterval", "stickiness", "glitch", "diffThreshold", "frameIndex", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["frameIndex", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" },
+      { "argumentIndex": 1, "source": "historyFrame", "historyOffset": 1 }
+    ],
+    "outputTextureIndex": 2
+  }
+}

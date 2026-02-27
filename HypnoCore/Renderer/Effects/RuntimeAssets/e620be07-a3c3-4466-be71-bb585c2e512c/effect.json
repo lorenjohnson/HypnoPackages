@@ -1,0 +1,25 @@
+{
+  "uuid": "e620be07-a3c3-4466-be71-bb585c2e512c",
+  "name": "Posterize Decay",
+  "version": "1.0.0",
+  "legacyTypes": ["PosterizeDecayEffect"],
+  "runtimeKind": "metalTemporal",
+  "requiredLookback": 2,
+  "usesPersistentState": false,
+  "parameters": {
+    "levels": { "type": "float", "default": 6.0, "min": 2.0, "max": 32.0 },
+    "decayAmount": { "type": "float", "default": 0.4, "min": 0.0, "max": 1.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["levels", "decayAmount", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" },
+      { "argumentIndex": 1, "source": "historyFrame", "historyOffset": 1 }
+    ],
+    "outputTextureIndex": 2
+  }
+}

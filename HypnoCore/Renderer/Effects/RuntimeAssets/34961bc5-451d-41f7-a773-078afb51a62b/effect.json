@@ -1,0 +1,23 @@
+{
+  "uuid": "34961bc5-451d-41f7-a773-078afb51a62b",
+  "name": "Gaussian Blur",
+  "version": "1.0.0",
+  "legacyTypes": ["GaussianBlurMetalEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 0,
+  "usesPersistentState": false,
+  "parameters": {
+    "radius": { "type": "float", "default": 10.0, "min": 0.0, "max": 100.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["radius", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" }
+    ],
+    "outputTextureIndex": 1
+  }
+}

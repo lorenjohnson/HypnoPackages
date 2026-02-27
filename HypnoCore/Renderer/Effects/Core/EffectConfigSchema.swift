@@ -125,6 +125,12 @@ public final class EffectChain: Codable, Equatable {
         maxRequiredLookback > 0
     }
 
+    /// Runtime metadata for this chain in the unified pass-chain model.
+    /// Useful for migration audits and tooling without executing effects.
+    public var runtimeDescriptor: EffectChainRuntimeDescriptor {
+        EffectConfigLoader.runtimeDescriptor(for: self)
+    }
+
     // MARK: - Apply
 
     /// Apply all effects in this chain to an image

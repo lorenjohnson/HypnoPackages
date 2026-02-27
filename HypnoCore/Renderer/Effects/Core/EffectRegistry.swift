@@ -41,70 +41,117 @@ public struct ParameterRange {
 /// Registry of effect types that can be instantiated from config
 public enum EffectRegistry {
 
+    private struct RegisteredEffectType {
+        let type: any Effect.Type
+        let runtimeKind: EffectRuntimeKind
+        let defaultRequiredLookback: Int
+        let usesPersistentState: Bool
+        let notes: String?
+
+        init(
+            type: any Effect.Type,
+            runtimeKind: EffectRuntimeKind,
+            defaultRequiredLookback: Int,
+            usesPersistentState: Bool = false,
+            notes: String? = nil
+        ) {
+            self.type = type
+            self.runtimeKind = runtimeKind
+            self.defaultRequiredLookback = defaultRequiredLookback
+            self.usesPersistentState = usesPersistentState
+            self.notes = notes
+        }
+    }
+
     // MARK: - Effect Type Mapping
 
     /// Map of type names to effect metatypes.
     /// Each effect declares its own parameterSpecs and init?(params:) - the effect is the source of truth.
-    static let effectTypes: [String: any Effect.Type] = [
-        // Core Effects
-        "RGBSplitSimpleEffect": RGBSplitSimpleEffect.self,
+    private static let effectTypes: [String: RegisteredEffectType] = [
+        // Non-runtime exceptions intentionally kept as compiled effects.
+        "LUTEffect": RegisteredEffectType(
+            type: LUTEffect.self,
+            runtimeKind: .coreImage,
+            defaultRequiredLookback: 0,
+            notes: "CIColorCube LUT application."
+        ),
 
-        // Temporal Effects
-        "GhostBlurEffect": GhostBlurEffect.self,
-        "HoldFrameEffect": HoldFrameEffect.self,
-        "ColorEchoEffect": ColorEchoEffect.self,
-        "ColorEchoMetalEffect": ColorEchoMetalEffect.self,
-        "FrameDifferenceEffect": FrameDifferenceEffect.self,
-        "FeedbackLoopEffect": FeedbackLoopEffect.self,
-        "TemporalSmearEffect": TemporalSmearEffect.self,
-
-        // Datamosh
-        "DatamoshMetalEffect": DatamoshMetalEffect.self,
-
-        // Visual Effects
-        "EdgeDecayEffect": EdgeDecayEffect.self,
-        "HueWobbleEffect": HueWobbleEffect.self,
-        "PixelSortEffect": PixelSortEffect.self,
-        "PosterizeDecayEffect": PosterizeDecayEffect.self,
-
-        // Metal Effects
-        "PixelateMetalEffect": PixelateMetalEffect.self,
-        "BasicEffect": BasicEffect.self,
-        "GaussianBlurMetalEffect": GaussianBlurMetalEffect.self,
-        "BlockFreezeMetalEffect": BlockFreezeMetalEffect.self,
-        "PixelDriftMetalEffect": PixelDriftMetalEffect.self,
-        "GlitchBlocksMetalEffect": GlitchBlocksMetalEffect.self,
-        "TimeShuffleMetalEffect": TimeShuffleMetalEffect.self,
-        "CompressionMetalEffect": CompressionMetalEffect.self,
-        "IFrameCompressEffect": IFrameCompressEffect.self,
-
-        // Color Effects
-        "LUTEffect": LUTEffect.self,
-
-        // Source Effects
-        "TextOverlayEffect": TextOverlayEffect.self
+        "TextOverlayEffect": RegisteredEffectType(
+            type: TextOverlayEffect.self,
+            runtimeKind: .cpuOverlay,
+            defaultRequiredLookback: 0,
+            usesPersistentState: true,
+            notes: "CPU text layout/rasterization overlay."
+        )
     ]
+
+    private static func staticRegistration(for type: String) -> RegisteredEffectType? {
+        effectTypes[type]
+    }
 
     /// Create an Effect from a type name and parameters using init?(params:)
     public static func create(type: String, params: [String: AnyCodableValue]?) -> Effect? {
-        guard let effectType = effectTypes[type] else {
-            print("⚠️ EffectRegistry: Unknown effect type '\(type)'")
-            return nil
+        if let registration = staticRegistration(for: type) {
+            guard let effect = registration.type.init(params: params) else {
+                return nil
+            }
+
+            // Transitional migration: every single effect is represented as a pass chain stage.
+            // This gives us one runtime composition pattern while we port stage internals to Metal.
+            let descriptor = runtimeDescriptor(for: type) ?? EffectRuntimeDescriptor(
+                effectType: type,
+                displayName: formatEffectTypeName(type),
+                runtimeKind: .hybrid,
+                requiredLookback: effect.requiredLookback
+            )
+            return PassChainEffect(name: effect.name, stages: [effect], stageRuntimeDescriptors: [descriptor])
         }
-        return effectType.init(params: params)
+
+        if let definition = RuntimeMetalEffectLibrary.shared.definition(for: type),
+           let effect = RuntimeMetalEffect(definition: definition, params: params) {
+            let descriptor = runtimeDescriptor(for: type) ?? EffectRuntimeDescriptor(
+                effectType: type,
+                displayName: definition.name,
+                runtimeKind: definition.runtimeKind,
+                requiredLookback: definition.requiredLookback,
+                usesPersistentState: definition.usesPersistentState,
+                notes: "User/runtime Metal asset."
+            )
+            return PassChainEffect(name: effect.name, stages: [effect], stageRuntimeDescriptors: [descriptor])
+        }
+
+        print("⚠️ EffectRegistry: Unknown effect type '\(type)'")
+        return nil
     }
 
     /// Available single effect types for adding to chains
     public static var availableEffectTypes: [(type: String, displayName: String)] {
-        effectTypes.keys
-            .sorted()
-            .map { type in
-                (type: type, displayName: formatEffectTypeName(type))
+        let staticTypes = effectTypes.keys.map { type in
+            (type: type, displayName: formatEffectTypeName(type))
+        }
+        let runtimeTypes = RuntimeMetalEffectLibrary.shared.allDefinitions().map { definition in
+            (type: definition.typeName, displayName: definition.name)
+        }
+
+        return (staticTypes + runtimeTypes)
+            .sorted { lhs, rhs in
+                lhs.displayName.localizedCaseInsensitiveCompare(rhs.displayName) == .orderedAscending
             }
     }
 
     /// Format effect type name for display: "FrameDifferenceEffect" -> "Frame Difference"
     public static func formatEffectTypeName(_ type: String) -> String {
+        // Runtime effect types should display their manifest names.
+        if let runtime = RuntimeMetalEffectLibrary.shared.definition(for: type) {
+            let name = runtime.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !name.isEmpty {
+                return name
+            }
+        }
+        if RuntimeMetalEffectLibrary.isRuntimeType(type) {
+            return "Runtime Effect"
+        }
+
         // Remove "Effect" suffix
         var name = type
         if name.hasSuffix("Effect") {
@@ -126,10 +173,13 @@ public enum EffectRegistry {
 
     /// Get parameter specs for an effect type (from the effect's static property)
     public static func parameterSpecs(for effectTypeName: String) -> [String: ParameterSpec] {
-        guard let effectType = effectTypes[effectTypeName] else {
-            return [:]
+        if let effectType = staticRegistration(for: effectTypeName) {
+            return effectType.type.parameterSpecs
         }
-        return effectType.parameterSpecs
+        if let definition = RuntimeMetalEffectLibrary.shared.definition(for: effectTypeName) {
+            return definition.parameterSpecs
+        }
+        return [:]
     }
 
     /// Get parameter range for a specific effect type and parameter name
@@ -143,7 +193,10 @@ public enum EffectRegistry {
 
     /// Get all parameter names for an effect type (in consistent order)
     public static func parameterNames(for effectType: String) -> [String] {
-        parameterSpecs(for: effectType).keys.sorted()
+        if let definition = RuntimeMetalEffectLibrary.shared.definition(for: effectType) {
+            return definition.parameterOrder
+        }
+        return parameterSpecs(for: effectType).keys.sorted()
     }
 
     // MARK: - Default Parameters
@@ -157,5 +210,42 @@ public enum EffectRegistry {
             defaults[name] = spec.defaultValue
         }
         return defaults
+    }
+
+    /// Runtime descriptor for a registered effect type (defaults view).
+    public static func runtimeDescriptor(for effectType: String) -> EffectRuntimeDescriptor? {
+        if let registration = staticRegistration(for: effectType) {
+            return EffectRuntimeDescriptor(
+                effectType: effectType,
+                displayName: formatEffectTypeName(effectType),
+                runtimeKind: registration.runtimeKind,
+                requiredLookback: registration.defaultRequiredLookback,
+                usesPersistentState: registration.usesPersistentState,
+                notes: registration.notes
+            )
+        }
+
+        if let definition = RuntimeMetalEffectLibrary.shared.definition(for: effectType) {
+            return EffectRuntimeDescriptor(
+                effectType: effectType,
+                displayName: definition.name,
+                runtimeKind: definition.runtimeKind,
+                requiredLookback: definition.requiredLookback,
+                usesPersistentState: definition.usesPersistentState,
+                notes: "Runtime Metal asset."
+            )
+        }
+
+        return nil
+    }
+
+    /// Runtime descriptors for all registered effect types.
+    public static var runtimeDescriptors: [EffectRuntimeDescriptor] {
+        let staticDescriptors = effectTypes.keys
+            .sorted()
+            .compactMap { runtimeDescriptor(for: $0) }
+        let runtimeAssetDescriptors = RuntimeMetalEffectLibrary.shared.allDefinitions()
+            .compactMap { runtimeDescriptor(for: $0.typeName) }
+        return staticDescriptors + runtimeAssetDescriptors
     }
 }
