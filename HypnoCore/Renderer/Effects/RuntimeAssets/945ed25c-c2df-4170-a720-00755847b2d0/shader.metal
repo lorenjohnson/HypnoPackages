@@ -7,6 +7,7 @@ struct HypnoParams {
     float saturation;
     float hueShift;
     int colorSpace;
+    int outputColorMode;
     bool invert;
     int textureWidth;
     int textureHeight;
@@ -143,5 +144,16 @@ kernel void render(
     }
 
     rgb = clamp(rgb, 0.0f, 1.0f);
-    outputTexture.write(float4(rgb, color.a), gid);
+
+    float3 outputColor = rgb;
+    if (params.outputColorMode == 1) {
+        outputColor = rgb2yuv(rgb);
+    } else if (params.outputColorMode == 2) {
+        outputColor = rgb2hsv(rgb);
+    } else if (params.outputColorMode == 3) {
+        outputColor = rgb2lab(rgb);
+    }
+
+    outputColor = clamp(outputColor, 0.0f, 1.0f);
+    outputTexture.write(float4(outputColor, color.a), gid);
 }

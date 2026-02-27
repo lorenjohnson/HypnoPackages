@@ -21,11 +21,21 @@
         { "key": "lab", "label": "LAB" }
       ]
     },
+    "outputColorMode": {
+      "type": "choice",
+      "default": "rgb",
+      "options": [
+        { "key": "rgb", "label": "RGB (Normal)" },
+        { "key": "yuv", "label": "YUV" },
+        { "key": "hsv", "label": "HSV" },
+        { "key": "lab", "label": "LAB" }
+      ]
+    },
     "invert": { "type": "bool", "default": false },
     "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
     "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
   },
-  "parameterOrder": ["contrast", "brightness", "saturation", "hueShift", "colorSpace", "invert", "textureWidth", "textureHeight"],
+  "parameterOrder": ["contrast", "brightness", "saturation", "hueShift", "colorSpace", "outputColorMode", "invert", "textureWidth", "textureHeight"],
   "autoBoundParameters": ["textureWidth", "textureHeight"],
   "bindings": {
     "parameterBufferIndex": 0,
