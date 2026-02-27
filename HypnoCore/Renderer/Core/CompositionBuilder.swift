@@ -168,7 +168,7 @@ final class CompositionBuilder {
                 stillImages.append(nil as CIImage?)
 
                 // Add audio track if available (mirror video looping)
-                if let audioTrack = loaded.audioTrack {
+                if !source.isMuted, let audioTrack = loaded.audioTrack {
                     guard let compAudioTrack = composition.addMutableTrack(
                         withMediaType: .audio,
                         preferredTrackID: kCMPersistentTrackID_Invalid
