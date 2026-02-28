@@ -302,23 +302,34 @@ public final class MediaLibrary {
     // MARK: - Random clip selection (with lazy validation for video + image)
 
     /// If `clipLength` is nil, videos use their full duration and images use `imageDuration`.
-    public func randomClip(clipLength: Double? = nil, imageDuration: Double = 0.1) -> MediaClip? {
-        // Consider *all* sources except those already marked bad.
-        let candidates = sourceIndex.filter { !badSources.contains(sourceKey($0.source)) }
+    /// When `excludingSourceIdentifiers` is provided, any matching source is skipped.
+    public func randomClip(
+        excludingSourceIdentifiers: Set<String> = [],
+        clipLength: Double? = nil,
+        imageDuration: Double = 0.1
+    ) -> MediaClip? {
+        // Consider all sources except known-bad entries and explicit exclusions.
+        let candidates = sourceIndex.filter { entry in
+            let key = sourceKey(entry.source)
+            return !badSources.contains(key) && !excludingSourceIdentifiers.contains(key)
+        }
         guard !candidates.isEmpty else {
-            print("⚠️ MediaLibrary.randomClip: No candidates (sourceIndex: \(sourceIndex.count), badSources: \(badSources.count))")
+            print(
+                "⚠️ MediaLibrary.randomClip: No candidates (sourceIndex: \(sourceIndex.count), " +
+                "badSources: \(badSources.count), excluded: \(excludingSourceIdentifiers.count))"
+            )
             return nil
         }
 
-        let maxAttempts = min(32, max(candidates.count * 2, 1))
-
-        for _ in 0..<maxAttempts {
-            guard let entry = candidates.randomElement() else { break }
+        // Shuffle once and walk the full candidate set so we do not fail early when
+        // the deck is nearly exhausted.
+        for entry in candidates.shuffled() {
+            let key = sourceKey(entry.source)
 
             switch entry.mediaKind {
             case .video:
                 guard let clip = validateVideoSource(entry, clipLength: clipLength) else {
-                    badSources.insert(sourceKey(entry.source))
+                    badSources.insert(key)
                     continue
                 }
                 return clip
@@ -326,7 +337,7 @@ public final class MediaLibrary {
             case .image:
                 let effectiveLength = clipLength ?? imageDuration
                 guard let clip = validateImageSource(entry, clipLength: effectiveLength) else {
-                    badSources.insert(sourceKey(entry.source))
+                    badSources.insert(key)
                     continue
                 }
                 return clip

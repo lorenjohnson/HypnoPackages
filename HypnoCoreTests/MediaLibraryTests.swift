@@ -62,6 +62,62 @@ struct MediaLibraryTests {
         #expect(clip.startTime.seconds >= 0)
     }
 
+    @Test func mediaLibraryRandomClipExcludingSourceIdentifiersSkipsExcluded() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let exclusionStore = try makeExclusionStore(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let imageAURL = tempDir.appendingPathComponent("library-image-a.png")
+        let imageBURL = tempDir.appendingPathComponent("library-image-b.png")
+        try writeTestImage(to: imageAURL, size: CGSize(width: 10, height: 10))
+        try writeTestImage(to: imageBURL, size: CGSize(width: 10, height: 10))
+
+        let library = MediaLibrary(
+            sources: [tempDir.path],
+            allowedMediaTypes: [.images],
+            exclusionStore: exclusionStore
+        )
+
+        guard let initialClip = library.randomClip(clipLength: 1.0) else {
+            #expect(Bool(false), "Expected initial image clip from library")
+            return
+        }
+
+        let excluded = Set([initialClip.file.source.identifier])
+        guard let clip = library.randomClip(excludingSourceIdentifiers: excluded, clipLength: 1.0) else {
+            #expect(Bool(false), "Expected non-excluded image clip from library")
+            return
+        }
+
+        #expect(!excluded.contains(clip.file.source.identifier))
+    }
+
+    @Test func mediaLibraryRandomClipExcludingSourceIdentifiersReturnsNilWhenAllExcluded() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let exclusionStore = try makeExclusionStore(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let imageURL = tempDir.appendingPathComponent("library-image.png")
+        try writeTestImage(to: imageURL, size: CGSize(width: 10, height: 10))
+
+        let library = MediaLibrary(
+            sources: [tempDir.path],
+            allowedMediaTypes: [.images],
+            exclusionStore: exclusionStore
+        )
+
+        guard let initialClip = library.randomClip(clipLength: 1.0) else {
+            #expect(Bool(false), "Expected initial image clip from library")
+            return
+        }
+
+        let clip = library.randomClip(
+            excludingSourceIdentifiers: Set([initialClip.file.source.identifier]),
+            clipLength: 1.0
+        )
+        #expect(clip == nil)
+    }
+
     private func makeTempDirectory() throws -> URL {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
             "hypnograph-tests-\(UUID().uuidString)",
