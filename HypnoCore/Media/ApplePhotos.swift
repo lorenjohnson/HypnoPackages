@@ -168,6 +168,21 @@ public final class ApplePhotos {
         return results.firstObject
     }
 
+    /// Resolve an asset identifier with tolerant matching.
+    ///
+    /// First tries exact localIdentifier match, then falls back to a prefix match.
+    /// Prefix matching helps recover assets when callers persisted older/variant
+    /// identifier forms.
+    public func resolveAsset(localIdentifierLike identifier: String) -> PHAsset? {
+        if let exact = fetchAsset(localIdentifier: identifier) {
+            return exact
+        }
+        let options = PHFetchOptions()
+        options.predicate = NSPredicate(format: "localIdentifier BEGINSWITH %@", identifier)
+        let results = PHAsset.fetchAssets(with: options)
+        return results.firstObject
+    }
+
     /// Fetch all assets from the entire Photos library (photos and videos)
     public func fetchAllAssets(limit: Int? = nil) -> [PHAsset] {
         guard status.canRead else { return [] }
@@ -207,31 +222,65 @@ public final class ApplePhotos {
     public func fetchUserAlbums() -> [AlbumInfo] {
         guard status.canRead else { return [] }
 
-        var albums: [AlbumInfo] = []
+        var albumByIdentifier: [String: AlbumInfo] = [:]
 
-        // Fetch all user-created albums
+        func recordAlbum(_ album: PHAssetCollection, folderPath: [String]) {
+            let assetCount = PHAsset.fetchAssets(in: album, options: nil).count
+            guard assetCount > 0 else { return }
+
+            let albumTitle = album.localizedTitle ?? "Untitled Album"
+            let qualifiedTitle: String
+            if folderPath.isEmpty {
+                qualifiedTitle = albumTitle
+            } else {
+                qualifiedTitle = folderPath.joined(separator: " / ") + " / " + albumTitle
+            }
+
+            albumByIdentifier[album.localIdentifier] = AlbumInfo(
+                localIdentifier: album.localIdentifier,
+                title: qualifiedTitle,
+                assetCount: assetCount
+            )
+        }
+
+        func walkCollections(_ collections: PHFetchResult<PHCollection>, folderPath: [String]) {
+            for idx in 0..<collections.count {
+                let collection = collections.object(at: idx)
+
+                if let album = collection as? PHAssetCollection {
+                    guard album.assetCollectionType == .album else { continue }
+                    recordAlbum(album, folderPath: folderPath)
+                    continue
+                }
+
+                if let folder = collection as? PHCollectionList {
+                    let folderName = folder.localizedTitle ?? "Untitled Folder"
+                    let children = PHCollection.fetchCollections(in: folder, options: nil)
+                    walkCollections(children, folderPath: folderPath + [folderName])
+                }
+            }
+        }
+
+        let topLevel = PHCollectionList.fetchTopLevelUserCollections(with: nil)
+        walkCollections(topLevel, folderPath: [])
+
+        // Fallback: direct album fetch catches any edge cases not reachable via top-level traversal.
         let userAlbums = PHAssetCollection.fetchAssetCollections(
             with: .album,
             subtype: .albumRegular,
             options: nil
         )
-
         for i in 0..<userAlbums.count {
             let album = userAlbums.object(at: i)
-            let assetCount = PHAsset.fetchAssets(in: album, options: nil).count
-
-            // Only include non-empty albums
-            if assetCount > 0, let title = album.localizedTitle {
-                albums.append(AlbumInfo(
-                    localIdentifier: album.localIdentifier,
-                    title: title,
-                    assetCount: assetCount
-                ))
+            if albumByIdentifier[album.localIdentifier] == nil {
+                recordAlbum(album, folderPath: [])
             }
         }
 
-        // Sort alphabetically by title
-        return albums.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        // Sort alphabetically by display title
+        return albumByIdentifier.values.sorted {
+            $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+        }
     }
 
     /// Fetch an album by local identifier
@@ -548,16 +597,6 @@ public final class ApplePhotos {
         return await addAsset(localIdentifier: localIdentifier, toAlbumNamed: Self.favoritesAlbumName, inFolderNamed: Self.hypnogramsFolderName)
     }
 
-    private func resolveAsset(identifier: String) -> PHAsset? {
-        if let exact = fetchAsset(localIdentifier: identifier) {
-            return exact
-        }
-        let options = PHFetchOptions()
-        options.predicate = NSPredicate(format: "localIdentifier BEGINSWITH %@", identifier)
-        let results = PHAsset.fetchAssets(with: options)
-        return results.firstObject
-    }
-
     /// Add an existing Photos asset to a named album (creating it if needed).
     public func addAsset(localIdentifier: String, toAlbumNamed albumName: String, inFolderNamed folderName: String? = nil) async -> Bool {
         refreshStatus()
@@ -566,7 +605,7 @@ public final class ApplePhotos {
             return false
         }
 
-        guard let asset = resolveAsset(identifier: localIdentifier) else {
+        guard let asset = resolveAsset(localIdentifierLike: localIdentifier) else {
             print("ApplePhotos: cannot add asset to album - asset not found (\(localIdentifier))")
             return false
         }

@@ -25,6 +25,7 @@ public final class MediaLibrary {
     /// Which media types to include
     private let allowedMediaTypes: Set<MediaType>
     private let exclusionStore: ExclusionStore
+    private let excludeHypnographCurationAssets: Bool
 
     let allowedPhotoExtensions = Set([
         "jpeg", "jpg", "png", "heic", "gif"
@@ -47,10 +48,12 @@ public final class MediaLibrary {
     public init(
         sources: [String],
         allowedMediaTypes: Set<MediaType> = [.images, .videos],
-        exclusionStore: ExclusionStore
+        exclusionStore: ExclusionStore,
+        excludeHypnographCurationAssets: Bool = true
     ) {
         self.allowedMediaTypes = allowedMediaTypes
         self.exclusionStore = exclusionStore
+        self.excludeHypnographCurationAssets = excludeHypnographCurationAssets
         if sources.isEmpty {
             // No explicit sources → default to Photos library videos
             loadFilesFromPhotosLibrary()
@@ -65,10 +68,12 @@ public final class MediaLibrary {
     public init(
         photosAlbum: PHAssetCollection,
         allowedMediaTypes: Set<MediaType> = [.images, .videos],
-        exclusionStore: ExclusionStore
+        exclusionStore: ExclusionStore,
+        excludeHypnographCurationAssets: Bool = true
     ) {
         self.allowedMediaTypes = allowedMediaTypes
         self.exclusionStore = exclusionStore
+        self.excludeHypnographCurationAssets = excludeHypnographCurationAssets
         loadFromPhotosAlbum(photosAlbum)
         applyExclusions()
     }
@@ -82,10 +87,12 @@ public final class MediaLibrary {
         includeAllPhotos: Bool = false,
         customPhotosAssetIds: [String] = [],
         allowedMediaTypes: Set<MediaType> = [.images, .videos],
-        exclusionStore: ExclusionStore
+        exclusionStore: ExclusionStore,
+        excludeHypnographCurationAssets: Bool = true
     ) {
         self.allowedMediaTypes = allowedMediaTypes
         self.exclusionStore = exclusionStore
+        self.excludeHypnographCurationAssets = excludeHypnographCurationAssets
 
         /// Load folder/file sources
         if !sources.isEmpty {
@@ -116,11 +123,18 @@ public final class MediaLibrary {
     private func loadFromPhotosAssetIds(_ identifiers: [String]) {
         guard ApplePhotos.shared.status.canRead else { return }
 
-        let assets = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
         var results: [SourceEntry] = []
+        var resolved = 0
+        var unresolved: [String] = []
 
-        for i in 0..<assets.count {
-            let asset = assets.object(at: i)
+        // Resolve one-by-one so we can preserve caller-provided ordering and
+        // handle mixed identifier formats more robustly.
+        for identifier in identifiers {
+            guard let asset = ApplePhotos.shared.resolveAsset(localIdentifierLike: identifier) else {
+                unresolved.append(identifier)
+                continue
+            }
+            resolved += 1
 
             switch asset.mediaType {
             case .video where allowVideos:
@@ -133,7 +147,17 @@ public final class MediaLibrary {
         }
 
         self.sourceIndex.append(contentsOf: results)
-        print("MediaLibrary: indexed \(results.count) assets from custom selection (\(identifiers.count) requested)")
+        print(
+            "MediaLibrary: indexed \(results.count) assets from custom selection " +
+            "(\(resolved)/\(identifiers.count) identifiers resolved)"
+        )
+        if !unresolved.isEmpty {
+            let preview = unresolved.prefix(5).joined(separator: ", ")
+            print(
+                "MediaLibrary: unresolved custom IDs (\(unresolved.count)): " +
+                "\(preview)\(unresolved.count > 5 ? ", ..." : "")"
+            )
+        }
     }
 
     /// Load all assets from the entire Photos library
@@ -450,34 +474,46 @@ public final class MediaLibrary {
         let hiddenUUIDs = ApplePhotos.shared.cachedHiddenUUIDs
         let excludedPhotoAssetIds: Set<String>
 
-        if ApplePhotos.shared.status.canRead {
+        if excludeHypnographCurationAssets, ApplePhotos.shared.status.canRead {
             excludedPhotoAssetIds = ApplePhotos.shared.fetchExcludedAssetIdentifiersInHypnographFolder()
         } else {
             excludedPhotoAssetIds = []
         }
 
+        let beforeCount = sourceIndex.count
+        var removedByExclusionStore = 0
+        var removedByCurationAlbum = 0
+        var removedByHiddenFilter = 0
+
         sourceIndex.removeAll { entry in
-            // Standard exclusions
             if exclusionStore.isExcluded(entry.source) {
+                removedByExclusionStore += 1
                 return true
             }
 
-            // Apple Photos curation albums
-            if case .external(let identifier) = entry.source {
-                if excludedPhotoAssetIds.contains(identifier) {
-                    return true
-                }
+            if case .external(let identifier) = entry.source,
+               excludedPhotoAssetIds.contains(identifier) {
+                removedByCurationAlbum += 1
+                return true
             }
 
-            // Hidden asset filter: check filename base against cached hidden UUIDs
             if !hiddenUUIDs.isEmpty, case .url(let url) = entry.source {
                 let filenameBase = url.deletingPathExtension().lastPathComponent
                 if hiddenUUIDs.contains(filenameBase) {
+                    removedByHiddenFilter += 1
                     return true
                 }
             }
 
             return false
+        }
+
+        let removedTotal = removedByExclusionStore + removedByCurationAlbum + removedByHiddenFilter
+        if removedTotal > 0 {
+            print(
+                "MediaLibrary: applyExclusions removed \(removedTotal) of \(beforeCount) " +
+                "[store: \(removedByExclusionStore), curation: \(removedByCurationAlbum), hidden: \(removedByHiddenFilter)]"
+            )
         }
     }
 

@@ -38,7 +38,8 @@ public enum MediaLibraryBuilder {
         keys: Set<String>,
         settings: MediaLibrarySettings,
         customPhotosAssetIds: [String],
-        exclusionStore: ExclusionStore
+        exclusionStore: ExclusionStore,
+        excludeHypnographCurationAssets: Bool = true
     ) -> MediaLibrary {
         var folderPaths: [String] = []
         var photosAlbums: [PHAssetCollection] = []
@@ -74,7 +75,8 @@ public enum MediaLibraryBuilder {
             includeAllPhotos: includeAllPhotos,
             customPhotosAssetIds: includeCustomSelection ? customPhotosAssetIds : [],
             allowedMediaTypes: settings.sourceMediaTypes,
-            exclusionStore: exclusionStore
+            exclusionStore: exclusionStore,
+            excludeHypnographCurationAssets: excludeHypnographCurationAssets
         )
     }
 
@@ -134,7 +136,8 @@ public enum MediaLibraryBuilder {
     public static func buildAvailableLibraries(
         settings: MediaLibrarySettings,
         customPhotosAssetIds: [String],
-        exclusionStore: ExclusionStore
+        exclusionStore: ExclusionStore,
+        excludeHypnographCurationAssets: Bool = true
     ) -> [SourceLibraryInfo] {
         var infos: [SourceLibraryInfo] = []
         var folderInfos: [SourceLibraryInfo] = []
@@ -147,7 +150,8 @@ public enum MediaLibraryBuilder {
             let tempLibrary = MediaLibrary(
                 sources: paths,
                 allowedMediaTypes: settings.sourceMediaTypes,
-                exclusionStore: exclusionStore
+                exclusionStore: exclusionStore,
+                excludeHypnographCurationAssets: excludeHypnographCurationAssets
             )
             let count = tempLibrary.assetCount
 
