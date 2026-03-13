@@ -17,6 +17,77 @@ import HypnoCore
 
 struct MediaLibraryTests {
 
+    @Test func mediaLibraryLiteralDirectoryDoesNotRecurseWithoutGlob() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let exclusionStore = try makeExclusionStore(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let topImage = tempDir.appendingPathComponent("top.png")
+        let nestedDir = tempDir.appendingPathComponent("nested", isDirectory: true)
+        let nestedImage = nestedDir.appendingPathComponent("nested.png")
+
+        try FileManager.default.createDirectory(at: nestedDir, withIntermediateDirectories: true)
+        try writeTestImage(to: topImage, size: CGSize(width: 10, height: 10))
+        try writeTestImage(to: nestedImage, size: CGSize(width: 10, height: 10))
+
+        let library = MediaLibrary(
+            sources: [tempDir.path],
+            allowedMediaTypes: [.images],
+            exclusionStore: exclusionStore
+        )
+
+        #expect(library.assetCount == 1)
+    }
+
+    @Test func mediaLibraryGlobstarFilePatternRecurses() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let exclusionStore = try makeExclusionStore(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let topImage = tempDir.appendingPathComponent("top.png")
+        let nestedDir = tempDir.appendingPathComponent("nested", isDirectory: true)
+        let nestedImage = nestedDir.appendingPathComponent("nested.png")
+
+        try FileManager.default.createDirectory(at: nestedDir, withIntermediateDirectories: true)
+        try writeTestImage(to: topImage, size: CGSize(width: 10, height: 10))
+        try writeTestImage(to: nestedImage, size: CGSize(width: 10, height: 10))
+
+        let library = MediaLibrary(
+            sources: ["\(tempDir.path)/**/*.png"],
+            allowedMediaTypes: [.images],
+            exclusionStore: exclusionStore
+        )
+
+        #expect(library.assetCount == 2)
+    }
+
+    @Test func mediaLibraryGlobstarDirectoryPatternMatchesNamedDirectories() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let exclusionStore = try makeExclusionStore(in: tempDir.appendingPathComponent("core", isDirectory: true))
+        let aCamRoot = tempDir.appendingPathComponent("A Cam", isDirectory: true)
+        let dayDir = tempDir.appendingPathComponent("Day 1", isDirectory: true)
+        let aCamNested = dayDir.appendingPathComponent("A Cam", isDirectory: true)
+        let bCamNested = dayDir.appendingPathComponent("B Cam", isDirectory: true)
+
+        try FileManager.default.createDirectory(at: aCamRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: aCamNested, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: bCamNested, withIntermediateDirectories: true)
+
+        try writeTestImage(to: aCamRoot.appendingPathComponent("root.png"), size: CGSize(width: 10, height: 10))
+        try writeTestImage(to: aCamNested.appendingPathComponent("nested.png"), size: CGSize(width: 10, height: 10))
+        try writeTestImage(to: bCamNested.appendingPathComponent("ignore.png"), size: CGSize(width: 10, height: 10))
+
+        let library = MediaLibrary(
+            sources: ["\(tempDir.path)/**/A Cam"],
+            allowedMediaTypes: [.images],
+            exclusionStore: exclusionStore
+        )
+
+        #expect(library.assetCount == 2)
+    }
+
     @Test func mediaLibraryRandomClipForImage() async throws {
         let tempDir = try makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: tempDir) }

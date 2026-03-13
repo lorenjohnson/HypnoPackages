@@ -193,50 +193,242 @@ public final class MediaLibrary {
     private func loadFiles(from sources: [String]) {
         let fileManager = FileManager.default
         var results: [SourceEntry] = []
+        var seenPaths = Set<String>()
 
-        for path in sources {
-            let url = URL(fileURLWithPath: path)
+        for rawSource in sources {
+            let source = (rawSource as NSString).expandingTildeInPath
 
-            var isDirectory: ObjCBool = false
-            guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
-                continue
-            }
+            if containsGlobToken(source) {
+                let recurse = source.contains("**")
+                let matches = expandGlobPattern(source, fileManager: fileManager)
 
-            if isDirectory.boolValue {
-                // Directory case: recurse and collect sources only (no AVAsset creation!)
-                guard let enumerator = fileManager.enumerator(
-                    at: url,
-                    includingPropertiesForKeys: nil
-                ) else { continue }
+                for match in matches {
+                    var isDirectory: ObjCBool = false
+                    guard fileManager.fileExists(atPath: match.path, isDirectory: &isDirectory) else { continue }
 
-                for case let fileURL as URL in enumerator {
-                    var isDir: ObjCBool = false
-                    if fileManager.fileExists(atPath: fileURL.path, isDirectory: &isDir),
-                       isDir.boolValue {
-                        continue
-                    }
-
-                    let ext = fileURL.pathExtension.lowercased()
-
-                    if allowVideos && allowVideoExtensions.contains(ext) {
-                        results.append(SourceEntry(source: .url(fileURL), mediaKind: .video))
-                    } else if allowImages && allowedPhotoExtensions.contains(ext) {
-                        results.append(SourceEntry(source: .url(fileURL), mediaKind: .image))
+                    if isDirectory.boolValue {
+                        collectMedia(
+                            from: match,
+                            recursive: recurse,
+                            fileManager: fileManager,
+                            results: &results,
+                            seenPaths: &seenPaths
+                        )
+                    } else {
+                        appendIfSupportedMediaFile(
+                            match,
+                            fileManager: fileManager,
+                            results: &results,
+                            seenPaths: &seenPaths
+                        )
                     }
                 }
             } else {
-                // Single-file case
-                let ext = url.pathExtension.lowercased()
+                let url = URL(fileURLWithPath: source)
+                var isDirectory: ObjCBool = false
+                guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else { continue }
 
-                if allowVideos && allowVideoExtensions.contains(ext) {
-                    results.append(SourceEntry(source: .url(url), mediaKind: .video))
-                } else if allowImages && allowedPhotoExtensions.contains(ext) {
-                    results.append(SourceEntry(source: .url(url), mediaKind: .image))
+                if isDirectory.boolValue {
+                    collectMedia(
+                        from: url,
+                        recursive: false,
+                        fileManager: fileManager,
+                        results: &results,
+                        seenPaths: &seenPaths
+                    )
+                } else {
+                    appendIfSupportedMediaFile(
+                        url,
+                        fileManager: fileManager,
+                        results: &results,
+                        seenPaths: &seenPaths
+                    )
                 }
             }
         }
 
         self.sourceIndex.append(contentsOf: results)
+    }
+
+    private func collectMedia(
+        from directoryURL: URL,
+        recursive: Bool,
+        fileManager: FileManager,
+        results: inout [SourceEntry],
+        seenPaths: inout Set<String>
+    ) {
+        if recursive {
+            guard let enumerator = fileManager.enumerator(
+                at: directoryURL,
+                includingPropertiesForKeys: nil
+            ) else { return }
+
+            for case let fileURL as URL in enumerator {
+                appendIfSupportedMediaFile(
+                    fileURL,
+                    fileManager: fileManager,
+                    results: &results,
+                    seenPaths: &seenPaths
+                )
+            }
+            return
+        }
+
+        guard let contents = try? fileManager.contentsOfDirectory(
+            at: directoryURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        ) else {
+            return
+        }
+
+        for fileURL in contents {
+            appendIfSupportedMediaFile(
+                fileURL,
+                fileManager: fileManager,
+                results: &results,
+                seenPaths: &seenPaths
+            )
+        }
+    }
+
+    private func appendIfSupportedMediaFile(
+        _ fileURL: URL,
+        fileManager: FileManager,
+        results: inout [SourceEntry],
+        seenPaths: inout Set<String>
+    ) {
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: fileURL.path, isDirectory: &isDirectory),
+              !isDirectory.boolValue else {
+            return
+        }
+
+        let normalizedPath = fileURL.standardizedFileURL.path
+        guard seenPaths.insert(normalizedPath).inserted else { return }
+
+        let ext = fileURL.pathExtension.lowercased()
+        if allowVideos && allowVideoExtensions.contains(ext) {
+            results.append(SourceEntry(source: .url(fileURL), mediaKind: .video))
+        } else if allowImages && allowedPhotoExtensions.contains(ext) {
+            results.append(SourceEntry(source: .url(fileURL), mediaKind: .image))
+        }
+    }
+
+    private func containsGlobToken(_ value: String) -> Bool {
+        value.contains("*") || value.contains("?")
+    }
+
+    private func expandGlobPattern(_ pattern: String, fileManager: FileManager) -> [URL] {
+        let (baseURL, globPattern) = splitGlobPattern(pattern)
+        guard fileManager.fileExists(atPath: baseURL.path) else { return [] }
+
+        let regexPattern = globToRegex(globPattern)
+        guard let regex = try? NSRegularExpression(pattern: regexPattern) else { return [] }
+
+        var candidates: [URL] = [baseURL]
+        if let enumerator = fileManager.enumerator(
+            at: baseURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        ) {
+            for case let fileURL as URL in enumerator {
+                candidates.append(fileURL)
+            }
+        }
+
+        var results: [URL] = []
+        for candidate in candidates {
+            let relPath = relativePath(candidate, from: baseURL)
+            let nsRelPath = relPath as NSString
+            let fullRange = NSRange(location: 0, length: nsRelPath.length)
+            let match = regex.firstMatch(in: relPath, range: fullRange)
+            if match?.range == fullRange {
+                results.append(candidate)
+            }
+        }
+        return results
+    }
+
+    private func splitGlobPattern(_ pattern: String) -> (baseURL: URL, globPattern: String) {
+        guard let firstGlobIndex = pattern.firstIndex(where: { $0 == "*" || $0 == "?" }) else {
+            return (URL(fileURLWithPath: pattern), "")
+        }
+
+        let prefix = String(pattern[..<firstGlobIndex])
+        let slashIndex = prefix.lastIndex(of: "/")
+
+        let basePath: String
+        let globPattern: String
+
+        if let slashIndex {
+            if slashIndex == pattern.startIndex {
+                basePath = "/"
+            } else {
+                basePath = String(pattern[..<slashIndex])
+            }
+            let patternStart = pattern.index(after: slashIndex)
+            globPattern = String(pattern[patternStart...])
+        } else {
+            basePath = "."
+            globPattern = pattern
+        }
+
+        return (URL(fileURLWithPath: basePath), globPattern)
+    }
+
+    private func relativePath(_ url: URL, from baseURL: URL) -> String {
+        let basePath = baseURL.standardizedFileURL.path
+        let candidatePath = url.standardizedFileURL.path
+
+        if candidatePath == basePath { return "" }
+        let prefix = basePath.hasSuffix("/") ? basePath : basePath + "/"
+        if candidatePath.hasPrefix(prefix) {
+            return String(candidatePath.dropFirst(prefix.count))
+        }
+        return candidatePath
+    }
+
+    private func globToRegex(_ glob: String) -> String {
+        let chars = Array(glob)
+        var regex = "^"
+        var index = 0
+
+        while index < chars.count {
+            let ch = chars[index]
+
+            if ch == "*" {
+                if index + 1 < chars.count, chars[index + 1] == "*" {
+                    if index + 2 < chars.count, chars[index + 2] == "/" {
+                        // **/ matches zero or more path components.
+                        regex += "(?:[^/]+/)*"
+                        index += 3
+                    } else {
+                        regex += ".*"
+                        index += 2
+                    }
+                } else {
+                    regex += "[^/]*"
+                    index += 1
+                }
+                continue
+            }
+
+            if ch == "?" {
+                regex += "[^/]"
+                index += 1
+                continue
+            }
+
+            if "\\.^$+()[]{}|".contains(ch) {
+                regex += "\\"
+            }
+            regex.append(ch)
+            index += 1
+        }
+
+        regex += "$"
+        return regex
     }
 
     // MARK: - Photos library fallback (raw originals scan)
