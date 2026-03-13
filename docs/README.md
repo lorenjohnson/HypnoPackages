@@ -5,6 +5,7 @@ Use this folder for cross-app and shared-library documentation.
 Place docs here when work affects both Hypnograph and Divine, shared packages, or shared ontology.
 
 Structure:
+- `architecture/` — shared package architecture notes
 - `active/` — active cross-app projects
 - `archive/` — completed cross-app project write-ups
 - `backlog/` — planned cross-app projects not started
