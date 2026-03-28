@@ -28,16 +28,16 @@ final class CompositionBuilder {
     
     // MARK: - Build
 
-    /// Build a montage composition from a clip.
+    /// Build a montage from a composition.
     /// - Parameters:
-    ///   - clip: The clip to build
+    ///   - composition: The composition to build
     ///   - outputSize: Output dimensions
     ///   - frameRate: Output frame rate
     ///   - enableEffects: Whether to apply effects
     ///   - effectManager: The EffectManager to use for this composition.
     ///                  Pass nil only for legacy callers; all new code should provide a manager.
     func build(
-        clip: Hypnogram,
+        composition: Composition,
         outputSize: CGSize,
         frameRate: Int = 30,
         enableEffects: Bool = true,
@@ -47,7 +47,7 @@ final class CompositionBuilder {
     ) async -> Result<BuildResult, RenderError> {
 
         // Validate
-        guard !clip.layers.isEmpty else {
+        guard !composition.layers.isEmpty else {
             return .failure(.noSources)
         }
 
@@ -56,8 +56,8 @@ final class CompositionBuilder {
         }
 
         return await buildMontage(
-            clip: clip,
-            targetDuration: clip.targetDuration,
+            composition: composition,
+            targetDuration: composition.targetDuration,
             outputSize: outputSize,
             frameRate: frameRate,
             enableEffects: enableEffects,
@@ -70,7 +70,7 @@ final class CompositionBuilder {
     // MARK: - Montage Builder
 
     private func buildMontage(
-        clip: Hypnogram,
+        composition: Composition,
         targetDuration: CMTime,
         outputSize: CGSize,
         frameRate: Int,
@@ -81,14 +81,14 @@ final class CompositionBuilder {
     ) async -> Result<BuildResult, RenderError> {
 
         // Load all sources
-        var loadedSources: [(sourceIndex: Int, source: HypnogramLayer, loaded: LoadedSource)] = []
+        var loadedSources: [(sourceIndex: Int, layer: Layer, loaded: LoadedSource)] = []
 
-        for (index, layer) in clip.layers.enumerated() {
-            let result = await sourceLoader.load(source: layer)
+        for (index, layer) in composition.layers.enumerated() {
+            let result = await sourceLoader.load(layer: layer)
 
             switch result {
             case .success(let loaded):
-                loadedSources.append((sourceIndex: index, source: layer, loaded: loaded))
+                loadedSources.append((sourceIndex: index, layer: layer, loaded: loaded))
             case .failure(let error):
                 error.log(context: "CompositionBuilder.montage[\(index)]")
                 // Skip failed sources for now (we can replace with fallback later if needed)
@@ -103,7 +103,7 @@ final class CompositionBuilder {
         // Loaded logging removed to reduce noise
 
         // Create composition
-        let composition = AVMutableComposition()
+        let avComposition = AVMutableComposition()
         let renderID = UUID()
         var trackIDs: [CMPersistentTrackID] = []
         var audioTrackIDs: [CMPersistentTrackID] = []
@@ -113,9 +113,9 @@ final class CompositionBuilder {
         var stillImages: [CIImage?] = []
 
         for (index, entry) in loadedSources.enumerated() {
-            let source = entry.source
+            let layer = entry.layer
             let loaded = entry.loaded
-            guard let track = composition.addMutableTrack(
+            guard let track = avComposition.addMutableTrack(
                 withMediaType: .video,
                 preferredTrackID: kCMPersistentTrackID_Invalid
             ) else {
@@ -124,7 +124,7 @@ final class CompositionBuilder {
             }
 
             // Compose metadata transform with user transforms array
-            let userTransform = source.transforms.reduce(CGAffineTransform.identity) { $0.concatenating($1) }
+            let userTransform = layer.transforms.reduce(CGAffineTransform.identity) { $0.concatenating($1) }
             let composedTransform = loaded.transform.concatenating(userTransform)
 
             if loaded.isStillImage {
@@ -140,10 +140,10 @@ final class CompositionBuilder {
                 }
 
                 let (effectiveStartTime, effectiveClipDuration) = normalizedClipSlice(
-                    clipID: clip.id,
+                    clipID: composition.id,
                     sourceIndex: entry.sourceIndex,
-                    sourceClip: source.mediaClip,
-                    fileID: source.mediaClip.file.id,
+                    sourceClip: layer.mediaClip,
+                    fileID: layer.mediaClip.file.id,
                     assetDuration: loaded.duration,
                     targetDuration: targetDuration
                 )
@@ -168,8 +168,8 @@ final class CompositionBuilder {
                 stillImages.append(nil as CIImage?)
 
                 // Add audio track if available (mirror video looping)
-                if !source.isMuted, let audioTrack = loaded.audioTrack {
-                    guard let compAudioTrack = composition.addMutableTrack(
+                if !layer.isMuted, let audioTrack = loaded.audioTrack {
+                    guard let compAudioTrack = avComposition.addMutableTrack(
                         withMediaType: .audio,
                         preferredTrackID: kCMPersistentTrackID_Invalid
                     ) else {
@@ -203,7 +203,7 @@ final class CompositionBuilder {
             sourceIndices.append(index)
 
             // Get blend mode from source (default to SourceOver for first, Screen for others)
-            let blendMode = source.blendMode ?? (index == 0 ? BlendMode.sourceOver : BlendMode.defaultMontage)
+            let blendMode = layer.blendMode ?? (index == 0 ? BlendMode.sourceOver : BlendMode.defaultMontage)
             blendModes.append(blendMode)
         }
 
@@ -213,8 +213,8 @@ final class CompositionBuilder {
 
         // If we have still images, we need to ensure composition has duration
         // (empty tracks don't extend composition duration)
-        if composition.duration.seconds <= 0 {
-            composition.insertEmptyTimeRange(CMTimeRange(start: .zero, duration: targetDuration))
+        if avComposition.duration.seconds <= 0 {
+            avComposition.insertEmptyTimeRange(CMTimeRange(start: .zero, duration: targetDuration))
         }
 
         // Create instruction with effect manager for effect processing
@@ -254,7 +254,7 @@ final class CompositionBuilder {
         }
 
         let result = BuildResult(
-            composition: composition,
+            composition: avComposition,
             videoComposition: videoComposition,
             audioMix: audioMix,
             instructions: [instruction]

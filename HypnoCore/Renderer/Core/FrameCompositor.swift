@@ -180,7 +180,7 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
                 }
 
                 // Apply slow-mo interpolation if needed
-                let playRate = manager?.clipProvider?()?.playRate ?? 1.0
+                let playRate = manager?.compositionProvider?()?.playRate ?? 1.0
 
                 if playRate < 1.0 {
                     layerImage = processSlowMo(
@@ -221,30 +221,30 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
                 bias: bias
             )
 
-            // Apply per-source effects from clip
+            // Apply per-layer effects from the composition.
             if instruction.enableEffects, let manager = manager {
-                let clip = manager.clipProvider?()
-                if let clip = clip, sourceIndex < clip.layers.count {
+                let composition = manager.compositionProvider?()
+                if let composition = composition, sourceIndex < composition.layers.count {
                     var sourceContext = manager.createContext(
                         frameIndex: frameIndex,
                         time: request.compositionTime,
                         outputSize: outputSize,
                         sourceIndex: sourceIndex
                     )
-                    img = clip.layers[sourceIndex].effectChain.apply(to: img, context: &sourceContext)
+                    img = composition.layers[sourceIndex].effectChain.apply(to: img, context: &sourceContext)
                 }
             }
 
             // Blend with previous layers
-            let clip = manager?.clipProvider?()
+            let composition = manager?.compositionProvider?()
             if let base = composited {
-                // Get blend mode from clip
+                // Get blend mode from the composition.
                 let blendMode: String
 
-                if let clip = clip, sourceIndex < clip.layers.count {
+                if let composition = composition, sourceIndex < composition.layers.count {
                     blendMode = sourceIndex == 0
                         ? BlendMode.sourceOver
-                        : (clip.layers[sourceIndex].blendMode ?? BlendMode.defaultMontage)
+                        : (composition.layers[sourceIndex].blendMode ?? BlendMode.defaultMontage)
                 } else {
                     blendMode = instruction.blendModes[index]
                 }
@@ -257,8 +257,8 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
                 ) ?? 1.0
 
                 let userOpacity: Double
-                if let clip, sourceIndex >= 0, sourceIndex < clip.layers.count {
-                    userOpacity = clip.layers[sourceIndex].opacity
+                if let composition, sourceIndex >= 0, sourceIndex < composition.layers.count {
+                    userOpacity = composition.layers[sourceIndex].opacity
                 } else {
                     userOpacity = 1.0
                 }
@@ -268,8 +268,8 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
                 composited = img
             } else {
                 let userOpacity: Double
-                if let clip, sourceIndex >= 0, sourceIndex < clip.layers.count {
-                    userOpacity = clip.layers[sourceIndex].opacity
+                if let composition, sourceIndex >= 0, sourceIndex < composition.layers.count {
+                    userOpacity = composition.layers[sourceIndex].opacity
                 } else {
                     userOpacity = 1.0
                 }
@@ -299,16 +299,16 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             finalImage = manager.applyNormalization(to: finalImage)
         }
 
-        // Apply global effects from clip (unless suspended, e.g., holding 0 key)
+        // Apply global effects from the composition (unless suspended, e.g., holding 0 key).
         if instruction.enableEffects, let manager = manager, !manager.isGlobalEffectSuspended {
-            let clip = manager.clipProvider?()
-            if let clip = clip {
+            let composition = manager.compositionProvider?()
+            if let composition = composition {
                 var context = manager.createContext(
                     frameIndex: frameIndex,
                     time: request.compositionTime,
                     outputSize: outputSize
                 )
-                finalImage = clip.effectChain.apply(to: finalImage, context: &context)
+                finalImage = composition.effectChain.apply(to: finalImage, context: &context)
             }
         }
 

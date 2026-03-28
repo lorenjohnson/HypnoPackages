@@ -38,21 +38,26 @@ public final class EffectManager {
         globalFrameIndex = 0
     }
 
-    /// Create a manager for export with a frozen recipe
+    /// Create a manager for export with a frozen composition snapshot.
     /// Uses same code paths as preview but with isolated state
-    public static func forExport(clip: Hypnogram) -> EffectManager {
+    public static func forExport(composition: Composition) -> EffectManager {
         let manager = EffectManager()
-        manager.clipProvider = { clip }
+        manager.compositionProvider = { composition }
         // No setters needed - export is read-only
         // flashSoloIndex stays nil - export renders all layers
         return manager
     }
 
-    /// Create an isolated manager for transition playback with a frozen clip snapshot.
-    /// Optionally preserves temporal render state from this manager so the outgoing clip
+    @available(*, deprecated, renamed: "forExport(composition:)")
+    public static func forExport(clip: Composition) -> EffectManager {
+        forExport(composition: clip)
+    }
+
+    /// Create an isolated manager for transition playback with a frozen composition snapshot.
+    /// Optionally preserves temporal render state from this manager so the outgoing composition
     /// continues smoothly during overlap.
     public func makeTransitionSnapshotManager(
-        frozenClip: Hypnogram,
+        frozenComposition: Composition,
         preserveTemporalState: Bool = true
     ) -> EffectManager {
         let clonedBuffer: FrameBuffer
@@ -70,19 +75,30 @@ public final class EffectManager {
         manager.isGlobalEffectSuspended = isGlobalEffectSuspended
         manager.isNormalizationEnabled = isNormalizationEnabled
         manager._normalizationStrategy = _normalizationStrategy
-        manager.clipProvider = { frozenClip }
+        manager.compositionProvider = { frozenComposition }
         return manager
     }
 
-    /// Get the maximum lookback required by any effect (global or per-layer)
+    @available(*, deprecated, renamed: "makeTransitionSnapshotManager(frozenComposition:preserveTemporalState:)")
+    public func makeTransitionSnapshotManager(
+        frozenClip: Composition,
+        preserveTemporalState: Bool = true
+    ) -> EffectManager {
+        makeTransitionSnapshotManager(
+            frozenComposition: frozenClip,
+            preserveTemporalState: preserveTemporalState
+        )
+    }
+
+    /// Get the maximum lookback required by any effect (global or per-layer).
     public var maxRequiredLookback: Int {
-        guard let clip = clipProvider?() else { return 0 }
+        guard let composition = compositionProvider?() else { return 0 }
 
         // Check global effect chain
-        let globalMax = clip.effectChain.maxRequiredLookback
+        let globalMax = composition.effectChain.maxRequiredLookback
 
         // Check per-layer effect chains
-        let layerMax = clip.layers.map { $0.effectChain.maxRequiredLookback }.max() ?? 0
+        let layerMax = composition.layers.map { $0.effectChain.maxRequiredLookback }.max() ?? 0
 
         return max(globalMax, layerMax)
     }
@@ -100,8 +116,14 @@ public final class EffectManager {
 
     // MARK: - Recipe Integration
 
-    /// Closure to get the current clip (injected by the owning feature)
-    public var clipProvider: (() -> Hypnogram?)?
+    /// Closure to get the current composition (injected by the owning feature).
+    public var compositionProvider: (() -> Composition?)?
+
+    @available(*, deprecated, renamed: "compositionProvider")
+    public var clipProvider: (() -> Composition?)? {
+        get { compositionProvider }
+        set { compositionProvider = newValue }
+    }
 
     /// Closure to set global effect chain on the recipe
     public var globalEffectChainSetter: ((EffectChain) -> Void)?
@@ -186,10 +208,10 @@ public final class EffectManager {
         cachedAnalysis = nil
     }
 
-    /// Collect all blend modes from current clip
+    /// Collect all blend modes from the current composition.
     private func collectBlendModes() -> [String] {
-        guard let clip = clipProvider?() else { return [] }
-        return clip.layers.enumerated().map { index, layer in
+        guard let composition = compositionProvider?() else { return [] }
+        return composition.layers.enumerated().map { index, layer in
             if index == 0 {
                 return BlendMode.sourceOver
             }
@@ -230,16 +252,16 @@ public final class EffectManager {
         )
     }
 
-    // MARK: - Global Effects (reads from clip)
+    // MARK: - Global Effects (reads from composition)
 
     /// Get the current global effect chain name (for UI matching)
     public var globalEffectName: String {
-        clipProvider?()?.effectChain.name ?? "None"
+        compositionProvider?()?.effectChain.name ?? "None"
     }
 
     /// Get the current global effect chain (for editing)
     public var globalEffectChain: EffectChain {
-        clipProvider?()?.effectChain ?? EffectChain()
+        compositionProvider?()?.effectChain ?? EffectChain()
     }
 
     /// Set global effect from an effect chain - the chain handles instantiation internally
@@ -392,7 +414,7 @@ public final class EffectManager {
     /// Re-apply active effects using fresh instances from the session.
     /// Called when effects config changes to apply parameter updates immediately.
     public func reapplyActiveEffects() {
-        guard let clip = clipProvider?() else { return }
+        guard let composition = compositionProvider?() else { return }
 
         // Get the chain list from session (required) - use thread-safe snapshot
         guard let session = session else {
@@ -402,7 +424,7 @@ public final class EffectManager {
         let availableChains = session.chainsSnapshot
 
         // Re-apply global effect by name from stored chain
-        let currentName = clip.effectChain.name
+        let currentName = composition.effectChain.name
         if let freshChain = availableChains.first(where: { $0.name == currentName }) {
             // Replace with fresh chain - it will re-instantiate effects on next apply()
             globalEffectChainSetter?(freshChain.clone())
@@ -410,7 +432,7 @@ public final class EffectManager {
         }
 
         // Re-apply per-layer effects by name from stored chains
-        for (index, layer) in clip.layers.enumerated() {
+        for (index, layer) in composition.layers.enumerated() {
             let currentLayerName = layer.effectChain.name
             if let freshChain = availableChains.first(where: { $0.name == currentLayerName }) {
                 sourceEffectChainSetter?(index, freshChain.clone())
@@ -421,16 +443,16 @@ public final class EffectManager {
         onEffectChanged?()
     }
 
-    // MARK: - Per-Layer Effects (reads from hypnogram layers)
+    // MARK: - Per-Layer Effects (reads from composition layers)
 
     /// Get the source effect chain name (for UI matching)
     public func sourceEffectName(for sourceIndex: Int) -> String {
-        guard let clip = clipProvider?(),
+        guard let composition = compositionProvider?(),
               sourceIndex >= 0,
-              sourceIndex < clip.layers.count else {
+              sourceIndex < composition.layers.count else {
             return "None"
         }
-        return clip.layers[sourceIndex].effectChain.name ?? "None"
+        return composition.layers[sourceIndex].effectChain.name ?? "None"
     }
 
     /// Set source effect from a chain - the chain handles instantiation internally
@@ -468,12 +490,12 @@ public final class EffectManager {
 
     /// Get a source's effect chain (for editing)
     public func sourceEffectChain(for sourceIndex: Int) -> EffectChain? {
-        guard let clip = clipProvider?(),
+        guard let composition = compositionProvider?(),
               sourceIndex >= 0,
-              sourceIndex < clip.layers.count else {
+              sourceIndex < composition.layers.count else {
             return nil
         }
-        return clip.layers[sourceIndex].effectChain
+        return composition.layers[sourceIndex].effectChain
     }
 
     // MARK: - Unified Layer API (layer -1 = global, 0+ = source)
@@ -578,14 +600,14 @@ public final class EffectManager {
             return image
         }
 
-        guard let clip = clipProvider?(), clip.effectChain.hasEnabledEffects else {
+        guard let composition = compositionProvider?(), composition.effectChain.hasEnabledEffects else {
             // Even if no effect, still update buffer for future use
             frameBuffer.addFrame(image, at: context.time)
             return image
         }
 
         // Apply all effects in the chain
-        let result = clip.effectChain.apply(to: image, context: &context)
+        let result = composition.effectChain.apply(to: image, context: &context)
 
         // Update frame buffer with processed result so temporal effects see prior effects
         frameBuffer.addFrame(result, at: context.time)
@@ -595,13 +617,13 @@ public final class EffectManager {
 
     /// Apply per-layer effects to a single layer image (before compositing)
     public func applyToSource(sourceIndex: Int, context: inout RenderContext, image: CIImage) -> CIImage {
-        guard let clip = clipProvider?(),
+        guard let composition = compositionProvider?(),
               sourceIndex >= 0,
-              sourceIndex < clip.layers.count else {
+              sourceIndex < composition.layers.count else {
             return image
         }
 
-        let effectChain = clip.layers[sourceIndex].effectChain
+        let effectChain = composition.layers[sourceIndex].effectChain
         guard effectChain.hasEnabledEffects else { return image }
 
         // Mark which source is being processed so effects can branch if they want.
@@ -617,9 +639,9 @@ public final class EffectManager {
 
         // Reset all effects that have internal state (e.g. IFrameCompressEffect, text overlays)
         // Important: Do this BEFORE the recipe clears effects, because effects may be preserved
-        if let clip = clipProvider?() {
-            clip.effectChain.reset()
-            for layer in clip.layers {
+        if let composition = compositionProvider?() {
+            composition.effectChain.reset()
+            for layer in composition.layers {
                 layer.effectChain.reset()
             }
         }
@@ -663,12 +685,12 @@ public final class EffectManager {
             return BlendMode.sourceOver
         }
         // Read from the recipe (single source of truth)
-        guard let clip = clipProvider?(),
+        guard let composition = compositionProvider?(),
               sourceIndex >= 0,
-              sourceIndex < clip.layers.count else {
+              sourceIndex < composition.layers.count else {
             return BlendMode.defaultMontage
         }
-        return clip.layers[sourceIndex].blendMode ?? BlendMode.defaultMontage
+        return composition.layers[sourceIndex].blendMode ?? BlendMode.defaultMontage
     }
 
     public func setBlendMode(_ mode: String, for sourceIndex: Int, silent: Bool = false) {

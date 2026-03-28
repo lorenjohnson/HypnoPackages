@@ -48,10 +48,10 @@ final class SourceLoader {
 
     // MARK: - Loading
 
-    /// Load a source, return error if it fails (never crashes)
-    /// Uses caching to avoid reloading the same source multiple times
-    func load(source: HypnogramLayer) async -> Result<LoadedSource, RenderError> {
-        let file = source.mediaClip.file
+    /// Load a layer, return an error if it fails (never crashes).
+    /// Uses caching to avoid reloading the same media multiple times.
+    func load(layer: Layer) async -> Result<LoadedSource, RenderError> {
+        let file = layer.mediaClip.file
         let cacheKey = file.id.uuidString
 
         // Check cache first
@@ -63,9 +63,9 @@ final class SourceLoader {
         let result: Result<LoadedSource, RenderError>
         switch file.mediaKind {
         case .image:
-            result = await loadImageSource(source: source)
+            result = await loadImageSource(layer: layer)
         case .video:
-            result = await loadVideoSource(source: source)
+            result = await loadVideoSource(layer: layer)
         }
 
         // Cache successful loads
@@ -80,8 +80,8 @@ final class SourceLoader {
     
     // MARK: - Video Loading
 
-    private func loadVideoSource(source: HypnogramLayer) async -> Result<LoadedSource, RenderError> {
-        let file = source.mediaClip.file
+    private func loadVideoSource(layer: Layer) async -> Result<LoadedSource, RenderError> {
+        let file = layer.mediaClip.file
 
         // Get AVAsset - either from URL or external source via hooks
         let asset: AVAsset
@@ -134,8 +134,8 @@ final class SourceLoader {
 
     // MARK: - Image Loading
 
-    private func loadImageSource(source: HypnogramLayer) async -> Result<LoadedSource, RenderError> {
-        let file = source.mediaClip.file
+    private func loadImageSource(layer: Layer) async -> Result<LoadedSource, RenderError> {
+        let file = layer.mediaClip.file
 
         // Get CIImage - either from URL or external source via hooks
         let ciImage: CIImage?
@@ -169,7 +169,7 @@ final class SourceLoader {
             asset: dummyAsset,
             videoTrack: nil,
             audioTrack: nil,
-            duration: source.mediaClip.duration,
+            duration: layer.mediaClip.duration,
             naturalSize: CGSize(width: extent.width, height: extent.height),
             transform: .identity,  // CIImage orientation already applied
             isStillImage: true,

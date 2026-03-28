@@ -1,18 +1,18 @@
 //
-//  HypnogramLayer.swift
+//  Layer.swift
 //  Hypnograph
 //
-//  Core, mode-agnostic models for media sources and hypnogram composition.
+//  Core, mode-agnostic models for media clips inside a composition.
 //
 
 import Foundation
 import CoreGraphics
 
-// MARK: - Hypnogram core models
+// MARK: - Layer
 
-/// One source of a hypnogram: clip + transforms + effects + blend mode.
-/// Transforms are user-applied (rotation, scale, etc.) - metadata transforms are computed at runtime.
-public struct HypnogramLayer: Codable {
+/// One layer of a composition: media clip + transforms + effects + blend mode.
+/// Transforms are user-applied (rotation, scale, etc.); metadata transforms are computed at runtime.
+public struct Layer: Codable {
     public var mediaClip: MediaClip
     /// User-applied transforms (rotation, scale, translation). Applied after metadata orientation correction.
     public var transforms: [CGAffineTransform]
@@ -22,14 +22,13 @@ public struct HypnogramLayer: Codable {
     /// Per-layer audio mute flag. When true, this layer's audio is excluded from composition mixing.
     public var isMuted: Bool
 
-    /// The effect chain for this source - contains definitions and handles instantiation/application.
-    /// Use effectChain.apply() to apply effects. Always non-nil (can be empty chain).
+    /// The effect chain for this layer. Always non-nil, even when empty.
     public var effectChain: EffectChain
 
     private enum CodingKeys: String, CodingKey {
         case mediaClip, transforms, blendMode, opacity, isMuted, effectChain
 
-        // Legacy keys (Phase 1–3 schema)
+        // Legacy keys (Phase 1-3 schema)
         case clip
     }
 
@@ -54,8 +53,7 @@ public struct HypnogramLayer: Codable {
         if let decoded = try container.decodeIfPresent(MediaClip.self, forKey: .mediaClip) {
             mediaClip = decoded
         } else {
-            // Temporary migration support (Phase 4, Option A):
-            // Prior schema stored MediaClip under the `clip` key.
+            // Legacy schema stored MediaClip under the `clip` key.
             mediaClip = try container.decode(MediaClip.self, forKey: .clip)
         }
         let codableTransforms = try container.decodeIfPresent([CodableCGAffineTransform].self, forKey: .transforms) ?? []
@@ -76,3 +74,6 @@ public struct HypnogramLayer: Codable {
         try container.encode(effectChain, forKey: .effectChain)
     }
 }
+
+@available(*, deprecated, renamed: "Layer")
+public typealias HypnogramLayer = Layer

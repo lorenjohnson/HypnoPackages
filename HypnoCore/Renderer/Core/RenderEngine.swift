@@ -82,17 +82,17 @@ public final class RenderEngine {
 
     /// Build a player item for preview or isolated playback
     /// - Parameters:
-    ///   - clip: The clip to build
+    ///   - composition: The composition to build
     ///   - config: Render configuration
     ///   - effectManager: The EffectManager to use. If nil, uses global effects.
     public func makePlayerItem(
-        clip: Hypnogram,
+        composition: Composition,
         config: Config,
         effectManager: EffectManager? = nil
     ) async -> Result<AVPlayerItem, RenderError> {
 
         let buildResult = await compositionBuilder.build(
-            clip: clip,
+            composition: composition,
             outputSize: config.outputSize,
             frameRate: config.frameRate,
             enableEffects: config.enableEffects,
@@ -121,27 +121,36 @@ public final class RenderEngine {
 
         return .success(playerItem)
     }
+
+    @available(*, deprecated, renamed: "makePlayerItem(composition:config:effectManager:)")
+    public func makePlayerItem(
+        clip: Composition,
+        config: Config,
+        effectManager: EffectManager? = nil
+    ) async -> Result<AVPlayerItem, RenderError> {
+        await makePlayerItem(composition: clip, config: config, effectManager: effectManager)
+    }
     
     // MARK: - Export
 
     /// Export to file
     public func export(
-        clip: Hypnogram,
+        composition: Composition,
         outputURL: URL,
         config: Config
     ) async -> Result<URL, RenderError> {
 
         print("🎬 RenderEngine.export: Starting export to \(outputURL.lastPathComponent)...")
 
-        // Create isolated copy of clip with fresh effect state for export
+        // Create an isolated copy of the composition with fresh effect state for export.
         // This prevents stateful effects (like TextOverlayEffect) from sharing state with preview
-        let exportClip = clip.copyForExport()
-        let exportManager = EffectManager.forExport(clip: exportClip)
+        let exportComposition = composition.copyForExport()
+        let exportManager = EffectManager.forExport(composition: exportComposition)
 
         // Build composition with the export manager
         let builder = CompositionBuilder()
         let buildResult = await builder.build(
-            clip: exportClip,
+            composition: exportComposition,
             outputSize: config.outputSize,
             frameRate: config.frameRate,
             enableEffects: config.enableEffects,
@@ -242,6 +251,15 @@ public final class RenderEngine {
         }
     }
 
+    @available(*, deprecated, renamed: "export(composition:outputURL:config:)")
+    public func export(
+        clip: Composition,
+        outputURL: URL,
+        config: Config
+    ) async -> Result<URL, RenderError> {
+        await export(composition: clip, outputURL: outputURL, config: config)
+    }
+
     // MARK: - Export Queue
 
     public final class ExportQueue {
@@ -252,7 +270,7 @@ public final class RenderEngine {
         public init() {}
 
         public func enqueue(
-            clip: Hypnogram,
+            composition: Composition,
             outputFolder: URL,
             outputSize: CGSize,
             frameRate: Int = 30,
@@ -326,7 +344,7 @@ public final class RenderEngine {
 
                     let engine = RenderEngine()
                     return await engine.export(
-                        clip: clip,
+                        composition: composition,
                         outputURL: outputURL,
                         config: config
                     )
@@ -360,6 +378,29 @@ public final class RenderEngine {
                     }
                 }
             }
+        }
+
+        @available(*, deprecated, renamed: "enqueue(composition:outputFolder:outputSize:frameRate:enableEffects:sourceFraming:notifyExternalDestinationHooks:completion:)")
+        public func enqueue(
+            clip: Composition,
+            outputFolder: URL,
+            outputSize: CGSize,
+            frameRate: Int = 30,
+            enableEffects: Bool = true,
+            sourceFraming: SourceFraming = .fill,
+            notifyExternalDestinationHooks: Bool = true,
+            completion: ((Result<URL, RenderError>) -> Void)? = nil
+        ) {
+            enqueue(
+                composition: clip,
+                outputFolder: outputFolder,
+                outputSize: outputSize,
+                frameRate: frameRate,
+                enableEffects: enableEffects,
+                sourceFraming: sourceFraming,
+                notifyExternalDestinationHooks: notifyExternalDestinationHooks,
+                completion: completion
+            )
         }
     }
 }
