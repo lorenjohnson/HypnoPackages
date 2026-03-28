@@ -3,7 +3,7 @@
 Shared Swift packages used by:
 
 - [Hypnograph](https://github.com/lorenjohnson/Hypnograph)
-- [Divine](https://github.com/lorenjohnson/Divine.git) *(planned repository; URL reserved)*
+- [Divine](https://github.com/lorenjohnson/Divine.git)
 
 This repository is the common foundation for rendering, effects, media integration, and shared UI primitives used across both apps.
 
