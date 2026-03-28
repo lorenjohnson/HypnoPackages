@@ -21,7 +21,8 @@ public struct Hypnogram: Codable {
     public var createdAt: Date
 
     private enum CodingKeys: String, CodingKey {
-        case compositions = "hypnograms"
+        case compositions
+        case legacyHypnograms = "hypnograms"
         case snapshot, createdAt
 
         // Legacy keys (Phase 1-3 schema)
@@ -77,8 +78,16 @@ public struct Hypnogram: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        // Transitional canonical format still encodes this array under `hypnograms`.
+        // Canonical format: `compositions: [...]`
         if let decoded = try container.decodeIfPresent([Composition].self, forKey: .compositions) {
+            compositions = decoded
+            snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
+            createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+            return
+        }
+
+        // Prior renamed format: `hypnograms: [...]`
+        if let decoded = try container.decodeIfPresent([Composition].self, forKey: .legacyHypnograms) {
             compositions = decoded
             snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
             createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()

@@ -31,7 +31,7 @@ struct EffectsTests {
         #expect(manager.usesFrameBuffer)
     }
 
-    @Test func hypnogramCodableRoundTripUsesLegacyTopLevelKey() throws {
+    @Test func hypnogramCodableRoundTripUsesCanonicalTopLevelKey() throws {
         let duration = CMTime(seconds: 3, preferredTimescale: 600)
         let file = MediaFile(source: .url(URL(fileURLWithPath: "/tmp/recipe.mov")), mediaKind: .video, duration: duration)
         let mediaClip = MediaClip(file: file, startTime: .zero, duration: duration)
@@ -44,8 +44,8 @@ struct EffectsTests {
         let decoded = try JSONDecoder().decode(Hypnogram.self, from: data)
         let root = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
-        #expect(root["hypnograms"] != nil)
-        #expect(root["compositions"] == nil)
+        #expect(root["compositions"] != nil)
+        #expect(root["hypnograms"] == nil)
         #expect(decoded.compositions.count == 1)
         #expect(decoded.compositions[0].layers.count == 1)
         #expect(decoded.compositions[0].targetDuration.seconds == hypnogram.compositions[0].targetDuration.seconds)
@@ -58,6 +58,35 @@ struct EffectsTests {
         #expect(decodedTransform.d == transform.d)
         #expect(decodedTransform.tx == transform.tx)
         #expect(decodedTransform.ty == transform.ty)
+    }
+
+    @Test func hypnogramDecodesLegacyHypnogramsPayload() throws {
+        let duration = CMTime(seconds: 2, preferredTimescale: 600)
+        let layer = Layer(
+            mediaClip: MediaClip(
+                file: MediaFile(
+                    source: .url(URL(fileURLWithPath: "/tmp/legacy-hypnograms.mov")),
+                    mediaKind: .video,
+                    duration: duration
+                ),
+                startTime: .zero,
+                duration: duration
+            )
+        )
+        let composition = Composition(layers: [layer], targetDuration: duration, playRate: 0.6)
+        let compositionJSON = try JSONEncoder().encode(composition)
+        let compositionObject = try #require(JSONSerialization.jsonObject(with: compositionJSON) as? [String: Any])
+        let payload: [String: Any] = [
+            "hypnograms": [compositionObject],
+            "snapshot": "legacy-hypnograms"
+        ]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+
+        let decoded = try JSONDecoder().decode(Hypnogram.self, from: data)
+
+        #expect(decoded.snapshot == "legacy-hypnograms")
+        #expect(decoded.compositions.count == 1)
+        #expect(decoded.compositions[0].playRate == 0.6)
     }
 
     @Test func hypnogramDecodesLegacyClipsPayload() throws {
@@ -87,6 +116,40 @@ struct EffectsTests {
         #expect(decoded.snapshot == "legacy-clips")
         #expect(decoded.compositions.count == 1)
         #expect(decoded.compositions[0].playRate == 0.75)
+    }
+
+    @Test func hypnogramDecodesLegacySingleCompositionSourcesPayload() throws {
+        let duration = CMTime(seconds: 4, preferredTimescale: 600)
+        let layer = Layer(
+            mediaClip: MediaClip(
+                file: MediaFile(
+                    source: .url(URL(fileURLWithPath: "/tmp/legacy-single-source.mov")),
+                    mediaKind: .video,
+                    duration: duration
+                ),
+                startTime: .zero,
+                duration: duration
+            )
+        )
+        let layerJSON = try JSONEncoder().encode(layer)
+        let layerObject = try #require(JSONSerialization.jsonObject(with: layerJSON) as? [String: Any])
+        var legacyLayerObject = layerObject
+        legacyLayerObject["clip"] = legacyLayerObject.removeValue(forKey: "mediaClip")
+
+        let payload: [String: Any] = [
+            "sources": [legacyLayerObject],
+            "targetDuration": ["seconds": duration.seconds],
+            "playRate": 0.5,
+            "snapshot": "legacy-single"
+        ]
+        let data = try JSONSerialization.data(withJSONObject: payload)
+
+        let decoded = try JSONDecoder().decode(Hypnogram.self, from: data)
+
+        #expect(decoded.snapshot == "legacy-single")
+        #expect(decoded.compositions.count == 1)
+        #expect(decoded.compositions[0].layers.count == 1)
+        #expect(decoded.compositions[0].playRate == 0.5)
     }
 
     @Test func compositionDecodesLegacySourcesAndLayerClipPayload() throws {
