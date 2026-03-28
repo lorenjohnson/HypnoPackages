@@ -74,6 +74,3 @@ public struct Layer: Codable {
         try container.encode(effectChain, forKey: .effectChain)
     }
 }
-
-@available(*, deprecated, renamed: "Layer")
-public typealias HypnogramLayer = Layer

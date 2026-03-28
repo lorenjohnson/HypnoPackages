@@ -66,15 +66,6 @@ public struct Hypnogram: Codable {
         )
     }
 
-    @available(*, deprecated, renamed: "init(compositions:snapshot:createdAt:)")
-    public init(
-        hypnograms: [Composition],
-        snapshot: String? = nil,
-        createdAt: Date = Date()
-    ) {
-        self.init(compositions: hypnograms, snapshot: snapshot, createdAt: createdAt)
-    }
-
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
@@ -143,13 +134,4 @@ public struct Hypnogram: Codable {
             compositions[index].ensureEffectChainNames()
         }
     }
-
-    @available(*, deprecated, renamed: "compositions")
-    public var hypnograms: [Composition] {
-        get { compositions }
-        set { compositions = newValue }
-    }
 }
-
-@available(*, deprecated, renamed: "Hypnogram")
-public typealias HypnographSession = Hypnogram
