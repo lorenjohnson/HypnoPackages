@@ -391,6 +391,15 @@ public final class EffectManager {
         updateEffectParameter(for: layer, effectDefIndex: effectDefIndex, key: "_enabled", value: .bool(enabled))
     }
 
+    /// Toggle chain enabled state in the recipe without touching per-effect enabled flags.
+    public func setChainEnabled(for layer: Int, enabled: Bool) {
+        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+        var params = chain.params ?? [:]
+        params["_enabled"] = .bool(enabled)
+        chain.params = params
+        setEffectWorkingCopy(chain, for: layer)
+    }
+
     /// Randomize all parameters for an effect in the recipe.
     public func randomizeEffect(for layer: Int, effectDefIndex: Int) {
         guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }

@@ -49,6 +49,24 @@ public struct Composition: Codable {
         self.createdAt = createdAt
     }
 
+    public static func effectiveDuration(for layers: [Layer], fallback: CMTime) -> CMTime {
+        guard let longestLayerSeconds = layers.map(\.mediaClip.duration.seconds).max() else {
+            return fallback
+        }
+
+        let clampedSeconds = max(0.1, longestLayerSeconds)
+        return CMTime(seconds: clampedSeconds, preferredTimescale: 600)
+    }
+
+    public var effectiveDuration: CMTime {
+        Self.effectiveDuration(for: layers, fallback: targetDuration)
+    }
+
+    public mutating func syncTargetDurationToLayers() {
+        guard !layers.isEmpty else { return }
+        targetDuration = effectiveDuration
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
@@ -86,7 +104,7 @@ public struct Composition: Codable {
         return Composition(
             id: id,
             layers: copiedLayers,
-            targetDuration: targetDuration,
+            targetDuration: effectiveDuration,
             playRate: playRate,
             effectChain: effectChain.clone(),
             createdAt: createdAt

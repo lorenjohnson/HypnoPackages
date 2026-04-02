@@ -108,9 +108,14 @@ public final class EffectChain: Codable, Equatable {
     /// Whether this chain has any effects
     public var isEmpty: Bool { effects.isEmpty }
 
+    /// Whether this chain itself is enabled (independent of per-effect enabled flags)
+    public var isEnabled: Bool {
+        params?["_enabled"]?.boolValue ?? true
+    }
+
     /// Whether this chain has any enabled effects
     public var hasEnabledEffects: Bool {
-        effects.contains { $0.isEnabled }
+        isEnabled && effects.contains { $0.isEnabled }
     }
 
     /// Maximum lookback required by any effect in this chain.

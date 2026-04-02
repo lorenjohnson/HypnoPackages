@@ -57,7 +57,7 @@ final class CompositionBuilder {
 
         return await buildMontage(
             composition: composition,
-            targetDuration: composition.targetDuration,
+            targetDuration: composition.effectiveDuration,
             outputSize: outputSize,
             frameRate: frameRate,
             enableEffects: enableEffects,
