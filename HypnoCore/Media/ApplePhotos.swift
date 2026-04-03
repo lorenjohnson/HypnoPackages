@@ -14,6 +14,31 @@ import AVFoundation
 public final class ApplePhotos {
     public static let shared = ApplePhotos()
 
+    public struct TransferEvent: Sendable {
+        public enum Phase: Sendable, Equatable {
+            case downloading(progress: Double)
+            case completed
+            case failed
+        }
+
+        public let requestID: String
+        public let localIdentifier: String
+        public let mediaLabel: String
+        public let phase: Phase
+
+        public init(
+            requestID: String,
+            localIdentifier: String,
+            mediaLabel: String,
+            phase: Phase
+        ) {
+            self.requestID = requestID
+            self.localIdentifier = localIdentifier
+            self.mediaLabel = mediaLabel
+            self.phase = phase
+        }
+    }
+
     // MARK: - Authorization
 
     public enum AuthorizationStatus {
@@ -34,6 +59,10 @@ public final class ApplePhotos {
 
     /// Current authorization status (cached, call checkAuthorization() to refresh)
     public private(set) var status: AuthorizationStatus = .notDetermined
+
+    /// Optional hook apps can use to observe real iCloud-backed transfer progress.
+    /// This only fires when PhotoKit reports download activity or terminal completion/failure.
+    public var onTransferEvent: (@Sendable (TransferEvent) -> Void)?
 
     /// In-memory cache of hidden asset UUIDs (loaded from disk on init)
     private(set) var cachedHiddenUUIDs: Set<String> = []
@@ -300,12 +329,31 @@ public final class ApplePhotos {
         guard asset.mediaType == .video else { return nil }
 
         return await withCheckedContinuation { continuation in
+            let requestID = UUID().uuidString
             let options = PHVideoRequestOptions()
             options.version = .current
             options.deliveryMode = .highQualityFormat
             options.isNetworkAccessAllowed = true
+            options.progressHandler = { [weak self] progress, _, _, _ in
+                self?.onTransferEvent?(
+                    TransferEvent(
+                        requestID: requestID,
+                        localIdentifier: asset.localIdentifier,
+                        mediaLabel: "Apple Photos Video",
+                        phase: .downloading(progress: min(max(progress, 0), 1))
+                    )
+                )
+            }
 
             PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
+                self.onTransferEvent?(
+                    TransferEvent(
+                        requestID: requestID,
+                        localIdentifier: asset.localIdentifier,
+                        mediaLabel: "Apple Photos Video",
+                        phase: avAsset == nil ? .failed : .completed
+                    )
+                )
                 continuation.resume(returning: avAsset)
             }
         }
@@ -319,27 +367,62 @@ public final class ApplePhotos {
         guard asset.mediaType == .image else { return nil }
 
         return await withCheckedContinuation { continuation in
+            let requestID = UUID().uuidString
             let options = PHImageRequestOptions()
             options.version = .current
             options.deliveryMode = .highQualityFormat
             options.isNetworkAccessAllowed = true
             options.isSynchronous = false
+            options.progressHandler = { [weak self] progress, _, _, _ in
+                self?.onTransferEvent?(
+                    TransferEvent(
+                        requestID: requestID,
+                        localIdentifier: asset.localIdentifier,
+                        mediaLabel: "Apple Photos Image",
+                        phase: .downloading(progress: min(max(progress, 0), 1))
+                    )
+                )
+            }
 
             // Request full-size image data
             PHImageManager.default().requestImageDataAndOrientation(for: asset, options: options) { data, _, orientation, _ in
                 guard let data = data else {
+                    self.onTransferEvent?(
+                        TransferEvent(
+                            requestID: requestID,
+                            localIdentifier: asset.localIdentifier,
+                            mediaLabel: "Apple Photos Image",
+                            phase: .failed
+                        )
+                    )
                     continuation.resume(returning: nil)
                     return
                 }
 
                 // Create CIImage from data
                 guard let ciImage = CIImage(data: data) else {
+                    self.onTransferEvent?(
+                        TransferEvent(
+                            requestID: requestID,
+                            localIdentifier: asset.localIdentifier,
+                            mediaLabel: "Apple Photos Image",
+                            phase: .failed
+                        )
+                    )
                     continuation.resume(returning: nil)
                     return
                 }
 
                 // Apply orientation correction using CGImagePropertyOrientation
                 let oriented = ciImage.oriented(orientation)
+                self.onTransferEvent?(
+                    TransferEvent(
+                        requestID: requestID,
+                        localIdentifier: asset.localIdentifier,
+                        mediaLabel: "Apple Photos Image",
+                        phase: .completed
+                    )
+                )
                 continuation.resume(returning: oriented)
             }
         }
