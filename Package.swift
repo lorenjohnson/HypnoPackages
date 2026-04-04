@@ -17,6 +17,7 @@ let package = Package(
             resources: [
                 .process("Renderer/Effects/Library/effects-default.json"),
                 .process("Renderer/Effects/Library/effects-default-old.json"),
+                .copy("Renderer/Effects/Library/BundledLUTs"),
                 .copy("Renderer/Effects/RuntimeAssets"),
                 .process("Renderer/Display/Passthrough.metal"),
                 .process("Renderer/Display/YUVConversion.metal"),

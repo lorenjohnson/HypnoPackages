@@ -1,326 +1,1257 @@
 {
-  "effectChains": [
+  "effectChains" : [
     {
-      "effects": [
+      "effects" : [
         {
-          "params": {
-            "brightness": 0,
-            "colorSpace": "rgb",
-            "contrast": 0,
-            "hueShift": 0,
-            "invert": false,
-            "opacity": 1,
-            "saturation": 0
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.06758415699005127,
+            "colorSpace" : "rgb",
+            "colorizeAmount" : 0,
+            "colorizeHue" : 0,
+            "contrast" : 0.21625685691833496,
+            "hueShift" : -0.7705180644989014,
+            "invert" : true,
+            "opacity" : 1,
+            "outputColorMode" : "lab",
+            "saturation" : 0.9222739934921265
           },
-          "type": "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+          "type" : "BasicEffect"
         },
         {
-          "params": {
-            "intensity": 1,
-            "lutFile": "NW-1"
+          "name" : "LUT",
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 0.6447525024414062,
+            "lutFile" : "IWLTBAP Psychedelia LUTs Pack (Free version)\/LUTs by IWLTBAP (CUBE)\/05 - Utility\/Canon C-Log to Rec.709\/U-CANON-C-LOG-V3-LTR"
           },
-          "type": "LUTEffect"
+          "type" : "LUTEffect"
+        },
+        {
+          "name" : "TemporalSmear",
+          "params" : {
+            "intensity" : 0.09327100924331777,
+            "lookback" : 30
+          },
+          "type" : "TemporalSmearEffect"
         }
       ],
-      "name": "Effect"
+      "id" : "A9659182-C2F8-49F3-A56D-A6173937F8F5",
+      "name" : "YUV Invert + NW LUT + Smear",
+      "sourceTemplateId" : "0EBC575F-864A-4F44-BE8E-8499670EE135"
     },
     {
-      "effects": [
+      "effects" : [
         {
-          "params": {
-            "animated": true,
-            "offsetAmount": 15
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.1288342235059039,
+            "colorSpace" : "yuv",
+            "colorizeAmount" : 0,
+            "colorizeHue" : 0,
+            "contrast" : 0.08879857719577222,
+            "hueShift" : 0.7918133802816902,
+            "invert" : true,
+            "opacity" : 1,
+            "saturation" : 0.48471874716643226
           },
-          "type": "RuntimeMetal:b3d67013-560d-498e-9cb8-c99714ed8b4a"
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "LUT",
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 1,
+            "lutFile" : "NW-9"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "name" : "TemporalSmear",
+          "params" : {
+            "intensity" : 0.09327100924331777,
+            "lookback" : 30
+          },
+          "type" : "TemporalSmearEffect"
         }
       ],
-      "name": "RGB Split"
+      "id" : "88490B3D-D5A3-4A11-A5B6-27412564ABF0",
+      "name" : "YUV Invert + Smear + NW LUT",
+      "sourceTemplateId" : "BE464228-C395-4A38-BCDC-4C8D5D85770E"
     },
     {
-      "effects": [
+      "effects" : [
         {
-          "name": "Basic",
-          "params": {
-            "brightness": -0.43695262738853524,
-            "colorSpace": "rgb",
-            "contrast": 0.17282046178343946,
-            "hueShift": 0.007762738853503093,
-            "invert": false,
-            "opacity": 1,
-            "saturation": -0.13380772292993626
+          "params" : {
+            "brightness" : -0.886890243902439,
+            "colorSpace" : "rgb",
+            "contrast" : 0.4526209677419355,
+            "hueShift" : 0,
+            "invert" : false,
+            "saturation" : 0
           },
-          "type": "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+          "type" : "BasicEffect"
         },
         {
-          "name": "RGBSplitSimple",
-          "params": {
-            "animated": true,
-            "offsetAmount": 12.624900477707008
+          "name" : "GhostBlur",
+          "params" : {
+            "_enabled" : true,
+            "blurAmount" : 65.61970715153114,
+            "intensity" : 0.8186587591240876,
+            "trailLength" : 6
           },
-          "type": "RuntimeMetal:b3d67013-560d-498e-9cb8-c99714ed8b4a"
-        },
-        {
-          "params": {
-            "antialiasing": true,
-            "changeIntervalFrames": 90,
-            "durationMultiplier": 1,
-            "fontSize": 32,
-            "fontSizeVariation": 0.30000001192092896,
-            "maxTextCount": 1,
-            "opacity": 0.800000011920929,
-            "strokeWidth": 2,
-            "textColor": "#FFFFFF"
-          },
-          "type": "TextOverlayEffect"
+          "type" : "GhostBlurEffect"
         }
       ],
-      "name": "RGB + Text"
+      "id" : "5548632E-8AFC-4BA4-9D21-C5EE26A3CA31",
+      "name" : "Ghosty",
+      "sourceTemplateId" : "EC4D731D-C37E-4C21-95AB-6E9D394F66AB"
     },
     {
-      "effects": [
+      "effects" : [
         {
-          "name": "Basic",
-          "params": {
-            "brightness": -0.1015625,
-            "colorSpace": "yuv",
-            "contrast": 0.9599680656934306,
-            "hueShift": -0.0020176610297659714,
-            "invert": false,
-            "opacity": 0.9202497718978102,
-            "saturation": -0.019616788321167866
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.15806007385253906,
+            "colorSpace" : "hsv",
+            "contrast" : 0.22222089767456055,
+            "hueShift" : 0.00030231475830078125,
+            "invert" : false,
+            "outputColorMode" : "hsv",
+            "saturation" : 0.4066457748413086
           },
-          "type": "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+          "type" : "BasicEffect"
         },
         {
-          "name": "TextOverlay",
-          "params": {
-            "_enabled": false,
-            "antialiasing": true,
-            "changeIntervalFrames": 90,
-            "durationMultiplier": 2,
-            "fontSize": 22.775650831216797,
-            "fontSizeVariation": 0.3593401073088301,
-            "maxTextCount": 1,
-            "opacity": 0.800000011920929,
-            "textColor": "#FFFFFF"
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.888636589050293,
+            "glitch" : 0.9258024096488953,
+            "iframeInterval" : 695,
+            "quality" : 0.10850104689598083,
+            "stickiness" : 0.6590186357498169
           },
-          "type": "TextOverlayEffect"
+          "type" : "IFrameCompressEffect"
         }
       ],
-      "name": "Glitch and Time"
+      "id" : "89F3EC63-5F76-41B1-AB78-D21238FBC20A",
+      "name" : "Pastel Invert Grainy",
+      "sourceTemplateId" : "3E082B6F-7D82-424C-AE79-14DE059C88D2"
     },
     {
-      "effects": [
+      "effects" : [
         {
-          "name": "Basic",
-          "params": {
-            "_enabled": true,
-            "brightness": 0.1288342235059039,
-            "colorSpace": "yuv",
-            "colorizeAmount": 0,
-            "colorizeHue": 0,
-            "contrast": -0.011167820653690264,
-            "hueShift": 0.7918133802816902,
-            "invert": true,
-            "opacity": 1,
-            "saturation": 0.48471874716643226
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.40701941287878785,
+            "colorSpace" : "rgb",
+            "contrast" : 0.28047975352112675,
+            "hueShift" : 0.6729991007194245,
+            "invert" : true,
+            "saturation" : -0.08937733208955223
           },
-          "type": "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+          "type" : "BasicEffect"
         },
         {
-          "name": "FrameDifference",
-          "params": {
-            "_enabled": false,
-            "boost": 2.1959806743421053,
-            "originalBlend": 0.6596422697368421
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 2.6653551283713695,
+            "originalBlend" : 0.28024507261410786,
+            "sensitivity" : 0.25748022562240663
           },
-          "type": "RuntimeMetal:f9cf5637-6799-492f-8bad-174394eb4e3a"
+          "type" : "FrameDifferenceEffect"
         },
         {
-          "name": "IFrameCompress",
-          "params": {
-            "_enabled": false,
-            "diffThreshold": 0.776693555485173,
-            "glitch": 0.6619294819078947,
-            "iframeInterval": 300,
-            "quality": 0.6855486739728134,
-            "stickiness": 0.8149398981339273
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.8794944286346436,
+            "glitch" : 0.6351004838943481,
+            "iframeInterval" : 867,
+            "quality" : 0.04316708445549011,
+            "stickiness" : 0.8332158327102661
           },
-          "type": "RuntimeMetal:aa57afa6-fe19-4d60-9ced-322ad47c6a60"
-        },
-        {
-          "name": "TextOverlay",
-          "params": {
-            "_enabled": true,
-            "antialiasing": true,
-            "changeIntervalFrames": 44,
-            "durationMultiplier": 1.7708232239906834,
-            "fontSize": 24.091625889794823,
-            "fontSizeVariation": 0.4020136443661972,
-            "maxTextCount": 1,
-            "opacity": 1,
-            "strokeWidth": 6.4604017811247045,
-            "textColor": "#FFFFFF",
-            "textDurationFrames": 105
-          },
-          "type": "TextOverlayEffect"
-        },
-        {
-          "name": "LUT",
-          "params": {
-            "_enabled": true,
-            "intensity": 1,
-            "lutFile": "NW-9"
-          },
-          "type": "LUTEffect"
+          "type" : "IFrameCompressEffect"
         }
       ],
-      "name": "YUV Invert + Text"
+      "id" : "5389082A-002C-4CB1-AD59-9ECF543EDB43",
+      "name" : "Mosh Dither (4k)"
     },
     {
-      "effects": [
+      "effects" : [
         {
-          "name": "Basic",
-          "params": {
-            "_enabled": true,
-            "brightness": -0.6783124366581121,
-            "colorSpace": "yuv",
-            "contrast": 0.6501661048792529,
-            "hueShift": -0.17486496913580252,
-            "invert": true,
-            "opacity": 0.834671145636208,
-            "saturation": 0.10594760693792371
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.19033370912075043,
+            "glitch" : 0.10581988096237183,
+            "iframeInterval" : 659,
+            "quality" : 0.14719686453928457,
+            "stickiness" : 0.9172616600990295
           },
-          "type": "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
-        },
-        {
-          "name": "GaussianBlurMetal",
-          "params": {
-            "_enabled": false,
-            "radius": 14.545641447368421
-          },
-          "type": "RuntimeMetal:34961bc5-451d-41f7-a773-078afb51a62b"
-        },
-        {
-          "name": "FrameDifference",
-          "params": {
-            "_enabled": true,
-            "intensity": 2.7613243811931447,
-            "originalBlend": 0.47031763980263147,
-            "sensitivity": 0.7944849917763158
-          },
-          "type": "RuntimeMetal:f9cf5637-6799-492f-8bad-174394eb4e3a"
-        },
-        {
-          "name": "TextOverlay",
-          "params": {
-            "_enabled": true,
-            "antialiasing": true,
-            "changeIntervalFrames": 90,
-            "durationMultiplier": 1.0218911840110003,
-            "fontSize": 32,
-            "fontSizeVariation": 0.30000001192092896,
-            "maxTextCount": 2,
-            "opacity": 0.46985035211267606,
-            "strokeWidth": 2,
-            "textColor": "#000000"
-          },
-          "type": "TextOverlayEffect"
+          "type" : "IFrameCompressEffect"
         }
       ],
-      "name": "Frame Diff + Text + Sat"
+      "id" : "831407E0-C76B-4442-8E2B-6BBB74771DC5",
+      "name" : "Mosh Halftoney",
+      "sourceTemplateId" : "43B45116-A1FB-4EF3-AFB2-1C6B410E620B"
     },
     {
-      "effects": [
+      "effects" : [
         {
-          "name": "TextOverlay",
-          "params": {
-            "_enabled": false,
-            "changeIntervalFrames": 55,
-            "durationMultiplier": 1.188720703125,
-            "fontSize": 34.75136861313869,
-            "fontSizeVariation": 0.09584198398356797,
-            "maxTextCount": 1,
-            "opacity": 0.800000011920929,
-            "textDurationFrames": 47
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.18388550311203322,
+            "colorSpace" : "yuv",
+            "contrast" : 0.9585710580912863,
+            "hueShift" : 0.633558091286307,
+            "invert" : true,
+            "saturation" : -0.9005932313278008
           },
-          "type": "TextOverlayEffect"
+          "type" : "BasicEffect"
         },
         {
-          "name": "GhostBlur",
-          "params": {
-            "_enabled": true,
-            "blurAmount": 65.61970715153114,
-            "intensity": 0.8186587591240876,
-            "trailLength": 6
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 2.6653551283713695,
+            "originalBlend" : 0.28024507261410786,
+            "sensitivity" : 0.25748022562240663
           },
-          "type": "RuntimeMetal:478863b3-72a1-443c-b341-dcd13dfa51c3"
+          "type" : "FrameDifferenceEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.8794944286346436,
+            "glitch" : 0.6351004838943481,
+            "iframeInterval" : 867,
+            "quality" : 0.04316708445549011,
+            "stickiness" : 0.8332158327102661
+          },
+          "type" : "IFrameCompressEffect"
         }
       ],
-      "name": "Text + Ghost"
+      "id" : "EA496831-A3C5-4D4A-9F56-7095DFE3FCF6",
+      "name" : "Mosh Dither",
+      "sourceTemplateId" : "EC01BBFA-C06F-4954-AE7F-194735AD1DA4"
     },
     {
-      "effects": [
+      "effects" : [
         {
-          "params": {
-            "brightness": 0,
-            "colorSpace": "rgb",
-            "contrast": 0,
-            "hueShift": 0,
-            "invert": false,
-            "opacity": 1,
-            "saturation": 0
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : -0.4756478658536586,
+            "colorSpace" : "lab",
+            "contrast" : 0.8887576219512194,
+            "hueShift" : -0.6881097560975609,
+            "invert" : false,
+            "opacity" : 1,
+            "saturation" : 0.33086890243902434
           },
-          "type": "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "brightness" : -0.8459252647625162,
+            "colorSpace" : "rgb",
+            "contrast" : 0.7113948170731708,
+            "hueShift" : -0.19030006418485235,
+            "invert" : false,
+            "saturation" : -0.8967757140564827
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "ColorEchoMetal",
+          "params" : {
+            "_enabled" : true,
+            "channelOffset" : 11,
+            "intensity" : 0.6628208893602853
+          },
+          "type" : "ColorEchoMetalEffect"
+        },
+        {
+          "name" : "IFrameCompress",
+          "params" : {
+            "diffThreshold" : 0.16306394430582039,
+            "glitch" : 0,
+            "iframeInterval" : 300,
+            "quality" : 1,
+            "stickiness" : 0.6787498729208379
+          },
+          "type" : "IFrameCompressEffect"
         }
       ],
-      "name": "OpFlow Test"
+      "id" : "681E6C15-0661-4AEA-9A77-AF92FF8E6AC9",
+      "name" : "Sepia Dark Echo",
+      "sourceTemplateId" : "21DC6B96-642B-4649-A558-879363E5C803"
     },
     {
-      "effects": [
+      "effects" : [
         {
-          "name": "Basic",
-          "params": {
-            "_enabled": true,
-            "brightness": 0.4510663898544558,
-            "colorSpace": "yuv",
-            "contrast": 1,
-            "hueShift": -0.36656057098765427,
-            "invert": true,
-            "opacity": 1,
-            "saturation": 0.16417272045424935
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.5323324548192772,
+            "colorSpace" : "yuv",
+            "contrast" : 0.7600715361445782,
+            "hueShift" : 0.4831042921686748,
+            "invert" : true,
+            "saturation" : -0.3168768825301205
           },
-          "type": "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+          "type" : "BasicEffect"
         },
         {
-          "name": "IFrameCompress",
-          "params": {
-            "diffThreshold": 0.16306394430582039,
-            "glitch": 0,
-            "iframeInterval": 300,
-            "quality": 0.1926046416972722,
-            "stickiness": 0.6787498729208379
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 3,
+            "originalBlend" : 0.2448465737951807,
+            "sensitivity" : 0.25748022562240663
           },
-          "type": "RuntimeMetal:aa57afa6-fe19-4d60-9ced-322ad47c6a60"
+          "type" : "FrameDifferenceEffect"
         },
         {
-          "name": "TextOverlay",
-          "params": {
-            "_enabled": true,
-            "antialiasing": true,
-            "changeIntervalFrames": 90,
-            "durationMultiplier": 2,
-            "fontSize": 17.16711956521739,
-            "fontSizeVariation": 0.30000001192092896,
-            "maxTextCount": 1,
-            "opacity": 0.800000011920929,
-            "textColor": "#FFFFFF"
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.8794944286346436,
+            "glitch" : 0.6351004838943481,
+            "iframeInterval" : 867,
+            "quality" : 0.04316708445549011,
+            "stickiness" : 0.8332158327102661
           },
-          "type": "TextOverlayEffect"
+          "type" : "IFrameCompressEffect"
         }
       ],
-      "name": "Dec 28: Set 1"
+      "id" : "0BD5EF28-D79A-4422-9EDF-FA0970D2AF3A",
+      "name" : "Mosh Dither (1)"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.18388550311203322,
+            "colorSpace" : "rgb",
+            "contrast" : 0.9585710580912863,
+            "hueShift" : 0.633558091286307,
+            "invert" : false,
+            "saturation" : -0.9005932313278008
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 2.6653551283713695,
+            "originalBlend" : 0.28024507261410786,
+            "sensitivity" : 0.25748022562240663
+          },
+          "type" : "FrameDifferenceEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.8794944286346436,
+            "glitch" : 0.6351004838943481,
+            "iframeInterval" : 867,
+            "quality" : 0.04316708445549011,
+            "stickiness" : 0.8332158327102661
+          },
+          "type" : "IFrameCompressEffect"
+        }
+      ],
+      "id" : "24A27687-8DAF-4E73-98AD-BFD7A13002CB",
+      "name" : "Mosh Dither (mostly BW)",
+      "sourceTemplateId" : "E97BF7BC-FAFD-47FD-BEAE-B31CBDFBC3C6"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 1,
+            "lutFile" : "Monochrome\/MONOCHROME_FILM_03"
+          },
+          "type" : "LUTEffect"
+        }
+      ],
+      "id" : "8A7748E2-0584-4447-811A-0CC91BF9CA7E",
+      "name" : "Mellow BW"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : false
+          },
+          "type" : "HueWobbleEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : -0.8979561136071886,
+            "colorSpace" : "rgb",
+            "contrast" : 1,
+            "hueShift" : 0,
+            "invert" : true,
+            "saturation" : 1
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "blurAmount" : 24.08070181516708,
+            "intensity" : 0.2419865272591123,
+            "trailLength" : 14
+          },
+          "type" : "GhostBlurEffect"
+        },
+        {
+          "params" : {
+            "brightness" : 0.30941611842105265,
+            "colorSpace" : "rgb",
+            "contrast" : 1,
+            "hueShift" : 0,
+            "invert" : true,
+            "saturation" : -1
+          },
+          "type" : "BasicEffect"
+        }
+      ],
+      "id" : "842F3458-4E12-4833-A095-37F0FCF86525",
+      "name" : "Dark BW Ghost",
+      "sourceTemplateId" : "1F5D68FE-8D08-41C9-A1E0-5E419E3459B4"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "decayAmount" : 0.04833376556016598,
+            "levels" : 19.189607105809127
+          },
+          "type" : "RuntimeMetal:e620be07-a3c3-4466-be71-bb585c2e512c"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.27953189834024905,
+            "colorSpace" : "rgb",
+            "contrast" : 0.38329875518672196,
+            "hueShift" : 0,
+            "invert" : false,
+            "outputColorMode" : "rgb",
+            "saturation" : -1
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "ghosting" : 0.20000000298023224,
+            "jitterAmount" : 0.3199999928474426,
+            "lineNoise" : 0.2199999988079071,
+            "sparkle" : 0.1599999964237213
+          },
+          "type" : "RuntimeMetal:ad6d0d14-4bf6-405e-b027-68d1d22fd158"
+        },
+        {
+          "params" : {
+            "diffThreshold" : 0.13712304830551147,
+            "glitch" : 0.7006971836090088,
+            "iframeInterval" : 368,
+            "quality" : 0.04486327990889549,
+            "stickiness" : 0.8504400253295898
+          },
+          "type" : "RuntimeMetal:405bb175-64a9-41e3-a0a6-3423c39f9861"
+        }
+      ],
+      "id" : "864078AA-4BE9-42E0-B165-DA8B216C9479",
+      "name" : "Dot Matrix",
+      "params" : {
+        "_enabled" : true
+      }
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "decayAmount" : 0.04833376556016598,
+            "levels" : 16
+          },
+          "type" : "RuntimeMetal:e620be07-a3c3-4466-be71-bb585c2e512c"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.27953189834024905,
+            "colorSpace" : "rgb",
+            "contrast" : 0.38329875518672196,
+            "hueShift" : 0,
+            "invert" : false,
+            "outputColorMode" : "rgb",
+            "saturation" : -0.4302061721991701
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "ghosting" : 0.20000000298023224,
+            "jitterAmount" : 0.3199999928474426,
+            "lineNoise" : 0.2199999988079071,
+            "sparkle" : 0.1599999964237213
+          },
+          "type" : "RuntimeMetal:ad6d0d14-4bf6-405e-b027-68d1d22fd158"
+        },
+        {
+          "params" : {
+            "diffThreshold" : 0.13712304830551147,
+            "glitch" : 0.7006971836090088,
+            "iframeInterval" : 368,
+            "quality" : 0.04486327990889549,
+            "stickiness" : 0.8504400253295898
+          },
+          "type" : "RuntimeMetal:405bb175-64a9-41e3-a0a6-3423c39f9861"
+        }
+      ],
+      "id" : "37D73AC4-605D-4C78-A6B5-085D107DC8B5",
+      "name" : "Dot Matrix (Color)",
+      "params" : {
+        "_enabled" : true
+      }
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : -0.31235795454545456,
+            "colorSpace" : "rgb",
+            "contrast" : 1,
+            "hueShift" : 0,
+            "invert" : false,
+            "saturation" : -0.5448863636363637
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "intensity" : 1,
+            "lutFile" : "Rec709_Cinematic"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "params" : {
+            "diffThreshold" : 0.27014916006830214,
+            "glitch" : 0.8764204545454546,
+            "iframeInterval" : 499,
+            "quality" : 1,
+            "stickiness" : 0.9990000128746033
+          },
+          "type" : "IFrameCompressEffect"
+        }
+      ],
+      "id" : "8143D564-1CEF-42DD-A916-FD83A55CB8B4",
+      "name" : "Moshy Impressions",
+      "sourceTemplateId" : "111C6708-7E78-4A8F-8D02-4FC95C2D9EA0"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.5575875946969697,
+            "colorSpace" : "rgb",
+            "contrast" : 0.29065801056338025,
+            "hueShift" : 0.055867805755395405,
+            "invert" : true,
+            "saturation" : -0.06967659883720934
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 1,
+            "lutFile" : "Rec709_Cinematic"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.27014916006830214,
+            "glitch" : 0.8764204545454546,
+            "iframeInterval" : 499,
+            "quality" : 1,
+            "stickiness" : 0.9990000128746033
+          },
+          "type" : "IFrameCompressEffect"
+        }
+      ],
+      "id" : "C0FFB607-5B35-4F1B-AAC7-1761068FC999",
+      "name" : "Moshey Impressions (colorful)"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.5575875946969697,
+            "colorSpace" : "rgb",
+            "contrast" : 0.29065801056338025,
+            "hueShift" : 0.055867805755395405,
+            "invert" : true,
+            "saturation" : -0.6479127798507462
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 1,
+            "lutFile" : "Rec709_Cinematic"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.27014916006830214,
+            "glitch" : 0.8764204545454546,
+            "iframeInterval" : 499,
+            "quality" : 1,
+            "stickiness" : 0.9990000128746033
+          },
+          "type" : "IFrameCompressEffect"
+        }
+      ],
+      "id" : "1F1E69EB-25ED-47FC-A190-8487F5296A08",
+      "name" : "Moshey Impressions 2",
+      "sourceTemplateId" : "2FE2B888-EDBB-4A55-9989-37FFEFC261E2"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "intensity" : 1,
+            "lutFile" : "Classic Chrome"
+          },
+          "type" : "LUTEffect"
+        }
+      ],
+      "id" : "7376FD2E-43BB-4635-8FAA-D6CDA5C2CB6B",
+      "name" : "Classic Chrome LUT",
+      "sourceTemplateId" : "962584A7-0509-4846-B9C3-F5791391A961"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : -0.347360321969697,
+            "colorSpace" : "yuv",
+            "colorizeAmount" : 0,
+            "colorizeHue" : 0,
+            "contrast" : 0.08879857719577222,
+            "hueShift" : 0.7918133802816902,
+            "invert" : false,
+            "opacity" : 1,
+            "saturation" : -0.5362117565649112
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "LUT",
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 1,
+            "lutFile" : "NW-9"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "name" : "TemporalSmear",
+          "params" : {
+            "intensity" : 0.09327100924331777,
+            "lookback" : 30
+          },
+          "type" : "TemporalSmearEffect"
+        }
+      ],
+      "id" : "E90163C3-C152-4BAB-827A-FA2A1E1F82C9",
+      "name" : "Purple Blue Dream"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "brightness" : 0.017874053030302983,
+            "colorSpace" : "yuv",
+            "contrast" : -0.3849031690140845,
+            "hueShift" : -0.22234712230215825,
+            "invert" : true,
+            "saturation" : 0.5144006529850746
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.17705162939180255,
+            "glitch" : 1,
+            "iframeInterval" : 776,
+            "quality" : 0.22156093732424778,
+            "stickiness" : 0.9990000128746033
+          },
+          "type" : "IFrameCompressEffect"
+        },
+        {
+          "params" : {
+            "brightness" : -0.04817708333333337,
+            "colorSpace" : "yuv",
+            "contrast" : 1,
+            "hueShift" : 0.529732464028777,
+            "invert" : true,
+            "saturation" : 0.10482742537313428
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "blurAmount" : 3.3030873493975967,
+            "intensity" : 0.9082236842105263,
+            "trailLength" : 6
+          },
+          "type" : "GhostBlurEffect"
+        },
+        {
+          "params" : {
+            "intensity" : 1,
+            "lutFile" : "Classic Chrome"
+          },
+          "type" : "LUTEffect"
+        }
+      ],
+      "id" : "E5A96D54-77E0-4843-8507-2079688796A0",
+      "name" : "Overloaded Effect Chain"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.49898599036654145,
+            "colorSpace" : "rgb",
+            "contrast" : 0.9078455105633803,
+            "hueShift" : 0.633558091286307,
+            "invert" : true,
+            "outputColorMode" : "lab",
+            "saturation" : -0.3977378731343284
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 1.7587011255924172,
+            "originalBlend" : 0.5286787974683544,
+            "sensitivity" : 1
+          },
+          "type" : "FrameDifferenceEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : false,
+            "diffThreshold" : 0.18917854161054887,
+            "glitch" : 0.6351004838943481,
+            "iframeInterval" : 867,
+            "quality" : 1,
+            "stickiness" : 0.8332158327102661
+          },
+          "type" : "IFrameCompressEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : false,
+            "blurAmount" : 2.694402610441768,
+            "intensity" : 0.06381578947368421,
+            "trailLength" : 4
+          },
+          "type" : "RuntimeMetal:478863b3-72a1-443c-b341-dcd13dfa51c3"
+        },
+        {
+          "params" : {
+            "_enabled" : false,
+            "brightness" : -0.3284489033385094,
+            "colorSpace" : "rgb",
+            "contrast" : 0.6775,
+            "hueShift" : -0.13614241803278693,
+            "invert" : true,
+            "outputColorMode" : "yuv",
+            "saturation" : -0.5169604700854701
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        },
+        {
+          "params" : {
+            "_enabled" : false,
+            "intensity" : 1,
+            "lutFile" : "Kodak_2383_D60_Rec.709_2.4_IF_MY_ANY_LUT_IS_HELPFUL_PLEASE_ADD_ME_ON_IG__ashikulislam3251"
+          },
+          "type" : "LUTEffect"
+        }
+      ],
+      "id" : "6696653E-3778-492A-B0F2-F54A00669AC7",
+      "name" : "Overloaded 11",
+      "sourceTemplateId" : "D6751EB4-69CB-4E6F-915C-A6F8107438CE"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "animated" : false,
+            "offsetAmount" : 43.08816909790039
+          },
+          "type" : "RuntimeMetal:b3d67013-560d-498e-9cb8-c99714ed8b4a"
+        },
+        {
+          "name" : "IFrameCompress",
+          "params" : {
+            "diffThreshold" : 0.16306394430582039,
+            "glitch" : 0,
+            "iframeInterval" : 300,
+            "quality" : 0.08476027598630766,
+            "stickiness" : 0.5695976256286625
+          },
+          "type" : "RuntimeMetal:aa57afa6-fe19-4d60-9ced-322ad47c6a60"
+        },
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.40467538759689914,
+            "colorSpace" : "hsv",
+            "contrast" : -0.2669573643410853,
+            "hueShift" : -0.30844234496124034,
+            "invert" : true,
+            "opacity" : 1,
+            "outputColorMode" : "hsv",
+            "saturation" : 0.011052567829457294
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        }
+      ],
+      "id" : "ACB3068F-7098-4F9D-8630-9889FCDA72A3",
+      "name" : "Candy Tron",
+      "sourceTemplateId" : "2BFD6087-8F26-407B-8455-15B59136927A"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.10642505186721984,
+            "colorSpace" : "yuv",
+            "contrast" : 0,
+            "hueShift" : -0.14957209543568462,
+            "invert" : false,
+            "opacity" : 1,
+            "saturation" : -0.0217518153526971
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        },
+        {
+          "name" : "IFrameCompress",
+          "params" : {
+            "diffThreshold" : 0.16306394430582039,
+            "glitch" : 0,
+            "iframeInterval" : 300,
+            "quality" : 0.1926046416972722,
+            "stickiness" : 0.6787498729208379
+          },
+          "type" : "RuntimeMetal:aa57afa6-fe19-4d60-9ced-322ad47c6a60"
+        },
+        {
+          "name" : "TextOverlay",
+          "params" : {
+            "_enabled" : false,
+            "antialiasing" : true,
+            "changeIntervalFrames" : 90,
+            "durationMultiplier" : 2,
+            "fontSize" : 17.16711956521739,
+            "fontSizeVariation" : 0.30000001192092896,
+            "maxTextCount" : 1,
+            "opacity" : 0.800000011920929,
+            "textColor" : "#FFFFFF"
+          },
+          "type" : "TextOverlayEffect"
+        }
+      ],
+      "id" : "E5C7AC44-5C81-44C5-B066-D62191E2A607",
+      "name" : "Old Faded Photo",
+      "sourceTemplateId" : "E4473B0A-6B64-421D-8C08-044149A3E449"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : -0.006777108433734913,
+            "colorSpace" : "rgb",
+            "contrast" : 1,
+            "hueShift" : -0.48432793674698793,
+            "invert" : true,
+            "outputColorMode" : "lab",
+            "saturation" : 0.5919148489932886
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 2.6653551283713695,
+            "originalBlend" : 0.28024507261410786,
+            "sensitivity" : 0.25748022562240663
+          },
+          "type" : "FrameDifferenceEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "diffThreshold" : 0.18917854161054887,
+            "glitch" : 0.6351004838943481,
+            "iframeInterval" : 867,
+            "quality" : 0.04316708445549011,
+            "stickiness" : 0.8332158327102661
+          },
+          "type" : "IFrameCompressEffect"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "blurAmount" : 2.694402610441768,
+            "intensity" : 0.06381578947368421,
+            "trailLength" : 4
+          },
+          "type" : "RuntimeMetal:478863b3-72a1-443c-b341-dcd13dfa51c3"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "brightness" : -0.28201530612244896,
+            "colorSpace" : "rgb",
+            "contrast" : 0.3081760204081634,
+            "hueShift" : -0.4113328313253012,
+            "invert" : true,
+            "outputColorMode" : "yuv",
+            "saturation" : -0.5169604700854701
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        },
+        {
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 1,
+            "lutFile" : "Kodak_2383_D60_Rec.709_2.4_IF_MY_ANY_LUT_IS_HELPFUL_PLEASE_ADD_ME_ON_IG__ashikulislam3251"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "params" : {
+            "ghosting" : 0.20000000298023224,
+            "jitterAmount" : 0.3199999928474426,
+            "lineNoise" : 0.2199999988079071,
+            "sparkle" : 0.1599999964237213
+          },
+          "type" : "RuntimeMetal:ad6d0d14-4bf6-405e-b027-68d1d22fd158"
+        }
+      ],
+      "id" : "6FA9D10F-2164-4025-97D5-1F360D70087B",
+      "name" : "Overloaded 12",
+      "sourceTemplateId" : "BDF99CF3-3624-47AE-B27B-F28121DB3AFD"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.24036815068493156,
+            "colorSpace" : "rgb",
+            "colorizeAmount" : 0,
+            "colorizeHue" : 0,
+            "contrast" : 0.09048117154811708,
+            "hueShift" : -0.21559817596566522,
+            "invert" : true,
+            "opacity" : 1,
+            "outputColorMode" : "lab",
+            "saturation" : 0.9222739934921265
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "LUT",
+          "params" : {
+            "_enabled" : true,
+            "intensity" : 0.6447525024414062,
+            "lutFile" : "IWLTBAP Psychedelia LUTs Pack (Free version)\/LUTs by IWLTBAP (CUBE)\/05 - Utility\/Canon C-Log to Rec.709\/U-CANON-C-LOG-V3-LTR"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "name" : "TemporalSmear",
+          "params" : {
+            "intensity" : 0.09327100924331777,
+            "lookback" : 30
+          },
+          "type" : "TemporalSmearEffect"
+        }
+      ],
+      "id" : "96D8EEB0-0A83-49CA-AFAC-195BE0283EEC",
+      "name" : "Pastel Dream Machine"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : -0.4756478658536586,
+            "colorSpace" : "lab",
+            "contrast" : 0.8887576219512194,
+            "hueShift" : -0.6881097560975609,
+            "invert" : false,
+            "opacity" : 1,
+            "saturation" : 0.33086890243902434
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "params" : {
+            "brightness" : 0.22693900602409633,
+            "colorSpace" : "rgb",
+            "contrast" : 0.7113948170731708,
+            "hueShift" : -0.19030006418485235,
+            "invert" : false,
+            "saturation" : -0.8967757140564827
+          },
+          "type" : "BasicEffect"
+        },
+        {
+          "name" : "ColorEchoMetal",
+          "params" : {
+            "_enabled" : true,
+            "channelOffset" : 11,
+            "intensity" : 0.6628208893602853
+          },
+          "type" : "ColorEchoMetalEffect"
+        },
+        {
+          "name" : "IFrameCompress",
+          "params" : {
+            "diffThreshold" : 0.16306394430582039,
+            "glitch" : 0,
+            "iframeInterval" : 300,
+            "quality" : 1,
+            "stickiness" : 0.6787498729208379
+          },
+          "type" : "IFrameCompressEffect"
+        }
+      ],
+      "id" : "6F5B01AD-5D8E-4267-9AAB-67DBC808B5A8",
+      "name" : "Black and Purple"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "NTSC Simple (RetroArch Inspired)",
+          "params" : {
+            "cableType" : "composite",
+            "chromaBandwidth" : 0.52,
+            "chromaGain" : 1.35,
+            "dotCrawl" : 0.85,
+            "lumaBandwidth" : 2.1,
+            "palMode" : false,
+            "profileMode" : "auto",
+            "rfJitter" : 0.15
+          },
+          "type" : "RuntimeMetal:edc9ffdf-e2a2-46e1-8c4d-053c2177e0c3"
+        },
+        {
+          "name" : "Gaussian Blur",
+          "params" : {
+            "radius" : 1.6
+          },
+          "type" : "RuntimeMetal:34961bc5-451d-41f7-a773-078afb51a62b"
+        },
+        {
+          "name" : "I-Frame Compress",
+          "params" : {
+            "diffThreshold" : 0.22,
+            "glitch" : 0.05,
+            "iframeInterval" : 210,
+            "quality" : 0.72,
+            "stickiness" : 0.86
+          },
+          "type" : "RuntimeMetal:aa57afa6-fe19-4d60-9ced-322ad47c6a60"
+        },
+        {
+          "name" : "Basic",
+          "params" : {
+            "brightness" : -0.03,
+            "colorSpace" : "yuv",
+            "contrast" : -0.08,
+            "hueShift" : 0,
+            "invert" : false,
+            "outputColorMode" : "rgb",
+            "saturation" : -0.12
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        }
+      ],
+      "id" : "93D3D551-6F7C-4D80-8228-6B83794C4554",
+      "name" : "NTSC Analog Chain (Retro Inspired)"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "NTSC Simple (RetroArch Inspired)",
+          "params" : {
+            "cableType" : "composite",
+            "chromaBandwidth" : 0.5,
+            "chromaGain" : 1.28,
+            "dotCrawl" : 0.95,
+            "lumaBandwidth" : 2,
+            "palMode" : false,
+            "profileMode" : "auto",
+            "rfJitter" : 0.18
+          },
+          "type" : "RuntimeMetal:edc9ffdf-e2a2-46e1-8c4d-053c2177e0c3"
+        },
+        {
+          "name" : "NTSC Chroma Bleed (RetroArch Inspired)",
+          "params" : {
+            "bleedPixels" : 2.9,
+            "chromaPhase" : 0.34,
+            "chromaSoftness" : 0.72
+          },
+          "type" : "RuntimeMetal:ecea0e34-6c0b-4e40-a4e7-ca1383db6a10"
+        },
+        {
+          "name" : "NTSC RF Instability (RetroArch Inspired)",
+          "params" : {
+            "ghosting" : 0.23,
+            "jitterAmount" : 0.34,
+            "lineNoise" : 0.26,
+            "sparkle" : 0.14
+          },
+          "type" : "RuntimeMetal:ad6d0d14-4bf6-405e-b027-68d1d22fd158"
+        },
+        {
+          "name" : "Basic",
+          "params" : {
+            "brightness" : -0.02,
+            "colorSpace" : "yuv",
+            "contrast" : -0.06,
+            "hueShift" : 0,
+            "invert" : false,
+            "outputColorMode" : "rgb",
+            "saturation" : -0.1
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        }
+      ],
+      "id" : "FAEF2DED-BA2D-4BF9-98B5-5A50901BE28B",
+      "name" : "NTSC Analog Chain v2 (Multi-Pass RA)"
+    },
+    {
+      "effects" : [
+        {
+          "name" : "NTSC Simple (RetroArch Inspired)",
+          "params" : {
+            "_enabled" : true,
+            "cableType" : "rf",
+            "chromaBandwidth" : 2.1888177710843375,
+            "chromaGain" : 1.28,
+            "dotCrawl" : 0.95,
+            "lumaBandwidth" : 4,
+            "palMode" : false,
+            "profileMode" : "mdPs1",
+            "rfJitter" : 0.18
+          },
+          "type" : "RuntimeMetal:edc9ffdf-e2a2-46e1-8c4d-053c2177e0c3"
+        },
+        {
+          "name" : "NTSC Chroma Bleed (RetroArch Inspired)",
+          "params" : {
+            "_enabled" : true,
+            "bleedPixels" : 2.9,
+            "chromaPhase" : 0.34,
+            "chromaSoftness" : 0.72
+          },
+          "type" : "RuntimeMetal:ecea0e34-6c0b-4e40-a4e7-ca1383db6a10"
+        },
+        {
+          "name" : "NTSC RF Instability (RetroArch Inspired)",
+          "params" : {
+            "_enabled" : true,
+            "ghosting" : 0.23,
+            "jitterAmount" : 0.34,
+            "lineNoise" : 0.26,
+            "sparkle" : 0.14
+          },
+          "type" : "RuntimeMetal:ad6d0d14-4bf6-405e-b027-68d1d22fd158"
+        },
+        {
+          "name" : "Basic",
+          "params" : {
+            "_enabled" : true,
+            "brightness" : 0.06425702811244971,
+            "colorSpace" : "yuv",
+            "contrast" : 0.4832141064257027,
+            "hueShift" : 0,
+            "invert" : false,
+            "outputColorMode" : "rgb",
+            "saturation" : -0.3095193273092369
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        }
+      ],
+      "id" : "AB412D7C-774C-43F4-A750-F9B5C2DB1C99",
+      "name" : "NTSC Analog Chain v2 - Nice!",
+      "sourceTemplateId" : "347A8450-46B8-4966-A2FA-40CE03E6669B"
+    },
+    {
+      "effects" : [
+        {
+          "params" : {
+            "intensity" : 1,
+            "lutFile" : "Panasonic\/V-Log to V-709"
+          },
+          "type" : "LUTEffect"
+        },
+        {
+          "params" : {
+            "brightness" : 0.21814437984496116,
+            "colorSpace" : "rgb",
+            "contrast" : 0.2506661821705427,
+            "hueShift" : 0,
+            "invert" : false,
+            "outputColorMode" : "rgb",
+            "saturation" : 0
+          },
+          "type" : "RuntimeMetal:945ed25c-c2df-4170-a720-00755847b2d0"
+        }
+      ],
+      "id" : "6CFD1946-847D-424D-BA55-8F9AA2126862",
+      "name" : "VLog LUT"
     }
   ],
-  "version": 1
+  "version" : 1
 }

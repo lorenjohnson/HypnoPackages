@@ -3,7 +3,8 @@
 //  Hypnograph
 //
 //  Apply a 3D LUT (Look Up Table) from a .cube file using CIColorCube filter.
-//  LUT files should be placed in ~/Library/Application Support/<app>/luts/
+//  LUT files can live in ~/Library/Application Support/<app>/luts/
+//  or be bundled with HypnoCore defaults under BundledLUTs/
 //
 
 import CoreImage
@@ -66,16 +67,8 @@ final class LUTEffect: Effect {
             return
         }
 
-        let lutsDir = HypnoCoreConfig.shared.lutsDirectory
-        var lutURL = lutsDir.appendingPathComponent(lutFileName)
-
-        // Add .cube extension if not present
-        if lutURL.pathExtension.lowercased() != "cube" {
-            lutURL = lutsDir.appendingPathComponent("\(lutFileName).cube")
-        }
-
-        guard FileManager.default.fileExists(atPath: lutURL.path) else {
-            print("⚠️ LUTEffect: LUT file not found at \(lutURL.path)")
+        guard let lutURL = resolveLUTURL(named: lutFileName) else {
+            print("⚠️ LUTEffect: LUT file not found for \(lutFileName)")
             return
         }
 
@@ -85,6 +78,27 @@ final class LUTEffect: Effect {
         } catch {
             print("⚠️ LUTEffect: Failed to read LUT file: \(error)")
         }
+    }
+
+    private func resolveLUTURL(named lutFileName: String) -> URL? {
+        let fm = FileManager.default
+        let relativePath = lutFileName.hasSuffix(".cube") ? lutFileName : "\(lutFileName).cube"
+
+        let userURL = HypnoCoreConfig.shared.lutsDirectory.appendingPathComponent(relativePath)
+        if fm.fileExists(atPath: userURL.path) {
+            return userURL
+        }
+
+        guard let bundledRoot = HypnoCoreBundle.bundle.resourceURL?.appendingPathComponent("BundledLUTs", isDirectory: true) else {
+            return nil
+        }
+
+        let bundledURL = bundledRoot.appendingPathComponent(relativePath)
+        if fm.fileExists(atPath: bundledURL.path) {
+            return bundledURL
+        }
+
+        return nil
     }
 
     private func parseCubeFile(_ content: String) {
