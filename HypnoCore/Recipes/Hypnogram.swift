@@ -17,13 +17,13 @@ public struct Hypnogram: Codable {
     /// Optional selected composition index for multi-composition documents.
     public var currentCompositionIndex: Int?
 
-    /// Last-used display and playback context for this working document.
-    public var lastAspectRatio: AspectRatio?
-    public var lastPlayerResolution: OutputResolution?
-    public var lastOutputResolution: OutputResolution?
-    public var lastSourceFraming: SourceFraming?
-    public var lastTransitionStyle: TransitionRenderer.TransitionType?
-    public var lastTransitionDuration: Double?
+    /// Optional display and playback context for this working document.
+    public var aspectRatio: AspectRatio?
+    public var playerResolution: OutputResolution?
+    public var outputResolution: OutputResolution?
+    public var sourceFraming: SourceFraming?
+    public var transitionStyle: TransitionRenderer.TransitionType?
+    public var transitionDuration: Double?
 
     /// Optional document-level poster image.
     public var snapshot: String?
@@ -42,8 +42,8 @@ public struct Hypnogram: Codable {
         case compositions
         case legacyHypnograms = "hypnograms"
         case snapshot, createdAt, currentCompositionIndex
-        case lastAspectRatio, lastPlayerResolution, lastOutputResolution, lastSourceFraming
-        case lastTransitionStyle, lastTransitionDuration
+        case aspectRatio, playerResolution, outputResolution, sourceFraming
+        case transitionStyle, transitionDuration
 
         // Legacy keys (Phase 1-3 schema)
         case clips
@@ -55,23 +55,23 @@ public struct Hypnogram: Codable {
     public init(
         compositions: [Composition],
         currentCompositionIndex: Int? = nil,
-        lastAspectRatio: AspectRatio? = nil,
-        lastPlayerResolution: OutputResolution? = nil,
-        lastOutputResolution: OutputResolution? = nil,
-        lastSourceFraming: SourceFraming? = nil,
-        lastTransitionStyle: TransitionRenderer.TransitionType? = nil,
-        lastTransitionDuration: Double? = nil,
+        aspectRatio: AspectRatio? = nil,
+        playerResolution: OutputResolution? = nil,
+        outputResolution: OutputResolution? = nil,
+        sourceFraming: SourceFraming? = nil,
+        transitionStyle: TransitionRenderer.TransitionType? = nil,
+        transitionDuration: Double? = nil,
         snapshot: String? = nil,
         createdAt: Date = Date()
     ) {
         self.compositions = compositions
         self.currentCompositionIndex = currentCompositionIndex
-        self.lastAspectRatio = lastAspectRatio
-        self.lastPlayerResolution = lastPlayerResolution
-        self.lastOutputResolution = lastOutputResolution
-        self.lastSourceFraming = lastSourceFraming
-        self.lastTransitionStyle = lastTransitionStyle
-        self.lastTransitionDuration = lastTransitionDuration
+        self.aspectRatio = aspectRatio
+        self.playerResolution = playerResolution
+        self.outputResolution = outputResolution
+        self.sourceFraming = sourceFraming
+        self.transitionStyle = transitionStyle
+        self.transitionDuration = transitionDuration
         self.snapshot = snapshot
         self.createdAt = createdAt
     }
@@ -96,12 +96,12 @@ public struct Hypnogram: Codable {
                 )
             ],
             currentCompositionIndex: 0,
-            lastAspectRatio: nil,
-            lastPlayerResolution: nil,
-            lastOutputResolution: nil,
-            lastSourceFraming: nil,
-            lastTransitionStyle: nil,
-            lastTransitionDuration: nil,
+            aspectRatio: nil,
+            playerResolution: nil,
+            outputResolution: nil,
+            sourceFraming: nil,
+            transitionStyle: nil,
+            transitionDuration: nil,
             snapshot: snapshot,
             createdAt: createdAt
         )
@@ -114,12 +114,12 @@ public struct Hypnogram: Codable {
         if let decoded = try container.decodeIfPresent([Composition].self, forKey: .compositions) {
             compositions = decoded
             currentCompositionIndex = try container.decodeIfPresent(Int.self, forKey: .currentCompositionIndex)
-            lastAspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .lastAspectRatio)
-            lastPlayerResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .lastPlayerResolution)
-            lastOutputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .lastOutputResolution)
-            lastSourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .lastSourceFraming)
-            lastTransitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .lastTransitionStyle)
-            lastTransitionDuration = try container.decodeIfPresent(Double.self, forKey: .lastTransitionDuration)
+            aspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .aspectRatio)
+            playerResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .playerResolution)
+            outputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .outputResolution)
+            sourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .sourceFraming)
+            transitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .transitionStyle)
+            transitionDuration = try container.decodeIfPresent(Double.self, forKey: .transitionDuration)
             snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
             createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
             return
@@ -129,12 +129,12 @@ public struct Hypnogram: Codable {
         if let decoded = try container.decodeIfPresent([Composition].self, forKey: .legacyHypnograms) {
             compositions = decoded
             currentCompositionIndex = try container.decodeIfPresent(Int.self, forKey: .currentCompositionIndex)
-            lastAspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .lastAspectRatio)
-            lastPlayerResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .lastPlayerResolution)
-            lastOutputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .lastOutputResolution)
-            lastSourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .lastSourceFraming)
-            lastTransitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .lastTransitionStyle)
-            lastTransitionDuration = try container.decodeIfPresent(Double.self, forKey: .lastTransitionDuration)
+            aspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .aspectRatio)
+            playerResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .playerResolution)
+            outputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .outputResolution)
+            sourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .sourceFraming)
+            transitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .transitionStyle)
+            transitionDuration = try container.decodeIfPresent(Double.self, forKey: .transitionDuration)
             snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
             createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
             return
@@ -144,12 +144,12 @@ public struct Hypnogram: Codable {
         if let decoded = try container.decodeIfPresent([Composition].self, forKey: .clips) {
             compositions = decoded
             currentCompositionIndex = try container.decodeIfPresent(Int.self, forKey: .currentCompositionIndex)
-            lastAspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .lastAspectRatio)
-            lastPlayerResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .lastPlayerResolution)
-            lastOutputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .lastOutputResolution)
-            lastSourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .lastSourceFraming)
-            lastTransitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .lastTransitionStyle)
-            lastTransitionDuration = try container.decodeIfPresent(Double.self, forKey: .lastTransitionDuration)
+            aspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .aspectRatio)
+            playerResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .playerResolution)
+            outputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .outputResolution)
+            sourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .sourceFraming)
+            transitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .transitionStyle)
+            transitionDuration = try container.decodeIfPresent(Double.self, forKey: .transitionDuration)
             snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
             createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
             return
@@ -160,12 +160,12 @@ public struct Hypnogram: Codable {
         let targetDuration = try container.decode(CodableCMTime.self, forKey: .targetDuration).cmTime
         let playRate = try container.decodeIfPresent(Float.self, forKey: .playRate) ?? 1.0
         let effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
-        lastAspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .lastAspectRatio)
-        lastPlayerResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .lastPlayerResolution)
-        lastOutputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .lastOutputResolution)
-        lastSourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .lastSourceFraming)
-        lastTransitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .lastTransitionStyle)
-        lastTransitionDuration = try container.decodeIfPresent(Double.self, forKey: .lastTransitionDuration)
+        aspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .aspectRatio)
+        playerResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .playerResolution)
+        outputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .outputResolution)
+        sourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .sourceFraming)
+        transitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .transitionStyle)
+        transitionDuration = try container.decodeIfPresent(Double.self, forKey: .transitionDuration)
         snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
         currentCompositionIndex = 0
@@ -185,12 +185,12 @@ public struct Hypnogram: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(compositions, forKey: .compositions)
         try container.encodeIfPresent(currentCompositionIndex, forKey: .currentCompositionIndex)
-        try container.encodeIfPresent(lastAspectRatio, forKey: .lastAspectRatio)
-        try container.encodeIfPresent(lastPlayerResolution, forKey: .lastPlayerResolution)
-        try container.encodeIfPresent(lastOutputResolution, forKey: .lastOutputResolution)
-        try container.encodeIfPresent(lastSourceFraming, forKey: .lastSourceFraming)
-        try container.encodeIfPresent(lastTransitionStyle, forKey: .lastTransitionStyle)
-        try container.encodeIfPresent(lastTransitionDuration, forKey: .lastTransitionDuration)
+        try container.encodeIfPresent(aspectRatio, forKey: .aspectRatio)
+        try container.encodeIfPresent(playerResolution, forKey: .playerResolution)
+        try container.encodeIfPresent(outputResolution, forKey: .outputResolution)
+        try container.encodeIfPresent(sourceFraming, forKey: .sourceFraming)
+        try container.encodeIfPresent(transitionStyle, forKey: .transitionStyle)
+        try container.encodeIfPresent(transitionDuration, forKey: .transitionDuration)
         try container.encodeIfPresent(snapshot, forKey: .snapshot)
         try container.encode(createdAt, forKey: .createdAt)
     }
@@ -201,12 +201,12 @@ public struct Hypnogram: Codable {
         Hypnogram(
             compositions: compositions.map { $0.copyForExport() },
             currentCompositionIndex: currentCompositionIndex,
-            lastAspectRatio: lastAspectRatio,
-            lastPlayerResolution: lastPlayerResolution,
-            lastOutputResolution: lastOutputResolution,
-            lastSourceFraming: lastSourceFraming,
-            lastTransitionStyle: lastTransitionStyle,
-            lastTransitionDuration: lastTransitionDuration,
+            aspectRatio: aspectRatio,
+            playerResolution: playerResolution,
+            outputResolution: outputResolution,
+            sourceFraming: sourceFraming,
+            transitionStyle: transitionStyle,
+            transitionDuration: transitionDuration,
             snapshot: snapshot,
             createdAt: createdAt
         )

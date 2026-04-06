@@ -23,11 +23,17 @@ public struct Composition: Codable {
     /// The global effect chain for this composition.
     public var effectChain: EffectChain
 
+    /// Optional larger preview image for this composition (typically a JPEG base64 snapshot).
+    public var snapshot: String?
+
+    /// Optional lightweight preview image for list and timeline display.
+    public var thumbnail: String?
+
     /// When this composition was created.
     public var createdAt: Date
 
     private enum CodingKeys: String, CodingKey {
-        case id, layers, targetDuration, playRate, effectChain, createdAt
+        case id, layers, targetDuration, playRate, effectChain, snapshot, thumbnail, createdAt
 
         // Legacy keys (Phase 1-3 schema)
         case sources
@@ -39,6 +45,8 @@ public struct Composition: Codable {
         targetDuration: CMTime,
         playRate: Float = 1.0,
         effectChain: EffectChain? = nil,
+        snapshot: String? = nil,
+        thumbnail: String? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -46,6 +54,8 @@ public struct Composition: Codable {
         self.targetDuration = targetDuration
         self.playRate = playRate
         self.effectChain = effectChain ?? EffectChain()
+        self.snapshot = snapshot
+        self.thumbnail = thumbnail
         self.createdAt = createdAt
     }
 
@@ -79,6 +89,8 @@ public struct Composition: Codable {
         targetDuration = try container.decode(CodableCMTime.self, forKey: .targetDuration).cmTime
         playRate = try container.decodeIfPresent(Float.self, forKey: .playRate) ?? 1.0
         effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
+        snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
+        thumbnail = try container.decodeIfPresent(String.self, forKey: .thumbnail)
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
     }
 
@@ -89,6 +101,8 @@ public struct Composition: Codable {
         try container.encode(CodableCMTime(targetDuration), forKey: .targetDuration)
         try container.encode(playRate, forKey: .playRate)
         try container.encode(effectChain, forKey: .effectChain)
+        try container.encodeIfPresent(snapshot, forKey: .snapshot)
+        try container.encodeIfPresent(thumbnail, forKey: .thumbnail)
         try container.encode(createdAt, forKey: .createdAt)
     }
 
@@ -107,6 +121,8 @@ public struct Composition: Codable {
             targetDuration: effectiveDuration,
             playRate: playRate,
             effectChain: effectChain.clone(),
+            snapshot: snapshot,
+            thumbnail: thumbnail,
             createdAt: createdAt
         )
     }

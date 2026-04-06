@@ -103,6 +103,12 @@ public final class RendererView: MTKView {
     /// Callback for transition progress updates (0.0 to 1.0)
     public var onTransitionProgress: ((Float) -> Void)?
 
+    /// One-shot callback fired after the next non-empty frame is presented.
+    public var onNextFramePresented: (() -> Void)?
+
+    /// One-shot callback fired after the first presented frame that includes transition input.
+    public var onFirstTransitionFramePresented: (() -> Void)?
+
     /// If false, the view won't auto-swap sources and clear state when progress reaches 1.0.
     /// Useful for mirrored views that should follow an external controller.
     public var autoCompleteTransitions: Bool = true
@@ -386,10 +392,13 @@ public final class RendererView: MTKView {
 
         let outputTexture: MTLTexture?
 
+        let includesTransitionInput: Bool
+
         if let transition = activeTransition,
            let outgoing = primaryTexture ?? directTexture,
            let incoming = secondaryTexture {
             // Render transition
+            includesTransitionInput = true
             outputTexture = renderTransition(
                 outgoing: outgoing,
                 incoming: incoming,
@@ -400,16 +409,45 @@ public final class RendererView: MTKView {
             )
         } else {
             // Use primary texture or direct texture
+            includesTransitionInput = false
             outputTexture = primaryTexture ?? directTexture
         }
 
         // Render to screen
         renderToScreen(texture: outputTexture, commandBuffer: commandBuffer)
 
+        let nextFramePresented = outputTexture != nil ? onNextFramePresented : nil
+        if outputTexture != nil {
+            onNextFramePresented = nil
+        }
+
+        let firstTransitionFramePresented = (outputTexture != nil && includesTransitionInput)
+            ? onFirstTransitionFramePresented
+            : nil
+        if outputTexture != nil && includesTransitionInput {
+            onFirstTransitionFramePresented = nil
+        }
+
         if let transitionCompletion {
             commandBuffer.addCompletedHandler { _ in
                 DispatchQueue.main.async {
                     transitionCompletion()
+                }
+            }
+        }
+
+        if let nextFramePresented {
+            commandBuffer.addCompletedHandler { _ in
+                DispatchQueue.main.async {
+                    nextFramePresented()
+                }
+            }
+        }
+
+        if let firstTransitionFramePresented {
+            commandBuffer.addCompletedHandler { _ in
+                DispatchQueue.main.async {
+                    firstTransitionFramePresented()
                 }
             }
         }
