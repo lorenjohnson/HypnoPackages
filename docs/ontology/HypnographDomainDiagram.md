@@ -17,7 +17,7 @@ graph TD
 
   %% Recipe models (what to render)
   HypnogramLayer["HypnoCore.HypnogramLayer<br/>(LAYER: media slice + transforms + blend + effects)"]
-  Hypnogram["HypnoCore.Hypnogram<br/>(CLIP (sequence item): layers + global effects + duration)"]
+  Hypnogram["HypnoCore.Hypnogram<br/>(CLIP (sequence item): layers + composition effects + duration)"]
   HypnographSession["HypnoCore.HypnographSession<br/>(SESSION: ordered hypnograms + snapshot)"]
   EffectChain["HypnoCore.EffectChain"]
 
@@ -36,7 +36,7 @@ graph TD
   MediaClip -->|is the clip of| HypnogramLayer
   HypnogramLayer -->|per-layer| EffectChain
   Hypnogram -->|contains many| HypnogramLayer
-  Hypnogram -->|global| EffectChain
+  Hypnogram -->|composition| EffectChain
   HypnographSession -->|contains many| Hypnogram
 
   HypnogramLayer -->|loaded by| SourceLoader

@@ -14,7 +14,7 @@ import CryptoKit
 // MARK: - Core Types
 
 /// An effect chain containing 0-n effects applied in sequence.
-/// This is the top-level effect container stored on recipes (global or per-source).
+/// This is the top-level effect container stored on recipes (composition or per-source).
 ///
 /// The chain holds effect definitions (serializable blueprints) and lazily instantiates
 /// runtime Effect objects when apply() is called. Instantiated effects are cached for

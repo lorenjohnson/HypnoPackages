@@ -84,7 +84,7 @@ public final class RenderEngine {
     /// - Parameters:
     ///   - composition: The composition to build
     ///   - config: Render configuration
-    ///   - effectManager: The EffectManager to use. If nil, uses global effects.
+    ///   - effectManager: The EffectManager to use. If nil, uses composition effect chain
     public func makePlayerItem(
         composition: Composition,
         config: Config,

@@ -20,7 +20,7 @@ public struct Composition: Codable {
     /// Playback rate (1.0 = normal speed, 0.5 = half speed, 2.0 = double speed).
     public var playRate: Float
 
-    /// The global effect chain for this composition.
+    /// The effect chain for this composition.
     public var effectChain: EffectChain
 
     /// Optional larger preview image for this composition (typically a JPEG base64 snapshot).
@@ -130,7 +130,7 @@ public struct Composition: Codable {
     public mutating func ensureEffectChainNames() {
         if !effectChain.effects.isEmpty &&
             (effectChain.name == nil || effectChain.name?.isEmpty == true) {
-            effectChain.name = "Global (imported)"
+            effectChain.name = "Composition (imported)"
         }
 
         for index in layers.indices {

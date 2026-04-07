@@ -72,7 +72,7 @@ public final class EffectManager {
         manager.session = session
         manager.recentStore = recentStore
         manager.flashSoloIndex = flashSoloIndex
-        manager.isGlobalEffectSuspended = isGlobalEffectSuspended
+        manager.isCompositionEffectSuspended = isCompositionEffectSuspended
         manager.isNormalizationEnabled = isNormalizationEnabled
         manager._normalizationStrategy = _normalizationStrategy
         manager.compositionProvider = { frozenComposition }
@@ -90,11 +90,11 @@ public final class EffectManager {
         )
     }
 
-    /// Get the maximum lookback required by any effect (global or per-layer).
+    /// Get the maximum lookback required by any effect (composition or per-layer).
     public var maxRequiredLookback: Int {
         guard let composition = compositionProvider?() else { return 0 }
 
-        // Check global effect chain
+        // Check composition effect chain
         let globalMax = composition.effectChain.maxRequiredLookback
 
         // Check per-layer effect chains
@@ -125,10 +125,10 @@ public final class EffectManager {
         set { compositionProvider = newValue }
     }
 
-    /// Closure to set global effect chain on the recipe
-    public var globalEffectChainSetter: ((EffectChain) -> Void)?
+    /// Closure to set composition effect chain
+    public var compositionEffectChainSetter: ((EffectChain) -> Void)?
 
-    /// Closure to set per-source effect chain on the recipe
+    /// Closure to set per-source effect chain
     public var sourceEffectChainSetter: ((Int, EffectChain) -> Void)?
 
     /// Closure to set blend mode for a source
@@ -153,8 +153,8 @@ public final class EffectManager {
 
     // MARK: - Effect Suspend
 
-    /// When true, global effect chain is bypassed (e.g., while holding 0 or 1-9 key in Montage)
-    public var isGlobalEffectSuspended: Bool = false
+    /// When true, composition effect chain is bypassed (e.g., while holding 0 or 1-9 key in Montage)
+    public var isCompositionEffectSuspended: Bool = false
 
     // MARK: - Blend Normalization
 
@@ -252,22 +252,22 @@ public final class EffectManager {
         )
     }
 
-    // MARK: - Global Effects (reads from composition)
+    // MARK: - Composition Effect Chain
 
-    /// Get the current global effect chain name (for UI matching)
-    public var globalEffectName: String {
+    /// Get the current composition effect chain name (for UI matching)
+    public var compositionEffectName: String {
         compositionProvider?()?.effectChain.name ?? "None"
     }
 
-    /// Get the current global effect chain (for editing)
-    public var globalEffectChain: EffectChain {
+    /// Get the current composition effect chain (for editing)
+    public var compositionEffectChain: EffectChain {
         compositionProvider?()?.effectChain ?? EffectChain()
     }
 
-    /// Set global effect from an effect chain - the chain handles instantiation internally
+    /// Set composition effect chain - the chain handles instantiation internally
     /// Copies the chain so the recipe has its own instance (not shared with library)
-    public func setGlobalEffect(from chain: EffectChain) {
-        globalEffectChainSetter?(chain.clone())
+    public func setCompositionEffect(from chain: EffectChain) {
+        compositionEffectChainSetter?(chain.clone())
         onEffectChanged?()
     }
 
@@ -275,7 +275,7 @@ public final class EffectManager {
 
     /// Update an effect's parameter in the recipe's effect chain
     /// - Parameters:
-    ///   - layer: -1 for global, 0+ for source index
+    ///   - layer: -1 for composition, 0+ for source index
     ///   - effectDefIndex: index of the effect in the chain
     ///   - key: parameter key
     ///   - value: new parameter value
@@ -292,7 +292,7 @@ public final class EffectManager {
 
     /// Update a chain-level parameter (future: chain params like "strength")
     /// - Parameters:
-    ///   - layer: -1 for global, 0+ for source index
+    ///   - layer: -1 for composition, 0+ for source index
     ///   - key: parameter key
     ///   - value: new parameter value
     public func updateChainParameter(for layer: Int, key: String, value: AnyCodableValue) {
@@ -307,7 +307,7 @@ public final class EffectManager {
 
     /// Add an effect to the recipe's effect chain for a layer
     /// - Parameters:
-    ///   - layer: -1 for global, 0+ for source index
+    ///   - layer: -1 for composition, 0+ for source index
     ///   - effectType: the type of effect to add (e.g. "IFrameCompressEffect")
     public func addEffectToChain(for layer: Int, effectType: String) {
         guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
@@ -321,7 +321,7 @@ public final class EffectManager {
 
     /// Remove an effect from the recipe's effect chain for a layer
     /// - Parameters:
-    ///   - layer: -1 for global, 0+ for source index
+    ///   - layer: -1 for composition, 0+ for source index
     ///   - effectDefIndex: index of the effect to remove
     public func removeEffectFromChain(for layer: Int, effectDefIndex: Int) {
         guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
@@ -334,7 +334,7 @@ public final class EffectManager {
 
     /// Update the chain name in the recipe
     /// - Parameters:
-    ///   - layer: -1 for global, 0+ for source index
+    ///   - layer: -1 for composition, 0+ for source index
     ///   - name: new name for the chain
     public func updateChainName(for layer: Int, name: String) {
         guard let chain = effectChain(for: layer)?.clone() else { return }
@@ -351,7 +351,7 @@ public final class EffectManager {
 
     /// Reorder effects in the recipe's effect chain for a layer
     /// - Parameters:
-    ///   - layer: -1 for global, 0+ for source index
+    ///   - layer: -1 for composition, 0+ for source index
     ///   - fromIndex: source index
     ///   - toIndex: destination index
     public func reorderEffectsInChain(for layer: Int, fromIndex: Int, toIndex: Int) {
@@ -367,7 +367,7 @@ public final class EffectManager {
 
     /// Reset an effect's parameters to defaults in the recipe
     /// - Parameters:
-    ///   - layer: -1 for global, 0+ for source index
+    ///   - layer: -1 for composition, 0+ for source index
     ///   - effectDefIndex: index of the effect to reset
     public func resetEffectToDefaults(for layer: Int, effectDefIndex: Int) {
         guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
@@ -432,12 +432,12 @@ public final class EffectManager {
         }
         let availableChains = session.chainsSnapshot
 
-        // Re-apply global effect by name from stored chain
+        // Re-apply composition effect chain by name from stored chain
         let currentName = composition.effectChain.name
         if let freshChain = availableChains.first(where: { $0.name == currentName }) {
             // Replace with fresh chain - it will re-instantiate effects on next apply()
-            globalEffectChainSetter?(freshChain.clone())
-            print("🔄 Reapplied global effect: \(currentName ?? "unnamed")")
+            compositionEffectChainSetter?(freshChain.clone())
+            print("🔄 Reapplied composition effect: \(currentName ?? "unnamed")")
         }
 
         // Re-apply per-layer effects by name from stored chains
@@ -471,7 +471,7 @@ public final class EffectManager {
         onEffectChanged?()
     }
 
-    /// Clear effect for a layer (-1 = global, 0+ = source index)
+    /// Clear effect for a layer (-1 = composition, 0+ = source index)
     public func clearEffect(for layer: Int) {
         clearEffect(for: layer, captureToRecent: true)
     }
@@ -490,7 +490,7 @@ public final class EffectManager {
             captureChainToRecent(existing)
         }
         if layer == -1 {
-            globalEffectChainSetter?(EffectChain())
+            compositionEffectChainSetter?(EffectChain())
         } else {
             sourceEffectChainSetter?(layer, EffectChain())
         }
@@ -507,29 +507,29 @@ public final class EffectManager {
         return composition.layers[sourceIndex].effectChain
     }
 
-    // MARK: - Unified Layer API (layer -1 = global, 0+ = source)
+    // MARK: - Unified Layer API (layer -1 = composition, 0+ = source)
 
-    /// Get effect name for a layer (-1 = global, 0+ = source index)
+    /// Get effect name for a layer (-1 = composition, 0+ = source index)
     public func effectName(for layer: Int) -> String {
         if layer == -1 {
-            return globalEffectName
+            return compositionEffectName
         }
         return sourceEffectName(for: layer)
     }
 
-    /// Get effect chain for a layer (-1 = global, 0+ = source index)
+    /// Get effect chain for a layer (-1 = composition, 0+ = source index)
     public func effectChain(for layer: Int) -> EffectChain? {
         if layer == -1 {
-            return globalEffectChain
+            return compositionEffectChain
         }
         return sourceEffectChain(for: layer)
     }
 
-    /// Set effect from a chain for a layer (-1 = global, 0+ = source index)
+    /// Set effect from a chain for a layer (-1 = composition, 0+ = source index)
     /// This sets CURRENT (the recipe-owned working copy) to the provided chain.
     public func setEffect(from chain: EffectChain?, for layer: Int) {
         if layer == -1 {
-            setGlobalEffect(from: chain ?? EffectChain())
+            setCompositionEffect(from: chain ?? EffectChain())
         } else {
             setSourceEffect(from: chain ?? EffectChain(), for: layer)
         }
@@ -538,7 +538,7 @@ public final class EffectManager {
     /// Apply an already-owned working copy without an additional clone hop.
     private func setEffectWorkingCopy(_ chain: EffectChain, for layer: Int) {
         if layer == -1 {
-            globalEffectChainSetter?(chain)
+            compositionEffectChainSetter?(chain)
         } else {
             sourceEffectChainSetter?(layer, chain)
         }
@@ -567,7 +567,7 @@ public final class EffectManager {
         applyChainSnapshot(template, sourceTemplateId: template?.id, to: layer)
     }
 
-    /// Cycle effect for a layer (-1 = global, 0+ = source index)
+    /// Cycle effect for a layer (-1 = composition, 0+ = source index)
     /// direction: 1 = forward, -1 = backward
     public func cycleEffect(for layer: Int, direction: Int = 1) {
         // Clear frame buffer and reset frame counter so new effect starts fresh
@@ -598,48 +598,48 @@ public final class EffectManager {
 
     // MARK: - Application
 
-    /// Apply recipe effects to the final composed image
-    public func applyGlobal(to context: inout RenderContext, image: CIImage) -> CIImage {
-        // Global effect is not tied to a particular source.
-        context.sourceIndex = nil
+    // /// Apply recipe effects to the final composed image
+    // public func applyGlobal(to context: inout RenderContext, image: CIImage) -> CIImage {
+    //     // Composition effect is not tied to a particular source.
+    //     context.sourceIndex = nil
 
-        // Skip global effects during flash solo - show raw source
-        if flashSoloIndex != nil {
-            frameBuffer.addFrame(image, at: context.time)
-            return image
-        }
+    //     // Skip composition effect chain during flash solo - show raw source
+    //     if flashSoloIndex != nil {
+    //         frameBuffer.addFrame(image, at: context.time)
+    //         return image
+    //     }
 
-        guard let composition = compositionProvider?(), composition.effectChain.hasEnabledEffects else {
-            // Even if no effect, still update buffer for future use
-            frameBuffer.addFrame(image, at: context.time)
-            return image
-        }
+    //     guard let composition = compositionProvider?(), composition.effectChain.hasEnabledEffects else {
+    //         // Even if no effect, still update buffer for future use
+    //         frameBuffer.addFrame(image, at: context.time)
+    //         return image
+    //     }
 
-        // Apply all effects in the chain
-        let result = composition.effectChain.apply(to: image, context: &context)
+    //     // Apply all effects in the chain
+    //     let result = composition.effectChain.apply(to: image, context: &context)
 
-        // Update frame buffer with processed result so temporal effects see prior effects
-        frameBuffer.addFrame(result, at: context.time)
+    //     // Update frame buffer with processed result so temporal effects see prior effects
+    //     frameBuffer.addFrame(result, at: context.time)
 
-        return result
-    }
+    //     return result
+    // }
 
-    /// Apply per-layer effects to a single layer image (before compositing)
-    public func applyToSource(sourceIndex: Int, context: inout RenderContext, image: CIImage) -> CIImage {
-        guard let composition = compositionProvider?(),
-              sourceIndex >= 0,
-              sourceIndex < composition.layers.count else {
-            return image
-        }
+    // /// Apply per-layer effects to a single layer image (before compositing)
+    // public func applyToSource(sourceIndex: Int, context: inout RenderContext, image: CIImage) -> CIImage {
+    //     guard let composition = compositionProvider?(),
+    //           sourceIndex >= 0,
+    //           sourceIndex < composition.layers.count else {
+    //         return image
+    //     }
 
-        let effectChain = composition.layers[sourceIndex].effectChain
-        guard effectChain.hasEnabledEffects else { return image }
+    //     let effectChain = composition.layers[sourceIndex].effectChain
+    //     guard effectChain.hasEnabledEffects else { return image }
 
-        // Mark which source is being processed so effects can branch if they want.
-        context.sourceIndex = sourceIndex
+    //     // Mark which source is being processed so effects can branch if they want.
+    //     context.sourceIndex = sourceIndex
 
-        return effectChain.apply(to: image, context: &context)
-    }
+    //     return effectChain.apply(to: image, context: &context)
+    // }
 
     public func clearFrameBuffer() {
         print("🔄 EffectManager: clearFrameBuffer() - clearing \(frameBuffer.frameCount) frames")
@@ -737,7 +737,7 @@ public final class EffectManager {
         )
     }
 
-    /// Apply post-composition normalization (call after all layers blended, before global effects)
+    /// Apply post-composition normalization (call after all layers blended, before composition effect chain)
     public func applyNormalization(to image: CIImage) -> CIImage {
         let analysis = currentBlendAnalysis
         return normalizationStrategy.normalizeComposite(image, analysis: analysis)

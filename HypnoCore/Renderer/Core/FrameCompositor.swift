@@ -299,8 +299,8 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             finalImage = manager.applyNormalization(to: finalImage)
         }
 
-        // Apply global effects from the composition (unless suspended, e.g., holding 0 key).
-        if instruction.enableEffects, let manager = manager, !manager.isGlobalEffectSuspended {
+        // Apply composition effect chain (unless suspended, e.g., holding 0 key).
+        if instruction.enableEffects, let manager = manager, !manager.isCompositionEffectSuspended {
             let composition = manager.compositionProvider?()
             if let composition = composition {
                 var context = manager.createContext(

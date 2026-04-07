@@ -36,7 +36,7 @@ struct EffectsTests {
         let file = MediaFile(source: .url(URL(fileURLWithPath: "/tmp/recipe.mov")), mediaKind: .video, duration: duration)
         let mediaClip = MediaClip(file: file, startTime: .zero, duration: duration)
         let transform = CGAffineTransform(a: 1, b: 0.1, c: -0.1, d: 1, tx: 5, ty: -3)
-        let chain = EffectChain(name: "Global", effects: [EffectDefinition(type: "BasicEffect")])
+        let chain = EffectChain(name: "Composition", effects: [EffectDefinition(type: "BasicEffect")])
         let layer = Layer(mediaClip: mediaClip, transforms: [transform], blendMode: BlendMode.sourceOver, effectChain: chain)
         let hypnogram = Hypnogram(layers: [layer], targetDuration: duration, playRate: 0.8, effectChain: chain)
 
