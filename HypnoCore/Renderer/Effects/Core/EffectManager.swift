@@ -596,51 +596,6 @@ public final class EffectManager {
         applyTemplate(nextIndex >= 0 ? chains[nextIndex] : nil, to: layer)
     }
 
-    // MARK: - Application
-
-    // /// Apply recipe effects to the final composed image
-    // public func applyGlobal(to context: inout RenderContext, image: CIImage) -> CIImage {
-    //     // Composition effect is not tied to a particular source.
-    //     context.sourceIndex = nil
-
-    //     // Skip composition effect chain during flash solo - show raw source
-    //     if flashSoloIndex != nil {
-    //         frameBuffer.addFrame(image, at: context.time)
-    //         return image
-    //     }
-
-    //     guard let composition = compositionProvider?(), composition.effectChain.hasEnabledEffects else {
-    //         // Even if no effect, still update buffer for future use
-    //         frameBuffer.addFrame(image, at: context.time)
-    //         return image
-    //     }
-
-    //     // Apply all effects in the chain
-    //     let result = composition.effectChain.apply(to: image, context: &context)
-
-    //     // Update frame buffer with processed result so temporal effects see prior effects
-    //     frameBuffer.addFrame(result, at: context.time)
-
-    //     return result
-    // }
-
-    // /// Apply per-layer effects to a single layer image (before compositing)
-    // public func applyToSource(sourceIndex: Int, context: inout RenderContext, image: CIImage) -> CIImage {
-    //     guard let composition = compositionProvider?(),
-    //           sourceIndex >= 0,
-    //           sourceIndex < composition.layers.count else {
-    //         return image
-    //     }
-
-    //     let effectChain = composition.layers[sourceIndex].effectChain
-    //     guard effectChain.hasEnabledEffects else { return image }
-
-    //     // Mark which source is being processed so effects can branch if they want.
-    //     context.sourceIndex = sourceIndex
-
-    //     return effectChain.apply(to: image, context: &context)
-    // }
-
     public func clearFrameBuffer() {
         print("🔄 EffectManager: clearFrameBuffer() - clearing \(frameBuffer.frameCount) frames")
         frameBuffer.clear()
