@@ -18,6 +18,7 @@ import simd
         public enum TransitionType: String, CaseIterable, Codable {
             case none
             case crossfade
+            case fadeToBlack
             case blur
             case slideUp
             case slideLeft
@@ -27,6 +28,7 @@ import simd
                 switch self {
                 case .none: return "None"
                 case .crossfade: return "Crossfade"
+                case .fadeToBlack: return "Fade to Black"
                 case .blur: return "Blur"
                 case .slideUp: return "Slide Up"
                 case .slideLeft: return "Slide Left"
@@ -38,6 +40,7 @@ import simd
                 switch self {
                 case .none: return nil
                 case .crossfade: return "transitionCrossfade"
+                case .fadeToBlack: return "transitionFadeToBlack"
                 case .blur: return "transitionBlur"
                 case .slideUp: return "transitionSlideUp"
                 case .slideLeft: return "transitionSlideLeft"

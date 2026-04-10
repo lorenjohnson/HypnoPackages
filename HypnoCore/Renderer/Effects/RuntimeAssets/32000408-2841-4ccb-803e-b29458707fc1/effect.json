@@ -1,0 +1,27 @@
+{
+  "uuid": "32000408-2841-4ccb-803e-b29458707fc1",
+  "name": "Frame Jump",
+  "version": "1.0.0",
+  "legacyTypes": ["FrameJumpEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 120,
+  "usesPersistentState": false,
+  "parameters": {
+    "jumpFrames": { "type": "int", "default": 6, "min": 1.0, "max": 40.0 },
+    "frameIndex": { "type": "int", "default": 0, "min": 0.0, "max": 2147483647.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["jumpFrames", "frameIndex", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["frameIndex", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" },
+      { "argumentIndex": 1, "source": "historyFrame", "historyOffsetParameter": "jumpFrames", "historyOffsetScale": 1.0 },
+      { "argumentIndex": 2, "source": "historyFrame", "historyOffsetParameter": "jumpFrames", "historyOffsetScale": 2.0 },
+      { "argumentIndex": 3, "source": "historyFrame", "historyOffsetParameter": "jumpFrames", "historyOffsetScale": 3.0 }
+    ],
+    "outputTextureIndex": 4
+  }
+}

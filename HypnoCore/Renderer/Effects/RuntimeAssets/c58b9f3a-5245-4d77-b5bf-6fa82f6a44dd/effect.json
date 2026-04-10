@@ -1,0 +1,30 @@
+{
+  "uuid": "c58b9f3a-5245-4d77-b5bf-6fa82f6a44dd",
+  "name": "Temporal Jumble",
+  "version": "1.0.3",
+  "legacyTypes": ["TemporalJumbleEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 120,
+  "usesPersistentState": false,
+  "parameters": {
+    "holdLength": { "type": "int", "default": 5, "min": 1.0, "max": 24.0 },
+    "historySpan": { "type": "int", "default": 12, "min": 3.0, "max": 120.0 },
+    "avoidRepeats": { "type": "bool", "default": false },
+    "mixAmount": { "type": "float", "default": 1.0, "min": 0.0, "max": 1.0 },
+    "frameIndex": { "type": "int", "default": 0, "min": 0.0, "max": 2147483647.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["holdLength", "historySpan", "avoidRepeats", "mixAmount", "frameIndex", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["frameIndex", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" },
+      { "argumentIndex": 1, "source": "historyFrame", "historyOffsetParameter": "historySpan", "historyOffsetScale": 1.0 },
+      { "argumentIndex": 2, "source": "historyFrame", "historyOffsetParameter": "historySpan", "historyOffsetScale": 0.66 },
+      { "argumentIndex": 3, "source": "historyFrame", "historyOffsetParameter": "historySpan", "historyOffsetScale": 0.33 }
+    ],
+    "outputTextureIndex": 4
+  }
+}

@@ -538,17 +538,48 @@ public final class MediaLibrary {
         }
 
         // Shuffle once and walk the full candidate set so we do not fail early when
-        // the deck is nearly exhausted.
-        for entry in candidates.shuffled() {
+        // the deck is nearly exhausted. When a preferred clip length is provided,
+        // first bias toward sources that can satisfy that requested duration in full.
+        let shuffledCandidates = candidates.shuffled()
+
+        if let clipLength {
+            for entry in shuffledCandidates {
+                let key = sourceKey(entry.source)
+
+                switch entry.mediaKind {
+                case .video:
+                    switch validateVideoSource(entry, clipLength: clipLength, requireRequestedLength: true) {
+                    case .success(let clip):
+                        return clip
+                    case .sourceInvalid:
+                        badSources.insert(key)
+                    case .requestedLengthUnavailable:
+                        continue
+                    }
+
+                case .image:
+                    let effectiveLength = clipLength
+                    guard let clip = validateImageSource(entry, clipLength: effectiveLength) else {
+                        badSources.insert(key)
+                        continue
+                    }
+                    return clip
+                }
+            }
+        }
+
+        for entry in shuffledCandidates {
             let key = sourceKey(entry.source)
 
             switch entry.mediaKind {
             case .video:
-                guard let clip = validateVideoSource(entry, clipLength: clipLength) else {
+                switch validateVideoSource(entry, clipLength: clipLength, requireRequestedLength: false) {
+                case .success(let clip):
+                    return clip
+                case .sourceInvalid, .requestedLengthUnavailable:
                     badSources.insert(key)
                     continue
                 }
-                return clip
 
             case .image:
                 let effectiveLength = clipLength ?? imageDuration
@@ -565,7 +596,17 @@ public final class MediaLibrary {
 
     // MARK: - Source Validation
 
-    private func validateVideoSource(_ entry: SourceEntry, clipLength: Double?) -> MediaClip? {
+    private enum VideoClipValidationResult {
+        case success(MediaClip)
+        case requestedLengthUnavailable
+        case sourceInvalid
+    }
+
+    private func validateVideoSource(
+        _ entry: SourceEntry,
+        clipLength: Double?,
+        requireRequestedLength: Bool
+    ) -> VideoClipValidationResult {
         switch entry.source {
         case .url(let url):
             let asset = AVURLAsset(url: url)
@@ -574,14 +615,18 @@ public final class MediaLibrary {
             guard totalSeconds > 0,
                   asset.isPlayable,
                   asset.tracks(withMediaType: .video).first != nil else {
-                return nil
+                return .sourceInvalid
+            }
+
+            if requireRequestedLength, let clipLength, totalSeconds < clipLength {
+                return .requestedLengthUnavailable
             }
 
             let length = clipLength.map { min($0, totalSeconds) } ?? totalSeconds
             let maxStart = max(0.0, totalSeconds - length)
             let startSeconds = maxStart > 0 ? Double.random(in: 0...maxStart) : 0
 
-            return MediaClip(
+            return .success(MediaClip(
                 file: MediaFile(
                     source: entry.source,
                     mediaKind: .video,
@@ -589,22 +634,26 @@ public final class MediaLibrary {
                 ),
                 startTime: CMTime(seconds: startSeconds, preferredTimescale: 600),
                 duration: CMTime(seconds: length, preferredTimescale: 600)
-            )
+            ))
 
         case .external(let identifier):
             // Fetch PHAsset to get duration (app-level - uses ApplePhotos directly)
             guard let phAsset = ApplePhotos.shared.fetchAsset(localIdentifier: identifier) else {
-                return nil
+                return .sourceInvalid
             }
 
             let totalSeconds = phAsset.duration
-            guard totalSeconds > 0 else { return nil }
+            guard totalSeconds > 0 else { return .sourceInvalid }
+
+            if requireRequestedLength, let clipLength, totalSeconds < clipLength {
+                return .requestedLengthUnavailable
+            }
 
             let length = clipLength.map { min($0, totalSeconds) } ?? totalSeconds
             let maxStart = max(0.0, totalSeconds - length)
             let startSeconds = maxStart > 0 ? Double.random(in: 0...maxStart) : 0
 
-            return MediaClip(
+            return .success(MediaClip(
                 file: MediaFile(
                     source: entry.source,
                     mediaKind: .video,
@@ -612,7 +661,7 @@ public final class MediaLibrary {
                 ),
                 startTime: CMTime(seconds: startSeconds, preferredTimescale: 600),
                 duration: CMTime(seconds: length, preferredTimescale: 600)
-            )
+            ))
         }
     }
 
