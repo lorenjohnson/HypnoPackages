@@ -579,7 +579,7 @@ public final class EffectManager {
             print("⚠️ EffectManager.cycleEffect: No session available")
             return
         }
-        let chains = session.chainsSnapshot
+        let chains = session.chainsSnapshot.filter { $0.hasEnabledEffects }
 
         let currentName = effectName(for: layer)
         let currentIndex = chains.firstIndex { $0.name == currentName } ?? -1

@@ -146,6 +146,11 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         updateParameter(chainIndex: chainIndex, effectIndex: effectIndex, key: "_enabled", value: .bool(enabled))
     }
 
+    /// Toggle chain enabled state without touching per-effect enabled flags.
+    public func setChainEnabled(chainIndex: Int, enabled: Bool) {
+        updateParameter(chainIndex: chainIndex, effectIndex: nil, key: "_enabled", value: .bool(enabled))
+    }
+
     /// Reset an effect's parameters to defaults
     public func resetEffectToDefaults(chainIndex: Int, effectIndex: Int) {
         guard chainIndex >= 0 && chainIndex < chains.count else { return }
@@ -323,6 +328,12 @@ public final class EffectsSession: PersistentStore<EffectLibraryConfig> {
         updateChains { effects in
             for newChain in newChains {
                 if let existingIndex = effects.firstIndex(where: { $0.name == newChain.name }) {
+                    let existingChain = effects[existingIndex]
+                    if let existingEnabled = existingChain.params?["_enabled"] {
+                        var mergedParams = newChain.params ?? [:]
+                        mergedParams["_enabled"] = existingEnabled
+                        newChain.params = mergedParams
+                    }
                     effects[existingIndex] = newChain
                 } else {
                     effects.append(newChain)
