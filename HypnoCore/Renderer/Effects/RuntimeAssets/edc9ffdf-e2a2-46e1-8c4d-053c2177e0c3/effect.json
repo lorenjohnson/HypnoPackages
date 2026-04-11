@@ -1,0 +1,60 @@
+{
+  "uuid": "edc9ffdf-e2a2-46e1-8c4d-053c2177e0c3",
+  "name": "NTSC Simple (RetroArch Inspired)",
+  "version": "1.0.0",
+  "legacyTypes": ["NTSCSimpleRetroArchInspiredEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 0,
+  "usesPersistentState": false,
+  "parameters": {
+    "profileMode": {
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        { "key": "auto", "label": "Auto" },
+        { "key": "snesNes", "label": "SNES/NES" },
+        { "key": "mdPs1", "label": "MD/PS1" },
+        { "key": "pce", "label": "PCE" }
+      ]
+    },
+    "palMode": { "type": "bool", "default": false },
+    "cableType": {
+      "type": "choice",
+      "default": "composite",
+      "options": [
+        { "key": "rf", "label": "RF" },
+        { "key": "composite", "label": "Composite" },
+        { "key": "sVideo", "label": "S-Video" }
+      ]
+    },
+    "lumaBandwidth": { "type": "float", "default": 2.4, "min": 0.0, "max": 5.0 },
+    "chromaBandwidth": { "type": "float", "default": 0.6, "min": 0.0, "max": 4.0 },
+    "chromaGain": { "type": "float", "default": 1.5, "min": 0.0, "max": 3.0 },
+    "rfJitter": { "type": "float", "default": 0.25, "min": 0.0, "max": 1.0 },
+    "dotCrawl": { "type": "float", "default": 1.0, "min": 0.0, "max": 1.0 },
+    "frameIndex": { "type": "int", "default": 0, "min": 0.0, "max": 2147483647.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": [
+    "profileMode",
+    "palMode",
+    "cableType",
+    "lumaBandwidth",
+    "chromaBandwidth",
+    "chromaGain",
+    "rfJitter",
+    "dotCrawl",
+    "frameIndex",
+    "textureWidth",
+    "textureHeight"
+  ],
+  "autoBoundParameters": ["frameIndex", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" }
+    ],
+    "outputTextureIndex": 1
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "uuid": "ecea0e34-6c0b-4e40-a4e7-ca1383db6a10",
+  "name": "NTSC Chroma Bleed (RetroArch Inspired)",
+  "version": "1.0.0",
+  "legacyTypes": ["NTSCChromaBleedRetroArchInspiredEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 0,
+  "usesPersistentState": false,
+  "parameters": {
+    "bleedPixels": { "type": "float", "default": 2.2, "min": 0.0, "max": 16.0 },
+    "chromaSoftness": { "type": "float", "default": 0.65, "min": 0.0, "max": 1.0 },
+    "chromaPhase": { "type": "float", "default": 0.2, "min": -1.0, "max": 1.0 },
+    "frameIndex": { "type": "int", "default": 0, "min": 0.0, "max": 2147483647.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": [
+    "bleedPixels",
+    "chromaSoftness",
+    "chromaPhase",
+    "frameIndex",
+    "textureWidth",
+    "textureHeight"
+  ],
+  "autoBoundParameters": ["frameIndex", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" }
+    ],
+    "outputTextureIndex": 1
+  }
+}

@@ -40,9 +40,15 @@ public final class EffectManager {
 
     /// Create a manager for export with a frozen composition snapshot.
     /// Uses same code paths as preview but with isolated state
-    public static func forExport(composition: Composition) -> EffectManager {
+    public static func forExport(
+        composition: Composition,
+        hypnogramEffectChain: EffectChain? = nil
+    ) -> EffectManager {
         let manager = EffectManager()
         manager.compositionProvider = { composition }
+        if let hypnogramEffectChain {
+            manager.hypnogramEffectChainProvider = { hypnogramEffectChain }
+        }
         // No setters needed - export is read-only
         // flashSoloIndex stays nil - export renders all layers
         return manager
@@ -50,7 +56,7 @@ public final class EffectManager {
 
     @available(*, deprecated, renamed: "forExport(composition:)")
     public static func forExport(clip: Composition) -> EffectManager {
-        forExport(composition: clip)
+        forExport(composition: clip, hypnogramEffectChain: nil)
     }
 
     /// Create an isolated manager for transition playback with a frozen composition snapshot.
@@ -76,6 +82,8 @@ public final class EffectManager {
         manager.isNormalizationEnabled = isNormalizationEnabled
         manager._normalizationStrategy = _normalizationStrategy
         manager.compositionProvider = { frozenComposition }
+        let frozenHypnogramEffectChain = hypnogramEffectChain.clone()
+        manager.hypnogramEffectChainProvider = { frozenHypnogramEffectChain }
         return manager
     }
 
@@ -94,13 +102,16 @@ public final class EffectManager {
     public var maxRequiredLookback: Int {
         guard let composition = compositionProvider?() else { return 0 }
 
+        // Check hypnogram effect chain
+        let hypnogramMax = hypnogramEffectChain.maxRequiredLookback
+
         // Check composition effect chain
         let globalMax = composition.effectChain.maxRequiredLookback
 
         // Check per-layer effect chains
         let layerMax = composition.layers.map { $0.effectChain.maxRequiredLookback }.max() ?? 0
 
-        return max(globalMax, layerMax)
+        return max(hypnogramMax, max(globalMax, layerMax))
     }
 
     /// Whether any effect in the recipe uses the frame buffer (has temporal dependencies)
@@ -119,6 +130,9 @@ public final class EffectManager {
     /// Closure to get the current composition (injected by the owning feature).
     public var compositionProvider: (() -> Composition?)?
 
+    /// Closure to get the current hypnogram-level effect chain.
+    public var hypnogramEffectChainProvider: (() -> EffectChain?)?
+
     @available(*, deprecated, renamed: "compositionProvider")
     public var clipProvider: (() -> Composition?)? {
         get { compositionProvider }
@@ -127,6 +141,9 @@ public final class EffectManager {
 
     /// Closure to set composition effect chain
     public var compositionEffectChainSetter: ((EffectChain) -> Void)?
+
+    /// Closure to set hypnogram-level effect chain
+    public var hypnogramEffectChainSetter: ((EffectChain) -> Void)?
 
     /// Closure to set per-source effect chain
     public var sourceEffectChainSetter: ((Int, EffectChain) -> Void)?
@@ -264,6 +281,11 @@ public final class EffectManager {
         compositionProvider?()?.effectChain ?? EffectChain()
     }
 
+    /// Get the current hypnogram-level effect chain (for editing)
+    public var hypnogramEffectChain: EffectChain {
+        hypnogramEffectChainProvider?() ?? EffectChain()
+    }
+
     /// Set composition effect chain - the chain handles instantiation internally
     /// Copies the chain so the recipe has its own instance (not shared with library)
     public func setCompositionEffect(from chain: EffectChain) {
@@ -271,111 +293,92 @@ public final class EffectManager {
         onEffectChanged?()
     }
 
+    /// Set hypnogram-level effect chain - the chain handles instantiation internally
+    /// Copies the chain so the recipe has its own instance (not shared with library)
+    public func setHypnogramEffect(from chain: EffectChain) {
+        hypnogramEffectChainSetter?(chain.clone())
+        onEffectChanged?()
+    }
+
     // MARK: - Effect Chain Management
 
     /// Update an effect's parameter in the recipe's effect chain
-    /// - Parameters:
-    ///   - layer: -1 for composition, 0+ for source index
-    ///   - effectDefIndex: index of the effect in the chain
-    ///   - key: parameter key
-    ///   - value: new parameter value
-    public func updateEffectParameter(for layer: Int, effectDefIndex: Int, key: String, value: AnyCodableValue) {
-        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+    public func updateEffectParameter(for target: EffectTarget, effectDefIndex: Int, key: String, value: AnyCodableValue) {
+        guard let chain = effectChain(for: target)?.clone(preserveRuntimeEffects: false) else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         var params = chain.effects[effectDefIndex].params ?? [:]
         params[key] = value
         chain.effects[effectDefIndex].params = params
 
-        setEffectWorkingCopy(chain, for: layer)
+        setEffectWorkingCopy(chain, for: target)
     }
 
     /// Update a chain-level parameter (future: chain params like "strength")
-    /// - Parameters:
-    ///   - layer: -1 for composition, 0+ for source index
-    ///   - key: parameter key
-    ///   - value: new parameter value
-    public func updateChainParameter(for layer: Int, key: String, value: AnyCodableValue) {
-        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+    public func updateChainParameter(for target: EffectTarget, key: String, value: AnyCodableValue) {
+        guard let chain = effectChain(for: target)?.clone(preserveRuntimeEffects: false) else { return }
 
         var params = chain.params ?? [:]
         params[key] = value
         chain.params = params
 
-        setEffectWorkingCopy(chain, for: layer)
+        setEffectWorkingCopy(chain, for: target)
     }
 
-    /// Add an effect to the recipe's effect chain for a layer
-    /// - Parameters:
-    ///   - layer: -1 for composition, 0+ for source index
-    ///   - effectType: the type of effect to add (e.g. "IFrameCompressEffect")
-    public func addEffectToChain(for layer: Int, effectType: String) {
-        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+    /// Add an effect to the recipe's effect chain.
+    public func addEffectToChain(for target: EffectTarget, effectType: String) {
+        guard let chain = effectChain(for: target)?.clone(preserveRuntimeEffects: false) else { return }
 
         let defaults = EffectRegistry.defaults(for: effectType)
         let newEffect = EffectDefinition(type: effectType, params: defaults)
         chain.effects.append(newEffect)
 
-        setEffectWorkingCopy(chain, for: layer)
+        setEffectWorkingCopy(chain, for: target)
     }
 
-    /// Remove an effect from the recipe's effect chain for a layer
-    /// - Parameters:
-    ///   - layer: -1 for composition, 0+ for source index
-    ///   - effectDefIndex: index of the effect to remove
-    public func removeEffectFromChain(for layer: Int, effectDefIndex: Int) {
-        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+    /// Remove an effect from the recipe's effect chain.
+    public func removeEffectFromChain(for target: EffectTarget, effectDefIndex: Int) {
+        guard let chain = effectChain(for: target)?.clone(preserveRuntimeEffects: false) else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         chain.effects.remove(at: effectDefIndex)
 
-        setEffectWorkingCopy(chain, for: layer)
+        setEffectWorkingCopy(chain, for: target)
     }
 
-    /// Update the chain name in the recipe
-    /// - Parameters:
-    ///   - layer: -1 for composition, 0+ for source index
-    ///   - name: new name for the chain
-    public func updateChainName(for layer: Int, name: String) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+    /// Update the chain name in the recipe.
+    public func updateChainName(for target: EffectTarget, name: String) {
+        guard let chain = effectChain(for: target)?.clone() else { return }
         chain.name = name
-        setEffect(from: chain, for: layer)
+        setEffect(from: chain, for: target)
     }
 
     /// Link/unlink the CURRENT chain to a template id (used for Update/Copy-to-Library actions).
-    public func updateSourceTemplateId(for layer: Int, sourceTemplateId: UUID?) {
-        guard let chain = effectChain(for: layer)?.clone() else { return }
+    public func updateSourceTemplateId(for target: EffectTarget, sourceTemplateId: UUID?) {
+        guard let chain = effectChain(for: target)?.clone() else { return }
         chain.sourceTemplateId = sourceTemplateId
-        setEffect(from: chain, for: layer)
+        setEffect(from: chain, for: target)
     }
 
-    /// Reorder effects in the recipe's effect chain for a layer
-    /// - Parameters:
-    ///   - layer: -1 for composition, 0+ for source index
-    ///   - fromIndex: source index
-    ///   - toIndex: destination index
-    public func reorderEffectsInChain(for layer: Int, fromIndex: Int, toIndex: Int) {
-        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+    /// Reorder effects in the recipe's effect chain.
+    public func reorderEffectsInChain(for target: EffectTarget, fromIndex: Int, toIndex: Int) {
+        guard let chain = effectChain(for: target)?.clone(preserveRuntimeEffects: false) else { return }
         guard fromIndex >= 0, fromIndex < chain.effects.count else { return }
         guard toIndex >= 0, toIndex < chain.effects.count else { return }
 
         let effect = chain.effects.remove(at: fromIndex)
         chain.effects.insert(effect, at: toIndex)
 
-        setEffectWorkingCopy(chain, for: layer)
+        setEffectWorkingCopy(chain, for: target)
     }
 
-    /// Reset an effect's parameters to defaults in the recipe
-    /// - Parameters:
-    ///   - layer: -1 for composition, 0+ for source index
-    ///   - effectDefIndex: index of the effect to reset
-    public func resetEffectToDefaults(for layer: Int, effectDefIndex: Int) {
-        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+    /// Reset an effect's parameters to defaults in the recipe.
+    public func resetEffectToDefaults(for target: EffectTarget, effectDefIndex: Int) {
+        guard let chain = effectChain(for: target)?.clone(preserveRuntimeEffects: false) else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         let effectType = chain.effects[effectDefIndex].type
 
-        // Get defaults from registry, preserve _enabled state
         var defaults = EffectRegistry.defaults(for: effectType)
         if let wasEnabled = chain.effects[effectDefIndex].params?["_enabled"] {
             defaults["_enabled"] = wasEnabled
@@ -383,26 +386,26 @@ public final class EffectManager {
 
         chain.effects[effectDefIndex].params = defaults
 
-        setEffectWorkingCopy(chain, for: layer)
+        setEffectWorkingCopy(chain, for: target)
     }
 
     /// Toggle effect enabled state in the recipe.
-    public func setEffectEnabled(for layer: Int, effectDefIndex: Int, enabled: Bool) {
-        updateEffectParameter(for: layer, effectDefIndex: effectDefIndex, key: "_enabled", value: .bool(enabled))
+    public func setEffectEnabled(for target: EffectTarget, effectDefIndex: Int, enabled: Bool) {
+        updateEffectParameter(for: target, effectDefIndex: effectDefIndex, key: "_enabled", value: .bool(enabled))
     }
 
     /// Toggle chain enabled state in the recipe without touching per-effect enabled flags.
-    public func setChainEnabled(for layer: Int, enabled: Bool) {
-        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+    public func setChainEnabled(for target: EffectTarget, enabled: Bool) {
+        guard let chain = effectChain(for: target)?.clone(preserveRuntimeEffects: false) else { return }
         var params = chain.params ?? [:]
         params["_enabled"] = .bool(enabled)
         chain.params = params
-        setEffectWorkingCopy(chain, for: layer)
+        setEffectWorkingCopy(chain, for: target)
     }
 
     /// Randomize all parameters for an effect in the recipe.
-    public func randomizeEffect(for layer: Int, effectDefIndex: Int) {
-        guard let chain = effectChain(for: layer)?.clone(preserveRuntimeEffects: false) else { return }
+    public func randomizeEffect(for target: EffectTarget, effectDefIndex: Int) {
+        guard let chain = effectChain(for: target)?.clone(preserveRuntimeEffects: false) else { return }
         guard effectDefIndex >= 0, effectDefIndex < chain.effects.count else { return }
 
         let effectDef = chain.effects[effectDefIndex]
@@ -413,11 +416,10 @@ public final class EffectManager {
             randomParams[key] = spec.randomValue()
         }
 
-        // Preserve _enabled state (default to true if absent)
         randomParams["_enabled"] = effectDef.params?["_enabled"] ?? .bool(true)
 
         chain.effects[effectDefIndex].params = randomParams
-        setEffectWorkingCopy(chain, for: layer)
+        setEffectWorkingCopy(chain, for: target)
     }
 
     /// Re-apply active effects using fresh instances from the session.
@@ -431,6 +433,13 @@ public final class EffectManager {
             return
         }
         let availableChains = session.chainsSnapshot
+
+        // Re-apply hypnogram effect chain by name from stored chain
+        let currentHypnogramName = hypnogramEffectChain.name
+        if let freshChain = availableChains.first(where: { $0.name == currentHypnogramName }) {
+            hypnogramEffectChainSetter?(freshChain.clone())
+            print("🔄 Reapplied hypnogram effect: \(currentHypnogramName ?? "unnamed")")
+        }
 
         // Re-apply composition effect chain by name from stored chain
         let currentName = composition.effectChain.name
@@ -471,9 +480,9 @@ public final class EffectManager {
         onEffectChanged?()
     }
 
-    /// Clear effect for a layer (-1 = composition, 0+ = source index)
-    public func clearEffect(for layer: Int) {
-        clearEffect(for: layer, captureToRecent: true)
+    /// Clear effect for a target.
+    public func clearEffect(for target: EffectTarget) {
+        clearEffect(for: target, captureToRecent: true)
     }
 
     private func captureChainToRecent(_ chain: EffectChain) {
@@ -485,14 +494,17 @@ public final class EffectManager {
         }
     }
 
-    private func clearEffect(for layer: Int, captureToRecent: Bool) {
-        if captureToRecent, let existing = effectChain(for: layer) {
+    private func clearEffect(for target: EffectTarget, captureToRecent: Bool) {
+        if captureToRecent, let existing = effectChain(for: target) {
             captureChainToRecent(existing)
         }
-        if layer == -1 {
+        switch target {
+        case .hypnogram:
+            hypnogramEffectChainSetter?(EffectChain())
+        case .composition:
             compositionEffectChainSetter?(EffectChain())
-        } else {
-            sourceEffectChainSetter?(layer, EffectChain())
+        case .layer(let index):
+            sourceEffectChainSetter?(index, EffectChain())
         }
         onEffectChanged?()
     }
@@ -509,67 +521,81 @@ public final class EffectManager {
 
     // MARK: - Unified Layer API (layer -1 = composition, 0+ = source)
 
-    /// Get effect name for a layer (-1 = composition, 0+ = source index)
-    public func effectName(for layer: Int) -> String {
-        if layer == -1 {
+    /// Get effect name for a target.
+    public func effectName(for target: EffectTarget) -> String {
+        switch target {
+        case .hypnogram:
+            return hypnogramEffectChain.name ?? "None"
+        case .composition:
             return compositionEffectName
+        case .layer(let index):
+            return sourceEffectName(for: index)
         }
-        return sourceEffectName(for: layer)
     }
 
-    /// Get effect chain for a layer (-1 = composition, 0+ = source index)
-    public func effectChain(for layer: Int) -> EffectChain? {
-        if layer == -1 {
+    /// Get effect chain for a target.
+    public func effectChain(for target: EffectTarget) -> EffectChain? {
+        switch target {
+        case .hypnogram:
+            return hypnogramEffectChain
+        case .composition:
             return compositionEffectChain
+        case .layer(let index):
+            return sourceEffectChain(for: index)
         }
-        return sourceEffectChain(for: layer)
     }
 
-    /// Set effect from a chain for a layer (-1 = composition, 0+ = source index)
+    /// Set effect from a chain for a target.
     /// This sets CURRENT (the recipe-owned working copy) to the provided chain.
-    public func setEffect(from chain: EffectChain?, for layer: Int) {
-        if layer == -1 {
+    public func setEffect(from chain: EffectChain?, for target: EffectTarget) {
+        switch target {
+        case .hypnogram:
+            setHypnogramEffect(from: chain ?? EffectChain())
+        case .composition:
             setCompositionEffect(from: chain ?? EffectChain())
-        } else {
-            setSourceEffect(from: chain ?? EffectChain(), for: layer)
+        case .layer(let index):
+            setSourceEffect(from: chain ?? EffectChain(), for: index)
         }
     }
 
     /// Apply an already-owned working copy without an additional clone hop.
-    private func setEffectWorkingCopy(_ chain: EffectChain, for layer: Int) {
-        if layer == -1 {
+    private func setEffectWorkingCopy(_ chain: EffectChain, for target: EffectTarget) {
+        switch target {
+        case .hypnogram:
+            hypnogramEffectChainSetter?(chain)
+        case .composition:
             compositionEffectChainSetter?(chain)
-        } else {
-            sourceEffectChainSetter?(layer, chain)
+        case .layer(let index):
+            sourceEffectChainSetter?(index, chain)
         }
         onEffectChanged?()
     }
 
     /// Replace CURRENT with a snapshot/template, capturing the old chain into RECENT.
     /// This is the shared implementation behind applying a template or a recent entry.
-    public func applyChainSnapshot(_ chain: EffectChain?, sourceTemplateId: UUID?, to layer: Int) {
-        if let existing = effectChain(for: layer) {
+    public func applyChainSnapshot(_ chain: EffectChain?, sourceTemplateId: UUID?, to target: EffectTarget) {
+        if let existing = effectChain(for: target) {
             captureChainToRecent(existing)
         }
 
         if let chain {
             let recipeChain = EffectChain(duplicating: chain, sourceTemplateId: sourceTemplateId)
-            setEffect(from: recipeChain, for: layer)
+            setEffect(from: recipeChain, for: target)
         } else {
-            clearEffect(for: layer, captureToRecent: false)
+            clearEffect(for: target, captureToRecent: false)
         }
     }
 
     /// Apply a library template to CURRENT without churning IDs during edits.
     /// - If template is non-nil, creates a new recipe-owned instance with a new id and links it via `sourceTemplateId`.
     /// - If template is nil, clears the chain on the recipe.
-    public func applyTemplate(_ template: EffectChain?, to layer: Int) {
-        applyChainSnapshot(template, sourceTemplateId: template?.id, to: layer)
+    public func applyTemplate(_ template: EffectChain?, to target: EffectTarget) {
+        applyChainSnapshot(template, sourceTemplateId: template?.id, to: target)
     }
 
-    /// Cycle effect for a layer (-1 = composition, 0+ = source index)
+    /// Cycle effect for a target.
     /// direction: 1 = forward, -1 = backward
-    public func cycleEffect(for layer: Int, direction: Int = 1) {
+    public func cycleEffect(for target: EffectTarget, direction: Int = 1) {
         // Clear frame buffer and reset frame counter so new effect starts fresh
         frameBuffer.clear()
         resetFrameIndex()
@@ -581,7 +607,7 @@ public final class EffectManager {
         }
         let chains = session.chainsSnapshot.filter { $0.hasEnabledEffects }
 
-        let currentName = effectName(for: layer)
+        let currentName = effectName(for: target)
         let currentIndex = chains.firstIndex { $0.name == currentName } ?? -1
 
         // Cycle through effects: -1 (None) -> 0 -> 1 -> ... -> count-1 -> -1
@@ -593,7 +619,7 @@ public final class EffectManager {
         let next0Based = (current0Based + direction + totalStates) % totalStates
         let nextIndex = next0Based - 1  // Back to -1 based
 
-        applyTemplate(nextIndex >= 0 ? chains[nextIndex] : nil, to: layer)
+        applyTemplate(nextIndex >= 0 ? chains[nextIndex] : nil, to: target)
     }
 
     public func clearFrameBuffer() {
@@ -603,12 +629,89 @@ public final class EffectManager {
 
         // Reset all effects that have internal state (e.g. IFrameCompressEffect, text overlays)
         // Important: Do this BEFORE the recipe clears effects, because effects may be preserved
+        hypnogramEffectChain.reset()
         if let composition = compositionProvider?() {
             composition.effectChain.reset()
             for layer in composition.layers {
                 layer.effectChain.reset()
             }
         }
+    }
+
+    private func target(for layer: Int) -> EffectTarget {
+        layer == -1 ? .composition : .layer(layer)
+    }
+
+    public func clearEffect(for layer: Int) {
+        clearEffect(for: target(for: layer))
+    }
+
+    public func effectName(for layer: Int) -> String {
+        effectName(for: target(for: layer))
+    }
+
+    public func effectChain(for layer: Int) -> EffectChain? {
+        effectChain(for: target(for: layer))
+    }
+
+    public func setEffect(from chain: EffectChain?, for layer: Int) {
+        setEffect(from: chain, for: target(for: layer))
+    }
+
+    public func updateEffectParameter(for layer: Int, effectDefIndex: Int, key: String, value: AnyCodableValue) {
+        updateEffectParameter(for: target(for: layer), effectDefIndex: effectDefIndex, key: key, value: value)
+    }
+
+    public func updateChainParameter(for layer: Int, key: String, value: AnyCodableValue) {
+        updateChainParameter(for: target(for: layer), key: key, value: value)
+    }
+
+    public func addEffectToChain(for layer: Int, effectType: String) {
+        addEffectToChain(for: target(for: layer), effectType: effectType)
+    }
+
+    public func removeEffectFromChain(for layer: Int, effectDefIndex: Int) {
+        removeEffectFromChain(for: target(for: layer), effectDefIndex: effectDefIndex)
+    }
+
+    public func updateChainName(for layer: Int, name: String) {
+        updateChainName(for: target(for: layer), name: name)
+    }
+
+    public func updateSourceTemplateId(for layer: Int, sourceTemplateId: UUID?) {
+        updateSourceTemplateId(for: target(for: layer), sourceTemplateId: sourceTemplateId)
+    }
+
+    public func reorderEffectsInChain(for layer: Int, fromIndex: Int, toIndex: Int) {
+        reorderEffectsInChain(for: target(for: layer), fromIndex: fromIndex, toIndex: toIndex)
+    }
+
+    public func resetEffectToDefaults(for layer: Int, effectDefIndex: Int) {
+        resetEffectToDefaults(for: target(for: layer), effectDefIndex: effectDefIndex)
+    }
+
+    public func setEffectEnabled(for layer: Int, effectDefIndex: Int, enabled: Bool) {
+        setEffectEnabled(for: target(for: layer), effectDefIndex: effectDefIndex, enabled: enabled)
+    }
+
+    public func setChainEnabled(for layer: Int, enabled: Bool) {
+        setChainEnabled(for: target(for: layer), enabled: enabled)
+    }
+
+    public func randomizeEffect(for layer: Int, effectDefIndex: Int) {
+        randomizeEffect(for: target(for: layer), effectDefIndex: effectDefIndex)
+    }
+
+    public func applyChainSnapshot(_ chain: EffectChain?, sourceTemplateId: UUID?, to layer: Int) {
+        applyChainSnapshot(chain, sourceTemplateId: sourceTemplateId, to: target(for: layer))
+    }
+
+    public func applyTemplate(_ template: EffectChain?, to layer: Int) {
+        applyTemplate(template, to: target(for: layer))
+    }
+
+    public func cycleEffect(for layer: Int, direction: Int = 1) {
+        cycleEffect(for: target(for: layer), direction: direction)
     }
 
     /// Record a frame into the temporal buffer (used by compositors)

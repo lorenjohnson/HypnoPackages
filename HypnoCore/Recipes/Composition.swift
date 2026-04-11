@@ -20,6 +20,10 @@ public struct Composition: Codable {
     /// Playback rate (1.0 = normal speed, 0.5 = half speed, 2.0 = double speed).
     public var playRate: Float
 
+    /// Optional transition behavior for how this composition exits into the next one.
+    public var transitionStyle: TransitionRenderer.TransitionType?
+    public var transitionDuration: Double?
+
     /// The effect chain for this composition.
     public var effectChain: EffectChain
 
@@ -33,7 +37,7 @@ public struct Composition: Codable {
     public var createdAt: Date
 
     private enum CodingKeys: String, CodingKey {
-        case id, layers, targetDuration, playRate, effectChain, snapshot, thumbnail, createdAt
+        case id, layers, targetDuration, playRate, transitionStyle, transitionDuration, effectChain, snapshot, thumbnail, createdAt
 
         // Legacy keys (Phase 1-3 schema)
         case sources
@@ -44,6 +48,8 @@ public struct Composition: Codable {
         layers: [Layer],
         targetDuration: CMTime,
         playRate: Float = 1.0,
+        transitionStyle: TransitionRenderer.TransitionType? = nil,
+        transitionDuration: Double? = nil,
         effectChain: EffectChain? = nil,
         snapshot: String? = nil,
         thumbnail: String? = nil,
@@ -53,6 +59,8 @@ public struct Composition: Codable {
         self.layers = layers
         self.targetDuration = targetDuration
         self.playRate = playRate
+        self.transitionStyle = transitionStyle
+        self.transitionDuration = transitionDuration
         self.effectChain = effectChain ?? EffectChain()
         self.snapshot = snapshot
         self.thumbnail = thumbnail
@@ -88,6 +96,8 @@ public struct Composition: Codable {
         }
         targetDuration = try container.decode(CodableCMTime.self, forKey: .targetDuration).cmTime
         playRate = try container.decodeIfPresent(Float.self, forKey: .playRate) ?? 1.0
+        transitionStyle = try container.decodeIfPresent(TransitionRenderer.TransitionType.self, forKey: .transitionStyle)
+        transitionDuration = try container.decodeIfPresent(Double.self, forKey: .transitionDuration)
         effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
         snapshot = try container.decodeIfPresent(String.self, forKey: .snapshot)
         thumbnail = try container.decodeIfPresent(String.self, forKey: .thumbnail)
@@ -100,6 +110,8 @@ public struct Composition: Codable {
         try container.encode(layers, forKey: .layers)
         try container.encode(CodableCMTime(targetDuration), forKey: .targetDuration)
         try container.encode(playRate, forKey: .playRate)
+        try container.encodeIfPresent(transitionStyle, forKey: .transitionStyle)
+        try container.encodeIfPresent(transitionDuration, forKey: .transitionDuration)
         try container.encode(effectChain, forKey: .effectChain)
         try container.encodeIfPresent(snapshot, forKey: .snapshot)
         try container.encodeIfPresent(thumbnail, forKey: .thumbnail)
@@ -120,6 +132,8 @@ public struct Composition: Codable {
             layers: copiedLayers,
             targetDuration: effectiveDuration,
             playRate: playRate,
+            transitionStyle: transitionStyle,
+            transitionDuration: transitionDuration,
             effectChain: effectChain.clone(),
             snapshot: snapshot,
             thumbnail: thumbnail,

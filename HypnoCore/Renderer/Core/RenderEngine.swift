@@ -137,7 +137,8 @@ public final class RenderEngine {
     public func export(
         composition: Composition,
         outputURL: URL,
-        config: Config
+        config: Config,
+        hypnogramEffectChain: EffectChain? = nil
     ) async -> Result<URL, RenderError> {
 
         print("🎬 RenderEngine.export: Starting export to \(outputURL.lastPathComponent)...")
@@ -145,7 +146,10 @@ public final class RenderEngine {
         // Create an isolated copy of the composition with fresh effect state for export.
         // This prevents stateful effects (like TextOverlayEffect) from sharing state with preview
         let exportComposition = composition.copyForExport()
-        let exportManager = EffectManager.forExport(composition: exportComposition)
+        let exportManager = EffectManager.forExport(
+            composition: exportComposition,
+            hypnogramEffectChain: hypnogramEffectChain?.clone()
+        )
 
         // Build composition with the export manager
         let builder = CompositionBuilder()
@@ -276,6 +280,7 @@ public final class RenderEngine {
             frameRate: Int = 30,
             enableEffects: Bool = true,
             sourceFraming: SourceFraming = .fill,
+            hypnogramEffectChain: EffectChain? = nil,
             notifyExternalDestinationHooks: Bool = true,
             completion: ((Result<URL, RenderError>) -> Void)? = nil
         ) {
@@ -346,7 +351,8 @@ public final class RenderEngine {
                     return await engine.export(
                         composition: composition,
                         outputURL: outputURL,
-                        config: config
+                        config: config,
+                        hypnogramEffectChain: hypnogramEffectChain
                     )
                 }()
 
@@ -388,6 +394,7 @@ public final class RenderEngine {
             frameRate: Int = 30,
             enableEffects: Bool = true,
             sourceFraming: SourceFraming = .fill,
+            hypnogramEffectChain: EffectChain? = nil,
             notifyExternalDestinationHooks: Bool = true,
             completion: ((Result<URL, RenderError>) -> Void)? = nil
         ) {
@@ -398,6 +405,7 @@ public final class RenderEngine {
                 frameRate: frameRate,
                 enableEffects: enableEffects,
                 sourceFraming: sourceFraming,
+                hypnogramEffectChain: hypnogramEffectChain,
                 notifyExternalDestinationHooks: notifyExternalDestinationHooks,
                 completion: completion
             )

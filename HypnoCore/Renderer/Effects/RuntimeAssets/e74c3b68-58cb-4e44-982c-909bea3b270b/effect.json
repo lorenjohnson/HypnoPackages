@@ -1,0 +1,29 @@
+{
+  "uuid": "e74c3b68-58cb-4e44-982c-909bea3b270b",
+  "name": "Stutter Exposure",
+  "version": "1.0.1",
+  "legacyTypes": ["StutterExposureEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 120,
+  "usesPersistentState": false,
+  "parameters": {
+    "holdFrames": { "type": "int", "default": 3, "min": 1.0, "max": 24.0 },
+    "jumpFrames": { "type": "int", "default": 6, "min": 1.0, "max": 30.0 },
+    "frameIndex": { "type": "int", "default": 0, "min": 0.0, "max": 2147483647.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["holdFrames", "jumpFrames", "frameIndex", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["frameIndex", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" },
+      { "argumentIndex": 1, "source": "historyFrame", "historyOffsetParameter": "jumpFrames", "historyOffsetScale": 1.0 },
+      { "argumentIndex": 2, "source": "historyFrame", "historyOffsetParameter": "jumpFrames", "historyOffsetScale": 2.0 },
+      { "argumentIndex": 3, "source": "historyFrame", "historyOffsetParameter": "jumpFrames", "historyOffsetScale": 3.0 },
+      { "argumentIndex": 4, "source": "historyFrame", "historyOffsetParameter": "jumpFrames", "historyOffsetScale": 4.0 }
+    ],
+    "outputTextureIndex": 5
+  }
+}

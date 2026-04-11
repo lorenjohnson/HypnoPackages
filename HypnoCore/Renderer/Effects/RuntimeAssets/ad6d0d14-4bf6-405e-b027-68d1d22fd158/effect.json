@@ -1,0 +1,35 @@
+{
+  "uuid": "ad6d0d14-4bf6-405e-b027-68d1d22fd158",
+  "name": "NTSC RF Instability (RetroArch Inspired)",
+  "version": "1.0.0",
+  "legacyTypes": ["NTSCRFInstabilityRetroArchInspiredEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 0,
+  "usesPersistentState": false,
+  "parameters": {
+    "jitterAmount": { "type": "float", "default": 0.32, "min": 0.0, "max": 1.0 },
+    "lineNoise": { "type": "float", "default": 0.22, "min": 0.0, "max": 1.0 },
+    "ghosting": { "type": "float", "default": 0.2, "min": 0.0, "max": 1.0 },
+    "sparkle": { "type": "float", "default": 0.16, "min": 0.0, "max": 1.0 },
+    "frameIndex": { "type": "int", "default": 0, "min": 0.0, "max": 2147483647.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": [
+    "jitterAmount",
+    "lineNoise",
+    "ghosting",
+    "sparkle",
+    "frameIndex",
+    "textureWidth",
+    "textureHeight"
+  ],
+  "autoBoundParameters": ["frameIndex", "textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" }
+    ],
+    "outputTextureIndex": 1
+  }
+}

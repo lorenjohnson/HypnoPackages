@@ -312,6 +312,19 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             }
         }
 
+        // Apply hypnogram/sequence effect chain last over the fully composed frame.
+        if instruction.enableEffects, let manager = manager {
+            let hypnogramChain = manager.hypnogramEffectChain
+            if !hypnogramChain.effects.isEmpty {
+                var context = manager.createContext(
+                    frameIndex: frameIndex,
+                    time: request.compositionTime,
+                    outputSize: outputSize
+                )
+                finalImage = hypnogramChain.apply(to: finalImage, context: &context)
+            }
+        }
+
         // Store frame in buffer
         if let manager = manager {
             manager.recordFrame(finalImage, at: request.compositionTime)

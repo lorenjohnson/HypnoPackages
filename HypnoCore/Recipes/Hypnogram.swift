@@ -18,6 +18,7 @@ public struct Hypnogram: Codable {
     public var currentCompositionIndex: Int?
 
     /// Optional display and playback context for this working document.
+    public var effectChain: EffectChain
     public var aspectRatio: AspectRatio?
     public var outputResolution: OutputResolution?
     public var sourceFraming: SourceFraming?
@@ -41,6 +42,7 @@ public struct Hypnogram: Codable {
         case compositions
         case legacyHypnograms = "hypnograms"
         case snapshot, createdAt, currentCompositionIndex
+        case effectChain
         case aspectRatio, outputResolution, sourceFraming
         case transitionStyle, transitionDuration
 
@@ -48,12 +50,13 @@ public struct Hypnogram: Codable {
         case clips
 
         // Legacy single-composition keys (pre-multi-clip)
-        case sources, targetDuration, playRate, effectChain
+        case sources, targetDuration, playRate
     }
 
     public init(
         compositions: [Composition],
         currentCompositionIndex: Int? = nil,
+        effectChain: EffectChain? = nil,
         aspectRatio: AspectRatio? = nil,
         outputResolution: OutputResolution? = nil,
         sourceFraming: SourceFraming? = nil,
@@ -64,6 +67,7 @@ public struct Hypnogram: Codable {
     ) {
         self.compositions = compositions
         self.currentCompositionIndex = currentCompositionIndex
+        self.effectChain = effectChain ?? EffectChain()
         self.aspectRatio = aspectRatio
         self.outputResolution = outputResolution
         self.sourceFraming = sourceFraming
@@ -93,6 +97,7 @@ public struct Hypnogram: Codable {
                 )
             ],
             currentCompositionIndex: 0,
+            effectChain: nil,
             aspectRatio: nil,
             outputResolution: nil,
             sourceFraming: nil,
@@ -110,6 +115,7 @@ public struct Hypnogram: Codable {
         if let decoded = try container.decodeIfPresent([Composition].self, forKey: .compositions) {
             compositions = decoded
             currentCompositionIndex = try container.decodeIfPresent(Int.self, forKey: .currentCompositionIndex)
+            effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
             aspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .aspectRatio)
             outputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .outputResolution)
             sourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .sourceFraming)
@@ -124,6 +130,7 @@ public struct Hypnogram: Codable {
         if let decoded = try container.decodeIfPresent([Composition].self, forKey: .legacyHypnograms) {
             compositions = decoded
             currentCompositionIndex = try container.decodeIfPresent(Int.self, forKey: .currentCompositionIndex)
+            effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
             aspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .aspectRatio)
             outputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .outputResolution)
             sourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .sourceFraming)
@@ -138,6 +145,7 @@ public struct Hypnogram: Codable {
         if let decoded = try container.decodeIfPresent([Composition].self, forKey: .clips) {
             compositions = decoded
             currentCompositionIndex = try container.decodeIfPresent(Int.self, forKey: .currentCompositionIndex)
+            effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
             aspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .aspectRatio)
             outputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .outputResolution)
             sourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .sourceFraming)
@@ -153,6 +161,7 @@ public struct Hypnogram: Codable {
         let targetDuration = try container.decode(CodableCMTime.self, forKey: .targetDuration).cmTime
         let playRate = try container.decodeIfPresent(Float.self, forKey: .playRate) ?? 1.0
         let effectChain = try container.decodeIfPresent(EffectChain.self, forKey: .effectChain) ?? EffectChain()
+        self.effectChain = EffectChain()
         aspectRatio = try container.decodeIfPresent(AspectRatio.self, forKey: .aspectRatio)
         outputResolution = try container.decodeIfPresent(OutputResolution.self, forKey: .outputResolution)
         sourceFraming = try container.decodeIfPresent(SourceFraming.self, forKey: .sourceFraming)
@@ -177,6 +186,7 @@ public struct Hypnogram: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(compositions, forKey: .compositions)
         try container.encodeIfPresent(currentCompositionIndex, forKey: .currentCompositionIndex)
+        try container.encode(effectChain, forKey: .effectChain)
         try container.encodeIfPresent(aspectRatio, forKey: .aspectRatio)
         try container.encodeIfPresent(outputResolution, forKey: .outputResolution)
         try container.encodeIfPresent(sourceFraming, forKey: .sourceFraming)
@@ -192,6 +202,7 @@ public struct Hypnogram: Codable {
         Hypnogram(
             compositions: compositions.map { $0.copyForExport() },
             currentCompositionIndex: currentCompositionIndex,
+            effectChain: effectChain.clone(),
             aspectRatio: aspectRatio,
             outputResolution: outputResolution,
             sourceFraming: sourceFraming,
@@ -203,6 +214,11 @@ public struct Hypnogram: Codable {
     }
 
     public mutating func ensureEffectChainNames() {
+        if !effectChain.effects.isEmpty &&
+            (effectChain.name == nil || effectChain.name?.isEmpty == true) {
+            effectChain.name = "Hypnogram (imported)"
+        }
+
         for index in compositions.indices {
             compositions[index].ensureEffectChainNames()
         }
