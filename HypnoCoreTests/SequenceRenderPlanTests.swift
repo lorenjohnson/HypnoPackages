@@ -154,6 +154,85 @@ struct SequenceRenderPlanTests {
         #expect(secondBody.compositionTime.seconds == 0.5)
     }
 
+    @Test func orderedSpansCompileBodiesAndTransitionsInSequenceOrder() {
+        var first = makeComposition(duration: 4)
+        first.transitionStyle = .fadeToBlack
+        first.transitionDuration = 1
+
+        let second = makeComposition(duration: 3)
+        let hypnogram = Hypnogram(compositions: [first, second])
+        let plan = hypnogram.makeSequenceRenderPlan()
+
+        #expect(plan.orderedSpans.count == 3)
+
+        guard case .compositionBody(let firstBody) = plan.orderedSpans[0] else {
+            Issue.record("Expected first span to be a composition body")
+            return
+        }
+        #expect(firstBody.compositionIndex == 0)
+        #expect(firstBody.sequenceStartTime.seconds == 0)
+        #expect(firstBody.sequenceEndTime.seconds == 3)
+        #expect(firstBody.compositionTimeStart.seconds == 0)
+        #expect(firstBody.compositionTimeEnd.seconds == 3)
+
+        guard case .transition(let transition) = plan.orderedSpans[1] else {
+            Issue.record("Expected second span to be a transition")
+            return
+        }
+        #expect(transition.style == .fadeToBlack)
+        #expect(transition.sequenceStartTime.seconds == 3)
+        #expect(transition.sequenceEndTime.seconds == 4)
+        #expect(transition.outgoingCompositionTimeStart.seconds == 3)
+        #expect(transition.outgoingCompositionTimeEnd.seconds == 4)
+        #expect(transition.incomingCompositionTimeStart.seconds == 0)
+        #expect(transition.incomingCompositionTimeEnd.seconds == 1)
+
+        guard case .compositionBody(let secondBody) = plan.orderedSpans[2] else {
+            Issue.record("Expected third span to be the second composition body")
+            return
+        }
+        #expect(secondBody.compositionIndex == 1)
+        #expect(secondBody.sequenceStartTime.seconds == 4)
+        #expect(secondBody.sequenceEndTime.seconds == 6)
+        #expect(secondBody.compositionTimeStart.seconds == 1)
+        #expect(secondBody.compositionTimeEnd.seconds == 3)
+    }
+
+    @Test func shortMiddleCompositionDoesNotProduceOverlappingSpans() {
+        var first = makeComposition(duration: 10)
+        first.transitionStyle = .crossfade
+        first.transitionDuration = 2.2
+
+        var middle = makeComposition(duration: 2.5083333333333333)
+        middle.transitionStyle = .crossfade
+        middle.transitionDuration = 2.2
+
+        let third = makeComposition(duration: 10)
+
+        let plan = Hypnogram(compositions: [first, middle, third]).makeSequenceRenderPlan()
+
+        #expect(plan.transitions.count == 2)
+        #expect(plan.transitions[0].duration.seconds < 2.2)
+        #expect(plan.transitions[1].duration.seconds < 2.2)
+
+        for pair in zip(plan.orderedSpans, plan.orderedSpans.dropFirst()) {
+            let lhsEnd: Double
+            let rhsStart: Double
+
+            switch pair.0 {
+            case .compositionBody(let body): lhsEnd = body.sequenceEndTime.seconds
+            case .transition(let transition): lhsEnd = transition.sequenceEndTime.seconds
+            }
+
+            switch pair.1 {
+            case .compositionBody(let body): rhsStart = body.sequenceStartTime.seconds
+            case .transition(let transition): rhsStart = transition.sequenceStartTime.seconds
+            }
+
+            #expect(lhsEnd <= rhsStart + 0.000_001)
+        }
+    }
+
     private func makeComposition(duration seconds: Double) -> Composition {
         Composition(
             layers: [],

@@ -8,7 +8,7 @@
 import Foundation
 import AVFoundation
 
-public enum RenderError: Error, CustomStringConvertible {
+public enum RenderError: Error, CustomStringConvertible, LocalizedError {
     case noSources
     case invalidDuration(CMTime)
     case sourceLoadFailed(index: Int, name: String, underlying: Error)
@@ -56,6 +56,10 @@ public enum RenderError: Error, CustomStringConvertible {
         case .playerItemCreationFailed:
             return "RenderError: Failed to create AVPlayerItem"
         }
+    }
+
+    public var errorDescription: String? {
+        description
     }
     
     /// Log this error with context

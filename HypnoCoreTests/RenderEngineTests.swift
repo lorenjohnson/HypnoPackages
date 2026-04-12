@@ -112,6 +112,201 @@ struct RenderEngineTests {
         }
     }
 
+    @Test func renderEngineExportsSequenceWithNoTransitions() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let hypnogram = try await makeSequenceHypnogram(
+            in: tempDir,
+            transitionStyle: .none,
+            transitionDuration: 0
+        )
+
+        let outputURL = tempDir.appendingPathComponent("sequence-none.mov")
+        let config = RenderEngine.Config(
+            outputSize: CGSize(width: 128, height: 72),
+            frameRate: 30,
+            enableEffects: true
+        )
+
+        let engine = RenderEngine()
+        let result = await engine.export(
+            hypnogram: hypnogram,
+            outputURL: outputURL,
+            config: config
+        )
+
+        switch result {
+        case .success(let url):
+            #expect(url.path == outputURL.path)
+            #expect(FileManager.default.fileExists(atPath: url.path))
+        case .failure(let error):
+            #expect(Bool(false), "Expected sequence export success with no transitions, got error: \(error)")
+        }
+    }
+
+    @Test func renderEngineExportsSequenceWithNoTransitionsEvenWhenDurationIsSet() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let hypnogram = try await makeSequenceHypnogram(
+            in: tempDir,
+            transitionStyle: .none,
+            transitionDuration: 2.0
+        )
+
+        let outputURL = tempDir.appendingPathComponent("sequence-none-duration-set.mov")
+        let config = RenderEngine.Config(
+            outputSize: CGSize(width: 128, height: 72),
+            frameRate: 30,
+            enableEffects: true
+        )
+
+        let engine = RenderEngine()
+        let result = await engine.export(
+            hypnogram: hypnogram,
+            outputURL: outputURL,
+            config: config
+        )
+
+        switch result {
+        case .success(let url):
+            #expect(url.path == outputURL.path)
+            #expect(FileManager.default.fileExists(atPath: url.path))
+        case .failure(let error):
+            #expect(Bool(false), "Expected sequence export success with no transitions even when duration is set, got error: \(error)")
+        }
+    }
+
+    @Test func renderEngineExportsSequenceWithDissolveTransitions() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let hypnogram = try await makeSequenceHypnogram(
+            in: tempDir,
+            transitionStyle: .crossfade,
+            transitionDuration: 0.15
+        )
+
+        let outputURL = tempDir.appendingPathComponent("sequence-dissolve.mov")
+        let config = RenderEngine.Config(
+            outputSize: CGSize(width: 128, height: 72),
+            frameRate: 30,
+            enableEffects: true
+        )
+
+        let engine = RenderEngine()
+        let result = await engine.export(
+            hypnogram: hypnogram,
+            outputURL: outputURL,
+            config: config
+        )
+
+        switch result {
+        case .success(let url):
+            #expect(url.path == outputURL.path)
+            #expect(FileManager.default.fileExists(atPath: url.path))
+        case .failure(let error):
+            #expect(Bool(false), "Expected sequence export success with dissolve transitions, got error: \(error)")
+        }
+    }
+
+    @Test func renderEngineExportsNineCompositionSequenceShapeWithTopLevelNone() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let durations: [Double] = [
+            16.476666666666667,
+            20.916666666666668,
+            21.488333333333333,
+            18.276666666666667,
+            16.661666666666665,
+            2.598333333333333,
+            19.203333333333333,
+            10.208333333333334,
+            7.573333333333333
+        ]
+
+        let hypnogram = try await makeSequenceHypnogram(
+            in: tempDir,
+            durations: durations,
+            topLevelTransitionStyle: .none,
+            topLevelTransitionDuration: 1.0,
+            perCompositionTransitionStyle: nil,
+            perCompositionTransitionDuration: nil
+        )
+
+        let outputURL = tempDir.appendingPathComponent("sequence-nine-top-level-none.mov")
+        let config = RenderEngine.Config(
+            outputSize: CGSize(width: 128, height: 72),
+            frameRate: 30,
+            enableEffects: true
+        )
+
+        let engine = RenderEngine()
+        let result = await engine.export(
+            hypnogram: hypnogram,
+            outputURL: outputURL,
+            config: config
+        )
+
+        switch result {
+        case .success(let url):
+            #expect(url.path == outputURL.path)
+            #expect(FileManager.default.fileExists(atPath: url.path))
+        case .failure(let error):
+            #expect(Bool(false), "Expected nine-composition top-level-none sequence export success, got error: \(error)")
+        }
+    }
+
+    @Test func renderEngineExportsNineCompositionFrameAlignedSequenceWithTopLevelNone() async throws {
+        let tempDir = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let frameAlignedDurations: [Double] = [
+            16.466666666666665,
+            20.933333333333334,
+            21.5,
+            18.266666666666666,
+            16.666666666666668,
+            2.6,
+            19.2,
+            10.2,
+            7.566666666666666
+        ]
+
+        let hypnogram = try await makeSequenceHypnogram(
+            in: tempDir,
+            durations: frameAlignedDurations,
+            topLevelTransitionStyle: .none,
+            topLevelTransitionDuration: 1.0,
+            perCompositionTransitionStyle: nil,
+            perCompositionTransitionDuration: nil
+        )
+
+        let outputURL = tempDir.appendingPathComponent("sequence-nine-frame-aligned-top-level-none.mov")
+        let config = RenderEngine.Config(
+            outputSize: CGSize(width: 128, height: 72),
+            frameRate: 30,
+            enableEffects: true
+        )
+
+        let engine = RenderEngine()
+        let result = await engine.export(
+            hypnogram: hypnogram,
+            outputURL: outputURL,
+            config: config
+        )
+
+        switch result {
+        case .success(let url):
+            #expect(url.path == outputURL.path)
+            #expect(FileManager.default.fileExists(atPath: url.path))
+        case .failure(let error):
+            #expect(Bool(false), "Expected nine-composition frame-aligned top-level-none sequence export success, got error: \(error)")
+        }
+    }
+
     private func makeTempDirectory() throws -> URL {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
             "hypnograph-tests-\(UUID().uuidString)",
@@ -247,6 +442,64 @@ struct RenderEngineTests {
         ctx.fill(CGRect(origin: .zero, size: size))
 
         return pixelBuffer
+    }
+
+    private func makeSequenceHypnogram(
+        in directory: URL,
+        transitionStyle: TransitionRenderer.TransitionType,
+        transitionDuration: Double
+    ) async throws -> Hypnogram {
+        try await makeSequenceHypnogram(
+            in: directory,
+            durations: [12.0 / 30.0, 13.0 / 30.0, 14.0 / 30.0],
+            topLevelTransitionStyle: transitionStyle,
+            topLevelTransitionDuration: transitionDuration,
+            perCompositionTransitionStyle: transitionStyle,
+            perCompositionTransitionDuration: transitionDuration
+        )
+    }
+
+    private func makeSequenceHypnogram(
+        in directory: URL,
+        durations: [Double],
+        topLevelTransitionStyle: TransitionRenderer.TransitionType,
+        topLevelTransitionDuration: Double,
+        perCompositionTransitionStyle: TransitionRenderer.TransitionType?,
+        perCompositionTransitionDuration: Double?
+    ) async throws -> Hypnogram {
+        let frameRate = 30
+        let size = CGSize(width: 16, height: 16)
+
+        let urls = durations.enumerated().map { index, _ in
+            directory.appendingPathComponent("sequence-\(index).mov")
+        }
+
+        for (index, url) in urls.enumerated() {
+            let frameCount = max(1, Int((durations[index] * Double(frameRate)).rounded()))
+            try await writeTestVideo(
+                to: url,
+                size: size,
+                frameCount: frameCount,
+                frameRate: frameRate
+            )
+        }
+
+        let compositions: [Composition] = urls.enumerated().map { index, url in
+            let duration = CMTime(seconds: durations[index], preferredTimescale: 600)
+            let file = MediaFile(source: .url(url), mediaKind: .video, duration: duration)
+            let mediaClip = MediaClip(file: file, startTime: .zero, duration: duration)
+            let layer = Layer(mediaClip: mediaClip)
+            var composition = Composition(layers: [layer], targetDuration: duration)
+            composition.transitionStyle = perCompositionTransitionStyle
+            composition.transitionDuration = perCompositionTransitionDuration
+            return composition
+        }
+
+        return Hypnogram(
+            compositions: compositions,
+            transitionStyle: topLevelTransitionStyle,
+            transitionDuration: topLevelTransitionDuration
+        )
     }
 
     private enum TestImageError: Error {

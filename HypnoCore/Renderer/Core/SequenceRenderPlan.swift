@@ -2,7 +2,7 @@
 //  SequenceRenderPlan.swift
 //  HypnoCore
 //
-//  Canonical forward sequence-time model shared by future preview and export paths.
+//  Canonical forward sequence-time model shared by preview-adjacent features and export.
 //
 
 import CoreMedia
@@ -10,10 +10,38 @@ import Foundation
 
 /// A forward sequence-time plan for a full hypnogram.
 ///
-/// This is intentionally a small first slice toward a unified render pipeline:
-/// it codifies how a saved sequence maps global sequence time into either
-/// composition body playback or an overlap transition between compositions.
+/// The plan codifies how saved sequence time maps into either composition body
+/// playback or an overlap transition between compositions.
 public struct SequenceRenderPlan {
+
+    public struct CompositionBodySpan {
+        public let compositionIndex: Int
+        public let compositionID: UUID
+        public let sequenceStartTime: CMTime
+        public let sequenceEndTime: CMTime
+        public let compositionTimeStart: CMTime
+        public let compositionTimeEnd: CMTime
+    }
+
+    public struct TransitionSpan {
+        public let outgoingCompositionIndex: Int
+        public let outgoingCompositionID: UUID
+        public let incomingCompositionIndex: Int
+        public let incomingCompositionID: UUID
+        public let sequenceStartTime: CMTime
+        public let sequenceEndTime: CMTime
+        public let outgoingCompositionTimeStart: CMTime
+        public let outgoingCompositionTimeEnd: CMTime
+        public let incomingCompositionTimeStart: CMTime
+        public let incomingCompositionTimeEnd: CMTime
+        public let style: TransitionRenderer.TransitionType
+        public let duration: CMTime
+    }
+
+    public enum Span {
+        case compositionBody(CompositionBodySpan)
+        case transition(TransitionSpan)
+    }
 
     public struct FrameRequest {
         public let frameIndex: Int
@@ -102,11 +130,26 @@ public struct SequenceRenderPlan {
 
     public let entries: [CompositionEntry]
     public let transitions: [BoundaryTransition]
+    public let orderedSpans: [Span]
     public let totalDuration: CMTime
 
     private let segments: [Segment]
 
     private static let timescale: CMTimeScale = 600
+
+    private init(
+        entries: [CompositionEntry],
+        transitions: [BoundaryTransition],
+        orderedSpans: [Span],
+        segments: [Segment],
+        totalDuration: CMTime
+    ) {
+        self.entries = entries
+        self.transitions = transitions
+        self.orderedSpans = orderedSpans
+        self.segments = segments
+        self.totalDuration = totalDuration
+    }
 
     public init(hypnogram: Hypnogram) {
         let compositions = hypnogram.compositions
@@ -114,6 +157,7 @@ public struct SequenceRenderPlan {
         guard !compositions.isEmpty else {
             entries = []
             transitions = []
+            orderedSpans = []
             segments = []
             totalDuration = .zero
             return
@@ -121,7 +165,14 @@ public struct SequenceRenderPlan {
 
         var builtEntries: [CompositionEntry] = []
         var builtTransitions: [BoundaryTransition] = []
+        var builtOrderedSpans: [Span] = []
         var builtSegments: [Segment] = []
+
+        let outgoingTransitions = Self.resolvedOutgoingTransitions(
+            in: compositions,
+            hypnogramDefaultStyle: hypnogram.transitionStyle,
+            hypnogramDefaultDuration: hypnogram.transitionDuration
+        )
 
         var bodyStartSeconds: Double = 0
         var previousTransitionDurationSeconds: Double = 0
@@ -129,12 +180,7 @@ public struct SequenceRenderPlan {
         for index in compositions.indices {
             let composition = compositions[index]
             let compositionDurationSeconds = Self.normalizedSeconds(composition.effectiveDuration)
-            let outgoingTransition = Self.effectiveOutgoingTransition(
-                for: index,
-                in: compositions,
-                hypnogramDefaultStyle: hypnogram.transitionStyle,
-                hypnogramDefaultDuration: hypnogram.transitionDuration
-            )
+            let outgoingTransition = outgoingTransitions[index]
 
             let incomingTransitionSeconds = previousTransitionDurationSeconds
             let outgoingTransitionSeconds = outgoingTransition?.duration.seconds ?? 0
@@ -159,6 +205,19 @@ public struct SequenceRenderPlan {
             builtEntries.append(entry)
 
             if bodyDurationSeconds > 0 {
+                builtOrderedSpans.append(
+                    .compositionBody(
+                        CompositionBodySpan(
+                            compositionIndex: index,
+                            compositionID: composition.id,
+                            sequenceStartTime: Self.time(bodyStartSeconds),
+                            sequenceEndTime: Self.time(bodyEndSeconds),
+                            compositionTimeStart: Self.time(incomingTransitionSeconds),
+                            compositionTimeEnd: Self.time(incomingTransitionSeconds + bodyDurationSeconds)
+                        )
+                    )
+                )
+
                 builtSegments.append(
                     .composition(
                         CompositionSampleTemplate(
@@ -189,6 +248,25 @@ public struct SequenceRenderPlan {
                     )
                 )
 
+                builtOrderedSpans.append(
+                    .transition(
+                        TransitionSpan(
+                            outgoingCompositionIndex: index,
+                            outgoingCompositionID: composition.id,
+                            incomingCompositionIndex: outgoingTransition.incomingCompositionIndex,
+                            incomingCompositionID: compositions[outgoingTransition.incomingCompositionIndex].id,
+                            sequenceStartTime: Self.time(transitionStartSeconds),
+                            sequenceEndTime: Self.time(transitionEndSeconds),
+                            outgoingCompositionTimeStart: Self.time(compositionDurationSeconds - outgoingTransition.duration.seconds),
+                            outgoingCompositionTimeEnd: Self.time(compositionDurationSeconds),
+                            incomingCompositionTimeStart: .zero,
+                            incomingCompositionTimeEnd: outgoingTransition.duration,
+                            style: outgoingTransition.style,
+                            duration: outgoingTransition.duration
+                        )
+                    )
+                )
+
                 builtSegments.append(
                     .transition(
                         TransitionSampleTemplate(
@@ -204,14 +282,17 @@ public struct SequenceRenderPlan {
                         )
                     )
                 )
-            }
 
-            bodyStartSeconds += max(0, compositionDurationSeconds - incomingTransitionSeconds)
+                bodyStartSeconds = transitionEndSeconds
+            } else {
+                bodyStartSeconds = bodyEndSeconds
+            }
             previousTransitionDurationSeconds = outgoingTransition?.duration.seconds ?? 0
         }
 
         entries = builtEntries
         transitions = builtTransitions
+        orderedSpans = builtOrderedSpans
         segments = builtSegments
         totalDuration = builtEntries.last?.sequenceEndTime ?? .zero
     }
@@ -300,6 +381,198 @@ public struct SequenceRenderPlan {
         }
     }
 
+    public func alignedToFrameRate(_ frameRate: Int) -> SequenceRenderPlan {
+        guard frameRate > 0, !orderedSpans.isEmpty else { return self }
+
+        let frameDuration = CMTime(value: 1, timescale: CMTimeScale(frameRate))
+
+        func snap(_ time: CMTime) -> CMTime {
+            let frames = (time.seconds * Double(frameRate)).rounded()
+            return CMTimeMultiply(frameDuration, multiplier: Int32(max(0, Int(frames))))
+        }
+
+        var alignedSpans: [Span] = []
+        alignedSpans.reserveCapacity(orderedSpans.count)
+
+        var cursor = CMTime.zero
+
+        for (index, span) in orderedSpans.enumerated() {
+            let rawEnd: CMTime
+            let hasPositiveDuration: Bool
+
+            switch span {
+            case .compositionBody(let body):
+                rawEnd = body.sequenceEndTime
+                hasPositiveDuration = body.sequenceEndTime > body.sequenceStartTime
+
+            case .transition(let transition):
+                rawEnd = transition.sequenceEndTime
+                hasPositiveDuration = transition.sequenceEndTime > transition.sequenceStartTime
+            }
+
+            var alignedEnd = index == orderedSpans.count - 1 ? snap(totalDuration) : snap(rawEnd)
+            if alignedEnd < cursor {
+                alignedEnd = cursor
+            }
+            if hasPositiveDuration, alignedEnd == cursor {
+                alignedEnd = CMTimeAdd(cursor, frameDuration)
+            }
+
+            let alignedDuration = CMTimeSubtract(alignedEnd, cursor)
+
+            switch span {
+            case .compositionBody(let body):
+                alignedSpans.append(
+                    .compositionBody(
+                        CompositionBodySpan(
+                            compositionIndex: body.compositionIndex,
+                            compositionID: body.compositionID,
+                            sequenceStartTime: cursor,
+                            sequenceEndTime: alignedEnd,
+                            compositionTimeStart: body.compositionTimeStart,
+                            compositionTimeEnd: CMTimeAdd(body.compositionTimeStart, alignedDuration)
+                        )
+                    )
+                )
+
+            case .transition(let transition):
+                alignedSpans.append(
+                    .transition(
+                        TransitionSpan(
+                            outgoingCompositionIndex: transition.outgoingCompositionIndex,
+                            outgoingCompositionID: transition.outgoingCompositionID,
+                            incomingCompositionIndex: transition.incomingCompositionIndex,
+                            incomingCompositionID: transition.incomingCompositionID,
+                            sequenceStartTime: cursor,
+                            sequenceEndTime: alignedEnd,
+                            outgoingCompositionTimeStart: transition.outgoingCompositionTimeStart,
+                            outgoingCompositionTimeEnd: CMTimeAdd(transition.outgoingCompositionTimeStart, alignedDuration),
+                            incomingCompositionTimeStart: transition.incomingCompositionTimeStart,
+                            incomingCompositionTimeEnd: CMTimeAdd(transition.incomingCompositionTimeStart, alignedDuration),
+                            style: transition.style,
+                            duration: alignedDuration
+                        )
+                    )
+                )
+            }
+
+            cursor = alignedEnd
+        }
+
+        var alignedTransitions: [BoundaryTransition] = []
+        var alignedSegments: [Segment] = []
+
+        for span in alignedSpans {
+            switch span {
+            case .compositionBody(let body):
+                alignedSegments.append(
+                    .composition(
+                        CompositionSampleTemplate(
+                            sequenceStartTime: body.sequenceStartTime,
+                            sequenceEndTime: body.sequenceEndTime,
+                            compositionIndex: body.compositionIndex,
+                            compositionID: body.compositionID,
+                            compositionTimeStart: body.compositionTimeStart
+                        )
+                    )
+                )
+
+            case .transition(let transition):
+                alignedTransitions.append(
+                    BoundaryTransition(
+                        outgoingCompositionIndex: transition.outgoingCompositionIndex,
+                        outgoingCompositionID: transition.outgoingCompositionID,
+                        incomingCompositionIndex: transition.incomingCompositionIndex,
+                        incomingCompositionID: transition.incomingCompositionID,
+                        style: transition.style,
+                        duration: transition.duration,
+                        sequenceStartTime: transition.sequenceStartTime,
+                        sequenceEndTime: transition.sequenceEndTime
+                    )
+                )
+
+                alignedSegments.append(
+                    .transition(
+                        TransitionSampleTemplate(
+                            sequenceStartTime: transition.sequenceStartTime,
+                            sequenceEndTime: transition.sequenceEndTime,
+                            outgoingCompositionIndex: transition.outgoingCompositionIndex,
+                            outgoingCompositionID: transition.outgoingCompositionID,
+                            outgoingCompositionTimeStart: transition.outgoingCompositionTimeStart,
+                            incomingCompositionIndex: transition.incomingCompositionIndex,
+                            incomingCompositionID: transition.incomingCompositionID,
+                            style: transition.style,
+                            duration: transition.duration
+                        )
+                    )
+                )
+            }
+        }
+
+        var bodyByIndex: [Int: CompositionBodySpan] = [:]
+        var incomingByIndex: [Int: BoundaryTransition] = [:]
+        var outgoingByIndex: [Int: BoundaryTransition] = [:]
+
+        for span in alignedSpans {
+            switch span {
+            case .compositionBody(let body):
+                bodyByIndex[body.compositionIndex] = body
+            case .transition(let transition):
+                let boundary = BoundaryTransition(
+                    outgoingCompositionIndex: transition.outgoingCompositionIndex,
+                    outgoingCompositionID: transition.outgoingCompositionID,
+                    incomingCompositionIndex: transition.incomingCompositionIndex,
+                    incomingCompositionID: transition.incomingCompositionID,
+                    style: transition.style,
+                    duration: transition.duration,
+                    sequenceStartTime: transition.sequenceStartTime,
+                    sequenceEndTime: transition.sequenceEndTime
+                )
+                outgoingByIndex[transition.outgoingCompositionIndex] = boundary
+                incomingByIndex[transition.incomingCompositionIndex] = boundary
+            }
+        }
+
+        let allIndices = Set(entries.map(\.compositionIndex))
+        let alignedEntries: [CompositionEntry] = allIndices.sorted().compactMap { index in
+            let body = bodyByIndex[index]
+            let incoming = incomingByIndex[index]
+            let outgoing = outgoingByIndex[index]
+
+            let sequenceStart = incoming?.sequenceStartTime ?? body?.sequenceStartTime ?? outgoing?.sequenceStartTime
+            let bodyStart = body?.sequenceStartTime ?? incoming?.sequenceEndTime ?? outgoing?.sequenceStartTime
+            let sequenceEnd = outgoing?.sequenceEndTime ?? body?.sequenceEndTime ?? incoming?.sequenceEndTime
+
+            guard let sequenceStart, let bodyStart, let sequenceEnd else { return nil }
+
+            let bodyDuration = body.map { CMTimeSubtract($0.sequenceEndTime, $0.sequenceStartTime) } ?? .zero
+            let incomingDuration = incoming?.duration ?? .zero
+            let outgoingDuration = outgoing?.duration ?? .zero
+            let compositionDuration = CMTimeAdd(CMTimeAdd(incomingDuration, bodyDuration), outgoingDuration)
+
+            let rawEntry = entries.first { $0.compositionIndex == index }
+
+            return CompositionEntry(
+                compositionIndex: index,
+                compositionID: rawEntry?.compositionID ?? body?.compositionID ?? incoming?.incomingCompositionID ?? outgoing?.outgoingCompositionID ?? UUID(),
+                sequenceStartTime: sequenceStart,
+                bodyStartTime: bodyStart,
+                sequenceEndTime: sequenceEnd,
+                compositionDuration: compositionDuration,
+                incomingTransitionDuration: incomingDuration,
+                outgoingTransitionDuration: outgoingDuration
+            )
+        }
+
+        return SequenceRenderPlan(
+            entries: alignedEntries,
+            transitions: alignedTransitions,
+            orderedSpans: alignedSpans,
+            segments: alignedSegments,
+            totalDuration: cursor
+        )
+    }
+
     private struct EffectiveOutgoingTransition {
         let incomingCompositionIndex: Int
         let style: TransitionRenderer.TransitionType
@@ -335,6 +608,76 @@ public struct SequenceRenderPlan {
             style: style,
             duration: time(clampedDuration)
         )
+    }
+
+    private static func resolvedOutgoingTransitions(
+        in compositions: [Composition],
+        hypnogramDefaultStyle: TransitionRenderer.TransitionType?,
+        hypnogramDefaultDuration: Double?
+    ) -> [EffectiveOutgoingTransition?] {
+        var transitions = compositions.indices.map {
+            effectiveOutgoingTransition(
+                for: $0,
+                in: compositions,
+                hypnogramDefaultStyle: hypnogramDefaultStyle,
+                hypnogramDefaultDuration: hypnogramDefaultDuration
+            )
+        }
+
+        guard compositions.count > 2 else { return transitions }
+
+        let durations = compositions.map { normalizedSeconds($0.effectiveDuration) }
+        let epsilon = 1e-9
+
+        for _ in 0..<(compositions.count * 2) {
+            var changed = false
+
+            for index in compositions.indices {
+                let incomingDuration = index > 0 ? (transitions[index - 1]?.duration.seconds ?? 0) : 0
+                let outgoingDuration = index < compositions.count - 1 ? (transitions[index]?.duration.seconds ?? 0) : 0
+                let totalTransitionDuration = incomingDuration + outgoingDuration
+                let compositionDuration = durations[index]
+
+                guard compositionDuration > 0,
+                      totalTransitionDuration > compositionDuration + epsilon else {
+                    continue
+                }
+
+                let scale = compositionDuration / totalTransitionDuration
+
+                if index > 0, let incoming = transitions[index - 1] {
+                    let scaledIncomingSeconds = time(incoming.duration.seconds * scale).seconds
+                    transitions[index - 1] = EffectiveOutgoingTransition(
+                        incomingCompositionIndex: incoming.incomingCompositionIndex,
+                        style: incoming.style,
+                        duration: time(scaledIncomingSeconds)
+                    )
+                }
+
+                if index < compositions.count - 1, let outgoing = transitions[index] {
+                    let resolvedIncomingSeconds = transitions[index - 1]?.duration.seconds ?? 0
+                    let remainingOutgoingSeconds = max(0, compositionDuration - resolvedIncomingSeconds)
+                    let scaledOutgoingSeconds = min(
+                        time(outgoing.duration.seconds * scale).seconds,
+                        remainingOutgoingSeconds
+                    )
+                    transitions[index] = EffectiveOutgoingTransition(
+                        incomingCompositionIndex: outgoing.incomingCompositionIndex,
+                        style: outgoing.style,
+                        duration: time(scaledOutgoingSeconds)
+                    )
+                }
+
+                changed = true
+            }
+
+            if !changed { break }
+        }
+
+        return transitions.map { transition in
+            guard let transition, transition.duration.seconds > epsilon else { return nil }
+            return transition
+        }
     }
 
     private static func normalizedSeconds(_ time: CMTime) -> Double {

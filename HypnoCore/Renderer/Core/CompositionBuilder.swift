@@ -34,6 +34,9 @@ final class CompositionBuilder {
     ///   - outputSize: Output dimensions
     ///   - frameRate: Output frame rate
     ///   - enableEffects: Whether to apply effects
+    ///   - targetDurationOverride: Optional export-aligned duration to use instead of
+    ///     the composition's raw effective duration. Sequence export uses this so each
+    ///     composition build lands on the same frame grid as the enclosing sequence plan.
     ///   - effectManager: The EffectManager to use for this composition.
     ///                  Pass nil only for legacy callers; all new code should provide a manager.
     func build(
@@ -43,7 +46,8 @@ final class CompositionBuilder {
         enableEffects: Bool = true,
         sourceFraming: SourceFraming = .fill,
         framingHook: (any FramingHook)? = HumanCenteringFramingHook.shared,
-        effectManager: EffectManager? = nil
+        effectManager: EffectManager? = nil,
+        targetDurationOverride: CMTime? = nil
     ) async -> Result<BuildResult, RenderError> {
 
         // Validate
@@ -55,9 +59,11 @@ final class CompositionBuilder {
             return .failure(.invalidOutputSize(outputSize))
         }
 
+        let targetDuration = targetDurationOverride ?? composition.effectiveDuration
+
         return await buildMontage(
             composition: composition,
-            targetDuration: composition.effectiveDuration,
+            targetDuration: targetDuration,
             outputSize: outputSize,
             frameRate: frameRate,
             enableEffects: enableEffects,

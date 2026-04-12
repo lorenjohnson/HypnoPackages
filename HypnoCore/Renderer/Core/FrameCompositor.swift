@@ -22,7 +22,6 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
     // Use .userInitiated instead of .userInteractive to avoid starving audio playback
     // Audio runs at .userInteractive, so our video rendering should be slightly lower priority
     private let renderQueue = DispatchQueue(label: "com.hypnograph.framecompositor", qos: .userInitiated)
-
     // MARK: - Cancellation
 
     /// AVFoundation can request cancellation when seeking, scrubbing, or if it needs to drop work.
@@ -124,12 +123,6 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             return
         }
 
-        guard let instruction = request.videoCompositionInstruction as? RenderInstruction else {
-            print("🔴 FrameCompositor: Invalid instruction type")
-            request.finish(with: NSError(domain: "FrameCompositor", code: 2, userInfo: nil))
-            return
-        }
-
         guard token == currentCancellationToken() else {
             request.finishCancelledRequest()
             return
@@ -146,113 +139,259 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
             height: CVPixelBufferGetHeight(outputBuffer)
         )
 
-        // Use the effect manager from the instruction
-        // All paths (preview, live display, export) now pass their manager through
-        let manager = instruction.effectManager
-        let frameIndex = manager?.nextFrameIndex() ?? 0
-
-        // Composite all layers
-        var composited: CIImage?
-
-        for (index, trackID) in instruction.layerTrackIDs.enumerated() {
-            if token != currentCancellationToken() {
-                request.finishCancelledRequest()
+        let finalImage: CIImage
+        if let instruction = request.videoCompositionInstruction as? SequenceRenderInstruction {
+            guard let image = renderSequenceInstruction(
+                instruction,
+                request: request,
+                outputSize: outputSize,
+                cancellationToken: token
+            ) else {
+                request.finish(with: frameRenderError(
+                    code: 5,
+                    description: "Failed to render sequence instruction at \(request.compositionTime.seconds)s"
+                ))
                 return
             }
+            finalImage = image
+        } else if let instruction = request.videoCompositionInstruction as? RenderInstruction {
+            let pass = CompositionRenderPass(
+                timeRange: instruction.timeRange,
+                compositionTimeStart: .zero,
+                layerTrackIDs: instruction.layerTrackIDs,
+                blendModes: instruction.blendModes,
+                transforms: instruction.transforms,
+                sourceIndices: instruction.sourceIndices,
+                enableEffects: instruction.enableEffects,
+                stillImages: instruction.stillImages,
+                sourceFraming: instruction.sourceFraming,
+                framingHook: instruction.framingHook,
+                renderID: instruction.renderID,
+                effectManager: instruction.effectManager,
+                applyHypnogramEffectsFromManager: true
+            )
 
-            let sourceIndex = instruction.sourceIndices[index]
+            guard let result = renderCompositionPass(
+                pass,
+                request: request,
+                outputSize: outputSize,
+                sequenceTime: request.compositionTime,
+                cancellationToken: token
+            ) else {
+                request.finish(with: frameRenderError(
+                    code: 5,
+                    description: "Failed to render composition instruction at \(request.compositionTime.seconds)s"
+                ))
+                return
+            }
+            finalImage = result
+        } else {
+            print("🔴 FrameCompositor: Invalid instruction type")
+            request.finish(with: frameRenderError(
+                code: 2,
+                description: "Invalid instruction type \(type(of: request.videoCompositionInstruction))"
+            ))
+            return
+        }
 
-            // Check flash solo - skip layers that shouldn't be rendered
-            if let manager = manager, !manager.shouldRenderSource(at: sourceIndex) {
+        guard token == currentCancellationToken() else {
+            request.finishCancelledRequest()
+            return
+        }
+
+        guard token == currentCancellationToken() else {
+            request.finishCancelledRequest()
+            return
+        }
+
+        // Render to output buffer
+        ciContext.render(finalImage, to: outputBuffer)
+
+        // Finish request
+        request.finish(withComposedVideoFrame: outputBuffer)
+
+        // Increment output frame counter for slow-mo
+        outputFrameCounter += 1
+    }
+
+    private func renderSequenceInstruction(
+        _ instruction: SequenceRenderInstruction,
+        request: AVAsynchronousVideoCompositionRequest,
+        outputSize: CGSize,
+        cancellationToken token: UInt64
+    ) -> CIImage? {
+        guard let sample = instruction.plan.sample(at: request.compositionTime) else {
+            print("🔴 FrameCompositor: Sequence plan had no sample at \(request.compositionTime.seconds)s")
+            return nil
+        }
+
+        switch sample {
+        case .composition(let sample):
+            guard let pass = instruction.passesByIndex[sample.compositionIndex] else {
+                print("🔴 FrameCompositor: Missing pass for composition \(sample.compositionIndex)")
+                return nil
+            }
+
+            guard var image = renderCompositionPass(
+                pass,
+                request: request,
+                outputSize: outputSize,
+                sequenceTime: request.compositionTime,
+                cancellationToken: token,
+                localTimeOverride: sample.compositionTime
+            ) else {
+                return nil
+            }
+
+            image = applySequenceEffects(
+                to: image,
+                using: instruction.sequenceEffectManager,
+                sequenceTime: request.compositionTime,
+                outputSize: outputSize
+            )
+            return image
+
+        case .transition(let sample):
+            guard let outgoing = instruction.passesByIndex[sample.outgoingCompositionIndex],
+                  let incoming = instruction.passesByIndex[sample.incomingCompositionIndex] else {
+                print(
+                    "🔴 FrameCompositor: Missing transition pass outgoing=\(sample.outgoingCompositionIndex) incoming=\(sample.incomingCompositionIndex)"
+                )
+                return nil
+            }
+
+            let outgoingImage = renderCompositionPass(
+                outgoing,
+                request: request,
+                outputSize: outputSize,
+                sequenceTime: request.compositionTime,
+                cancellationToken: token,
+                localTimeOverride: sample.outgoingCompositionTime
+            )
+            let incomingImage = renderCompositionPass(
+                incoming,
+                request: request,
+                outputSize: outputSize,
+                sequenceTime: request.compositionTime,
+                cancellationToken: token,
+                localTimeOverride: sample.incomingCompositionTime
+            )
+
+            guard token == currentCancellationToken() else { return nil }
+
+            let extent = CGRect(origin: .zero, size: outputSize)
+            var image = applyTransition(
+                outgoing: outgoingImage,
+                incoming: incomingImage,
+                style: sample.style,
+                progress: CGFloat(sample.progress),
+                extent: extent
+            )
+
+            image = applySequenceEffects(
+                to: image,
+                using: instruction.sequenceEffectManager,
+                sequenceTime: request.compositionTime,
+                outputSize: outputSize
+            )
+            return image
+        }
+    }
+
+    private func renderCompositionPass(
+        _ pass: CompositionRenderPass,
+        request: AVAsynchronousVideoCompositionRequest,
+        outputSize: CGSize,
+        sequenceTime: CMTime,
+        cancellationToken token: UInt64,
+        localTimeOverride: CMTime? = nil
+    ) -> CIImage? {
+        guard token == currentCancellationToken() else { return nil }
+
+        let manager = pass.effectManager
+        let localTime = localTimeOverride ?? pass.localTime(for: sequenceTime)
+        let frameIndex = manager?.nextFrameIndex() ?? 0
+        let composition = manager?.compositionProvider?()
+
+        var composited: CIImage?
+
+        for (index, trackID) in pass.layerTrackIDs.enumerated() {
+            guard token == currentCancellationToken() else { return nil }
+
+            let sourceIndex = pass.sourceIndices[index]
+            if let manager, !manager.shouldRenderSource(at: sourceIndex) {
                 continue
             }
 
             var layerImage: CIImage?
-
-            // Check if this layer is a still image
-            if index < instruction.stillImages.count, let stillImage = instruction.stillImages[index] {
+            if index < pass.stillImages.count, let stillImage = pass.stillImages[index] {
                 layerImage = stillImage
-            } else {
-                // Get frame from video track
-                guard let sourceBuffer = request.sourceFrame(byTrackID: trackID) else {
-                    print("⚠️ FrameCompositor: No source frame for track \(trackID) at \(request.compositionTime.seconds)s")
-                    continue
-                }
-
-                // Apply slow-mo interpolation if needed
+            } else if let sourceBuffer = request.sourceFrame(byTrackID: trackID) {
                 let playRate = manager?.compositionProvider?()?.playRate ?? 1.0
-
                 if playRate < 1.0 {
                     layerImage = processSlowMo(
                         sourceBuffer: sourceBuffer,
                         trackID: trackID,
                         playRate: playRate,
-                        compositionTime: request.compositionTime
+                        compositionTime: localTime
                     )
                 } else {
                     layerImage = CIImage(cvPixelBuffer: sourceBuffer)
                 }
-            }
-
-            guard var img = layerImage else {
+            } else {
+                print(
+                    "⚠️ FrameCompositor: Missing source frame " +
+                    "track=\(trackID) sequenceTime=\(sequenceTime.seconds) localTime=\(localTime.seconds) " +
+                    "passStart=\(pass.timeRange.start.seconds) passDuration=\(pass.timeRange.duration.seconds) " +
+                    "sourceIndex=\(sourceIndex)"
+                )
                 continue
             }
 
-            // Apply combined transform (metadata orientation + user transform)
-            let transform = instruction.transforms[index]
-            img = img.transformed(by: transform)
+            guard var img = layerImage else { continue }
 
-            // Ask optional framing hook for a per-source bias (smart framing).
-            let bias: FramingBias? = instruction.framingHook?.framingBias(for: FramingRequest(
-                renderID: instruction.renderID,
+            img = img.transformed(by: pass.transforms[index])
+
+            let bias = pass.framingHook?.framingBias(for: FramingRequest(
+                renderID: pass.renderID,
                 layerIndex: index,
                 sourceIndex: sourceIndex,
-                time: request.compositionTime,
-                sourceFraming: instruction.sourceFraming,
+                time: localTime,
+                sourceFraming: pass.sourceFraming,
                 outputSize: outputSize,
                 sourceImage: img
             ))
 
-            // Map source into output frame
             img = RendererImageUtils.applySourceFraming(
                 image: img,
                 to: outputSize,
-                framing: instruction.sourceFraming,
+                framing: pass.sourceFraming,
                 bias: bias
             )
 
-            // Apply per-layer effects from the composition.
-            if instruction.enableEffects, let manager = manager {
-                let composition = manager.compositionProvider?()
-                if let composition = composition, sourceIndex < composition.layers.count {
-                    var sourceContext = manager.createContext(
-                        frameIndex: frameIndex,
-                        time: request.compositionTime,
-                        outputSize: outputSize,
-                        sourceIndex: sourceIndex
-                    )
-                    img = composition.layers[sourceIndex].effectChain.apply(to: img, context: &sourceContext)
-                }
+            if pass.enableEffects, let manager, let composition, sourceIndex < composition.layers.count {
+                var sourceContext = manager.createContext(
+                    frameIndex: frameIndex,
+                    time: localTime,
+                    outputSize: outputSize,
+                    sourceIndex: sourceIndex
+                )
+                img = composition.layers[sourceIndex].effectChain.apply(to: img, context: &sourceContext)
             }
 
-            // Blend with previous layers
-            let composition = manager?.compositionProvider?()
             if let base = composited {
-                // Get blend mode from the composition.
                 let blendMode: String
-
-                if let composition = composition, sourceIndex < composition.layers.count {
+                if let composition, sourceIndex < composition.layers.count {
                     blendMode = sourceIndex == 0
                         ? BlendMode.sourceOver
                         : (composition.layers[sourceIndex].blendMode ?? BlendMode.defaultMontage)
                 } else {
-                    blendMode = instruction.blendModes[index]
+                    blendMode = pass.blendModes[index]
                 }
 
-                // Get compensated opacity from manager (same for preview and export)
                 let compensatedOpacity = manager?.compensatedOpacity(
                     layerIndex: index,
-                    totalLayers: instruction.layerTrackIDs.count,
+                    totalLayers: pass.layerTrackIDs.count,
                     blendMode: blendMode
                 ) ?? 1.0
 
@@ -262,8 +401,8 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
                 } else {
                     userOpacity = 1.0
                 }
-                let opacity = compensatedOpacity * CGFloat(max(0.0, min(userOpacity, 1.0)))
 
+                let opacity = compensatedOpacity * CGFloat(max(0.0, min(userOpacity, 1.0)))
                 img = RendererImageUtils.blend(layer: img, over: base, mode: blendMode, opacity: opacity)
                 composited = img
             } else {
@@ -284,65 +423,157 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
         }
 
         guard var finalImage = composited else {
-            print("🔴 FrameCompositor: No layers composited")
-            request.finish(with: NSError(domain: "FrameCompositor", code: 5, userInfo: nil))
-            return
+            print(
+                "🔴 FrameCompositor: No layers composited " +
+                "sequenceTime=\(sequenceTime.seconds) passStart=\(pass.timeRange.start.seconds) " +
+                "passDuration=\(pass.timeRange.duration.seconds) layerTrackCount=\(pass.layerTrackIDs.count)"
+            )
+            return nil
         }
 
-        guard token == currentCancellationToken() else {
-            request.finishCancelledRequest()
-            return
-        }
-
-        // Apply blend normalization (same for preview and export)
-        if let manager = manager {
+        if let manager {
             finalImage = manager.applyNormalization(to: finalImage)
         }
 
-        // Apply composition effect chain (unless suspended, e.g., holding 0 key).
-        if instruction.enableEffects, let manager = manager, !manager.isCompositionEffectSuspended {
-            let composition = manager.compositionProvider?()
-            if let composition = composition {
-                var context = manager.createContext(
-                    frameIndex: frameIndex,
-                    time: request.compositionTime,
-                    outputSize: outputSize
-                )
-                finalImage = composition.effectChain.apply(to: finalImage, context: &context)
-            }
+        if pass.enableEffects, let manager, !manager.isCompositionEffectSuspended, let composition {
+            var context = manager.createContext(
+                frameIndex: frameIndex,
+                time: localTime,
+                outputSize: outputSize
+            )
+            finalImage = composition.effectChain.apply(to: finalImage, context: &context)
         }
 
-        // Apply hypnogram/sequence effect chain last over the fully composed frame.
-        if instruction.enableEffects, let manager = manager {
+        if pass.enableEffects, pass.applyHypnogramEffectsFromManager, let manager {
             let hypnogramChain = manager.hypnogramEffectChain
             if !hypnogramChain.effects.isEmpty {
                 var context = manager.createContext(
                     frameIndex: frameIndex,
-                    time: request.compositionTime,
+                    time: localTime,
                     outputSize: outputSize
                 )
                 finalImage = hypnogramChain.apply(to: finalImage, context: &context)
             }
         }
 
-        // Store frame in buffer
-        if let manager = manager {
-            manager.recordFrame(finalImage, at: request.compositionTime)
+        manager?.recordFrame(finalImage, at: localTime)
+        return finalImage
+    }
+
+    private func applySequenceEffects(
+        to image: CIImage,
+        using manager: EffectManager?,
+        sequenceTime: CMTime,
+        outputSize: CGSize
+    ) -> CIImage {
+        guard let manager else { return image }
+        let hypnogramChain = manager.hypnogramEffectChain
+        guard !hypnogramChain.effects.isEmpty else { return image }
+
+        let frameIndex = manager.nextFrameIndex()
+        var context = manager.createContext(
+            frameIndex: frameIndex,
+            time: sequenceTime,
+            outputSize: outputSize
+        )
+        let finalImage = hypnogramChain.apply(to: image, context: &context)
+        manager.recordFrame(finalImage, at: sequenceTime)
+        return finalImage
+    }
+
+    private func applyTransition(
+        outgoing: CIImage?,
+        incoming: CIImage?,
+        style: TransitionRenderer.TransitionType,
+        progress: CGFloat,
+        extent: CGRect
+    ) -> CIImage {
+        let black = CIImage(color: .black).cropped(to: extent)
+        let clamped = max(0, min(progress, 1))
+
+        switch style {
+        case .none:
+            return clamped < 1 ? (outgoing ?? black) : (incoming ?? black)
+
+        case .crossfade:
+            return blendTransition(
+                outgoing: outgoing ?? black,
+                incoming: incoming ?? black,
+                progress: clamped,
+                extent: extent
+            )
+
+        case .fadeToBlack:
+            if clamped < 0.5 {
+                return blendTransition(
+                    outgoing: outgoing ?? black,
+                    incoming: black,
+                    progress: clamped * 2,
+                    extent: extent
+                )
+            } else {
+                return blendTransition(
+                    outgoing: black,
+                    incoming: incoming ?? black,
+                    progress: (clamped - 0.5) * 2,
+                    extent: extent
+                )
+            }
+
+        case .blur:
+            let blurRadius = 12 * clamped
+            let blurredOutgoing = (outgoing ?? black)
+                .clampedToExtent()
+                .applyingFilter("CIGaussianBlur", parameters: ["inputRadius": blurRadius])
+                .cropped(to: extent)
+            let blurredIncoming = (incoming ?? black)
+                .clampedToExtent()
+                .applyingFilter("CIGaussianBlur", parameters: ["inputRadius": 12 * (1 - clamped)])
+                .cropped(to: extent)
+            return blendTransition(
+                outgoing: blurredOutgoing,
+                incoming: blurredIncoming,
+                progress: clamped,
+                extent: extent
+            )
+
+        case .slideLeft:
+            let width = extent.width
+            let outgoingTranslated = (outgoing ?? black)
+                .transformed(by: CGAffineTransform(translationX: -width * clamped, y: 0))
+            let incomingTranslated = (incoming ?? black)
+                .transformed(by: CGAffineTransform(translationX: width * (1 - clamped), y: 0))
+            return incomingTranslated.composited(over: outgoingTranslated.composited(over: black)).cropped(to: extent)
+
+        case .slideUp:
+            let height = extent.height
+            let outgoingTranslated = (outgoing ?? black)
+                .transformed(by: CGAffineTransform(translationX: 0, y: height * clamped))
+            let incomingTranslated = (incoming ?? black)
+                .transformed(by: CGAffineTransform(translationX: 0, y: -height * (1 - clamped)))
+            return incomingTranslated.composited(over: outgoingTranslated.composited(over: black)).cropped(to: extent)
         }
+    }
 
-        guard token == currentCancellationToken() else {
-            request.finishCancelledRequest()
-            return
-        }
+    private func blendTransition(
+        outgoing: CIImage,
+        incoming: CIImage,
+        progress: CGFloat,
+        extent: CGRect
+    ) -> CIImage {
+        let fadedOutgoing = applyOpacity(to: outgoing, opacity: 1 - progress)
+        let fadedIncoming = applyOpacity(to: incoming, opacity: progress)
+        let black = CIImage(color: .black).cropped(to: extent)
+        return fadedIncoming.composited(over: fadedOutgoing.composited(over: black)).cropped(to: extent)
+    }
 
-        // Render to output buffer
-        ciContext.render(finalImage, to: outputBuffer)
-
-        // Finish request
-        request.finish(withComposedVideoFrame: outputBuffer)
-
-        // Increment output frame counter for slow-mo
-        outputFrameCounter += 1
+    private func applyOpacity(to image: CIImage, opacity: CGFloat) -> CIImage {
+        image.applyingFilter(
+            "CIColorMatrix",
+            parameters: [
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: opacity)
+            ]
+        )
     }
 
     // MARK: - Slow-Mo Processing
@@ -398,5 +629,13 @@ final class FrameCompositor: NSObject, AVVideoCompositing {
         let frame1 = CIImage(cvPixelBuffer: prevBuffer)
         let frame2 = CIImage(cvPixelBuffer: sourceBuffer)
         return crossFadeInterpolator.interpolate(frame1: frame1, frame2: frame2, blendFactor: blendFactor)
+    }
+
+    private func frameRenderError(code: Int, description: String) -> NSError {
+        NSError(
+            domain: "FrameCompositor",
+            code: code,
+            userInfo: [NSLocalizedDescriptionKey: description]
+        )
     }
 }
