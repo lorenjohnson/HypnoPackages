@@ -171,6 +171,13 @@ public final class AVPlayerFrameSource: FrameSource {
 
     /// Configure with a new player item (replaces current item)
     public func configure(with item: AVPlayerItem) {
+        // Clear any cached frame/output state synchronously before swapping items so callers
+        // never observe readiness from the previous item while the new one is still attaching.
+        detachOutput()
+        clearCachedFrame()
+        lastNewBufferHostTime = 0
+        lastReattachAttemptHostTime = 0
+        suppressStallRecoveryUntilHostTime = 0
         player.replaceCurrentItem(with: item)
     }
 

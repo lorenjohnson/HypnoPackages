@@ -1,0 +1,23 @@
+{
+  "uuid": "0d51a9ff-2a0c-4f50-aa3f-459d8bdfbe27",
+  "name": "Dream Print",
+  "version": "1.0.1",
+  "legacyTypes": ["DreamPrintEffect"],
+  "runtimeKind": "metal",
+  "requiredLookback": 0,
+  "usesPersistentState": false,
+  "parameters": {
+    "intensity": { "type": "float", "default": 0.55, "min": 0.0, "max": 1.0 },
+    "textureWidth": { "type": "int", "default": 1920, "min": 1.0, "max": 8192.0 },
+    "textureHeight": { "type": "int", "default": 1080, "min": 1.0, "max": 8192.0 }
+  },
+  "parameterOrder": ["intensity", "textureWidth", "textureHeight"],
+  "autoBoundParameters": ["textureWidth", "textureHeight"],
+  "bindings": {
+    "parameterBufferIndex": 0,
+    "inputTextures": [
+      { "argumentIndex": 0, "source": "currentFrame" }
+    ],
+    "outputTextureIndex": 1
+  }
+}
