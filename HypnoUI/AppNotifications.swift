@@ -21,6 +21,7 @@ struct NotificationItem: Identifiable {
     let id = UUID()
     let message: String
     let flash: Bool
+    let onTap: (() -> Void)?
 }
 
 // MARK: - AppNotificationIdentity
@@ -88,9 +89,14 @@ public final class AppNotifications: ObservableObject {
     ///   - message: The message to display
     ///   - flash: If true, auto-dismiss after duration. If false (default), requires manual dismiss.
     ///   - duration: How long to show if flash is true (default 2 seconds)
-    public func show(_ message: String, flash: Bool = false, duration: TimeInterval = 2.0) {
+    public func show(
+        _ message: String,
+        flash: Bool = false,
+        duration: TimeInterval = 2.0,
+        onTap: (() -> Void)? = nil
+    ) {
         if isAppActive {
-            showInApp(message, flash: flash, duration: duration)
+            showInApp(message, flash: flash, duration: duration, onTap: onTap)
         } else {
             sendSystemNotification(message)
         }
@@ -98,8 +104,13 @@ public final class AppNotifications: ObservableObject {
 
     // MARK: - In-app overlay
 
-    private func showInApp(_ message: String, flash: Bool, duration: TimeInterval) {
-        let item = NotificationItem(message: message, flash: flash)
+    private func showInApp(
+        _ message: String,
+        flash: Bool,
+        duration: TimeInterval,
+        onTap: (() -> Void)?
+    ) {
+        let item = NotificationItem(message: message, flash: flash, onTap: onTap)
 
         withAnimation(.easeIn(duration: 0.15)) {
             notifications.append(item)
@@ -186,9 +197,14 @@ public final class AppNotifications: ObservableObject {
 
     // MARK: - Static convenience (nonisolated so they can be called from anywhere)
 
-    nonisolated public static func show(_ message: String, flash: Bool = false, duration: TimeInterval = 2.0) {
+    nonisolated public static func show(
+        _ message: String,
+        flash: Bool = false,
+        duration: TimeInterval = 2.0,
+        onTap: (() -> Void)? = nil
+    ) {
         Task { @MainActor in
-            shared.show(message, flash: flash, duration: duration)
+            shared.show(message, flash: flash, duration: duration, onTap: onTap)
         }
     }
 
@@ -214,6 +230,8 @@ public final class AppNotifications: ObservableObject {
 /// The in-app notification overlay view - shows stacked notifications.
 struct AppNotificationOverlay: View {
     @ObservedObject var manager: AppNotifications
+    var bottomPadding: CGFloat = 20
+    var trailingPadding: CGFloat = 20
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 8) {
@@ -234,20 +252,35 @@ private struct NotificationBubble: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(item.message)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
-
-            Button(action: onDismiss) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white.opacity(0.7))
+            if let onTap = item.onTap {
+                Button {
+                    onTap()
+                    onDismiss()
+                } label: {
+                    Text(item.message)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .underline(!item.flash, color: .white.opacity(0.35))
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text(item.message)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
             }
-            .buttonStyle(.plain)
-            .contentShape(Rectangle())
+
+            if !item.flash {
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+            }
         }
         .padding(.leading, 20)
-        .padding(.trailing, 14)
+        .padding(.trailing, item.flash ? 20 : 14)
         .padding(.vertical, 14)
         .background(
             Color.black.opacity(0.75)
@@ -260,11 +293,19 @@ private struct NotificationBubble: View {
 
 public extension View {
     /// Adds the app notification overlay to the view (bottom right corner).
-    func appNotifications(manager: AppNotifications = .shared) -> some View {
+    func appNotifications(
+        manager: AppNotifications = .shared,
+        trailingPadding: CGFloat = 20,
+        bottomPadding: CGFloat = 20
+    ) -> some View {
         self.overlay(alignment: .bottomTrailing) {
-            AppNotificationOverlay(manager: manager)
-                .padding(.trailing, 20)
-                .padding(.bottom, 20)
+            AppNotificationOverlay(
+                manager: manager,
+                bottomPadding: bottomPadding,
+                trailingPadding: trailingPadding
+            )
+            .padding(.trailing, trailingPadding)
+            .padding(.bottom, bottomPadding)
         }
     }
 }

@@ -1044,6 +1044,7 @@ public final class RenderEngine {
         public private(set) var activeJobs: Int = 0
         public var onAllJobsFinished: (() -> Void)?
         public var onStatusMessage: ((String) -> Void)?
+        public var onActiveJobsChanged: ((Int) -> Void)?
 
         public init() {}
 
@@ -1059,6 +1060,7 @@ public final class RenderEngine {
             completion: ((Result<URL, RenderError>) -> Void)? = nil
         ) {
             activeJobs += 1
+            onActiveJobsChanged?(activeJobs)
             onStatusMessage?("Rendering started")
 
             Task {
@@ -1090,6 +1092,7 @@ public final class RenderEngine {
 
                 await MainActor.run {
                     self.activeJobs -= 1
+                    self.onActiveJobsChanged?(self.activeJobs)
 
                     switch result {
                     case .success(let url):
@@ -1129,6 +1132,7 @@ public final class RenderEngine {
             completion: ((Result<URL, RenderError>) -> Void)? = nil
         ) {
             activeJobs += 1
+            onActiveJobsChanged?(activeJobs)
             onStatusMessage?("Sequence render started")
 
             Task {
@@ -1159,6 +1163,7 @@ public final class RenderEngine {
 
                 await MainActor.run {
                     self.activeJobs -= 1
+                    self.onActiveJobsChanged?(self.activeJobs)
 
                     switch result {
                     case .success(let url):
