@@ -21,19 +21,22 @@ public final class RenderEngine {
         public let enableEffects: Bool
         public let sourceFraming: SourceFraming
         public let framingHook: (any FramingHook)?
+        public let useSourceFrameRate: Bool
 
         public init(
             outputSize: CGSize,
             frameRate: Int,
             enableEffects: Bool,
             sourceFraming: SourceFraming = .fill,
-            framingHook: (any FramingHook)? = HumanCenteringFramingHook.shared
+            framingHook: (any FramingHook)? = HumanCenteringFramingHook.shared,
+            useSourceFrameRate: Bool = false
         ) {
             self.outputSize = outputSize
             self.frameRate = frameRate
             self.enableEffects = enableEffects
             self.sourceFraming = sourceFraming
             self.framingHook = framingHook
+            self.useSourceFrameRate = useSourceFrameRate
         }
     }
 
@@ -123,7 +126,8 @@ public final class RenderEngine {
             enableEffects: config.enableEffects,
             sourceFraming: config.sourceFraming,
             framingHook: config.framingHook,
-            effectManager: effectManager
+            effectManager: effectManager,
+            useSourceFrameRate: config.useSourceFrameRate
         )
 
         guard case .success(let build) = buildResult else {

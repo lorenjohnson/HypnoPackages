@@ -47,7 +47,8 @@ final class CompositionBuilder {
         sourceFraming: SourceFraming = .fill,
         framingHook: (any FramingHook)? = HumanCenteringFramingHook.shared,
         effectManager: EffectManager? = nil,
-        targetDurationOverride: CMTime? = nil
+        targetDurationOverride: CMTime? = nil,
+        useSourceFrameRate: Bool = false
     ) async -> Result<BuildResult, RenderError> {
 
         // Validate
@@ -69,7 +70,8 @@ final class CompositionBuilder {
             enableEffects: enableEffects,
             sourceFraming: sourceFraming,
             framingHook: framingHook,
-            effectManager: effectManager
+            effectManager: effectManager,
+            useSourceFrameRate: useSourceFrameRate
         )
     }
 
@@ -83,7 +85,8 @@ final class CompositionBuilder {
         enableEffects: Bool,
         sourceFraming: SourceFraming,
         framingHook: (any FramingHook)?,
-        effectManager: EffectManager?
+        effectManager: EffectManager?,
+        useSourceFrameRate: Bool
     ) async -> Result<BuildResult, RenderError> {
 
         // Load all sources
@@ -238,9 +241,15 @@ final class CompositionBuilder {
             effectManager: effectManager
         )
 
+        let effectiveFrameRate = preferredFrameRate(
+            fallback: frameRate,
+            loadedSources: loadedSources,
+            useSourceFrameRate: useSourceFrameRate
+        )
+
         // Create video composition
         let videoComposition = AVMutableVideoComposition()
-        videoComposition.frameDuration = CMTime(value: 1, timescale: CMTimeScale(frameRate))
+        videoComposition.frameDuration = CMTime(value: 1, timescale: CMTimeScale(effectiveFrameRate))
         videoComposition.renderSize = outputSize
         videoComposition.instructions = [instruction]
 
@@ -268,6 +277,47 @@ final class CompositionBuilder {
 
         // Success logging removed to reduce noise
         return .success(result)
+    }
+
+    private func preferredFrameRate(
+        fallback: Int,
+        loadedSources: [(sourceIndex: Int, layer: Layer, loaded: LoadedSource)],
+        useSourceFrameRate: Bool
+    ) -> Int {
+        guard useSourceFrameRate else { return max(1, fallback) }
+        let videoFrameRates = loadedSources.compactMap { entry in
+            sourceFrameRate(for: entry.loaded)
+        }
+        guard let firstFrameRate = videoFrameRates.first else { return max(1, fallback) }
+
+        let tolerance = 0.1
+        let allVideoSourcesMatch = videoFrameRates.allSatisfy { abs($0 - firstFrameRate) <= tolerance }
+        guard allVideoSourcesMatch else { return max(1, fallback) }
+
+        let averageFrameRate = videoFrameRates.reduce(0, +) / Double(videoFrameRates.count)
+        return max(1, Int(averageFrameRate.rounded()))
+    }
+
+    private func sourceFrameRate(for loadedSource: LoadedSource) -> Double? {
+        guard !loadedSource.isStillImage else { return nil }
+
+        if let nominalFrameRate = loadedSource.videoTrack?.nominalFrameRate,
+           nominalFrameRate.isFinite,
+           nominalFrameRate > 0 {
+            return Double(nominalFrameRate)
+        }
+
+        let minFrameDuration = loadedSource.videoTrack?.minFrameDuration ?? .invalid
+        if minFrameDuration.isValid,
+           minFrameDuration.isNumeric,
+           minFrameDuration.seconds > 0 {
+            let derivedFrameRate = 1.0 / minFrameDuration.seconds
+            if derivedFrameRate.isFinite, derivedFrameRate > 0 {
+                return derivedFrameRate
+            }
+        }
+
+        return nil
     }
 
     /// Normalize a video slice so that:
