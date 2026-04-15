@@ -96,6 +96,20 @@ public final class AVPlayerFrameSource: FrameSource {
         cacheLock.unlock()
     }
 
+    private func cacheFrame(from pixelBuffer: CVPixelBuffer, at time: CMTime) {
+        let colorSpace: CGColorSpace? = CVImageBufferGetColorSpace(pixelBuffer)?.takeUnretainedValue()
+        let frame = DecodedFrame(
+            pixelBuffer: pixelBuffer,
+            pts: time,
+            duration: nil,
+            isKeyframe: false,
+            colorSpace: colorSpace
+        )
+        cacheLock.lock()
+        cachedFrame = frame
+        cacheLock.unlock()
+    }
+
     /// Detach video output from the previously attached item, if any.
     private func detachOutput() {
         guard let existing = videoOutput else { return }
@@ -247,20 +261,11 @@ public final class AVPlayerFrameSource: FrameSource {
             return cached
         }
 
-        // Get color space (CVImageBufferGetColorSpace returns Unmanaged, need to unwrap)
-        let colorSpace: CGColorSpace? = CVImageBufferGetColorSpace(pixelBuffer)?.takeUnretainedValue()
-
-        let frame = DecodedFrame(
-            pixelBuffer: pixelBuffer,
-            pts: actualTime,
-            duration: nil,
-            isKeyframe: false,  // AVPlayer doesn't expose this
-            colorSpace: colorSpace
-        )
+        cacheFrame(from: pixelBuffer, at: actualTime)
         cacheLock.lock()
-        cachedFrame = frame
+        let cached = cachedFrame
         cacheLock.unlock()
-        return frame
+        return cached
     }
 
     public func bestFrame(forHostTime hostTime: CFTimeInterval) -> DecodedFrame? {
@@ -292,19 +297,11 @@ public final class AVPlayerFrameSource: FrameSource {
 
         lastNewBufferHostTime = hostTime
 
-        let colorSpace: CGColorSpace? = CVImageBufferGetColorSpace(pixelBuffer)?.takeUnretainedValue()
-
-        let frame = DecodedFrame(
-            pixelBuffer: pixelBuffer,
-            pts: actualTime,
-            duration: nil,
-            isKeyframe: false,
-            colorSpace: colorSpace
-        )
+        cacheFrame(from: pixelBuffer, at: actualTime)
         cacheLock.lock()
-        cachedFrame = frame
+        let cached = cachedFrame
         cacheLock.unlock()
-        return frame
+        return cached
     }
 
     // MARK: - Playback Control (convenience pass-through)
@@ -347,7 +344,57 @@ public final class AVPlayerFrameSource: FrameSource {
             detachOutput()
             attachOutput(to: item)
         }
-        player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero) { finished in
+        player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] finished in
+            guard let self else {
+                completion?(finished)
+                return
+            }
+
+            if finished,
+               let output = self.videoOutput {
+                var actualTime = CMTime.zero
+                if let pixelBuffer = output.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: &actualTime) {
+                    self.cacheFrame(from: pixelBuffer, at: actualTime)
+                } else {
+                    let currentTime = self.player.currentTime()
+                    if currentTime.isValid,
+                       let pixelBuffer = output.copyPixelBuffer(forItemTime: currentTime, itemTimeForDisplay: &actualTime) {
+                        self.cacheFrame(from: pixelBuffer, at: actualTime)
+                    }
+                }
+            }
+
+            completion?(finished)
+        }
+    }
+
+    /// Seek and seed the cache for interactive scrubbing without forcing a video-output reattach.
+    /// This is lighter-weight than `refresh(at:)` and better suited to repeated drag updates.
+    public func scrub(to time: CMTime, completion: ((Bool) -> Void)? = nil) {
+        let now = CACurrentMediaTime()
+        suppressStallRecoveryUntilHostTime = now + 0.5
+        lastNewBufferHostTime = now
+
+        player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] finished in
+            guard let self else {
+                completion?(finished)
+                return
+            }
+
+            if finished,
+               let output = self.videoOutput {
+                var actualTime = CMTime.zero
+                if let pixelBuffer = output.copyPixelBuffer(forItemTime: time, itemTimeForDisplay: &actualTime) {
+                    self.cacheFrame(from: pixelBuffer, at: actualTime)
+                } else {
+                    let currentTime = self.player.currentTime()
+                    if currentTime.isValid,
+                       let pixelBuffer = output.copyPixelBuffer(forItemTime: currentTime, itemTimeForDisplay: &actualTime) {
+                        self.cacheFrame(from: pixelBuffer, at: actualTime)
+                    }
+                }
+            }
+
             completion?(finished)
         }
     }
